@@ -428,7 +428,7 @@ Observation should capture evidence sufficient for the Control Plane to determin
 
 Observation records should be append-only.
 
-## 4.7 Escalation
+## 4.8 Escalation
 
 Escalation represents a blocked execution requiring human attention.
 
@@ -466,12 +466,12 @@ An escalation must contain a concrete question whenever possible.
 
 # 5. Execution State Machine
 
+The Execution Unit state machine intentionally does not contain a separate APPROVED state. Approval belongs to Decisions and to the documentation lifecycle; readiness belongs to the concrete execution instance.
+
 The initial state machine is:
 
 ```
 DESIGN
-  |
-APPROVED
   |
 READY
   |
@@ -485,9 +485,9 @@ EXECUTING --> BLOCKED
 VERIFYING --> BLOCKED
 BLOCKED --> EXECUTING
 BLOCKED --> READY
-APPROVED --> REJECTED
-APPROVED --> SUPERSEDED
 ```
+
+A source Decision may have status approved, and a source specification may live under docs/specs/approved/, but neither is an Execution Unit state transition.
 
 The implementation must validate transitions.
 
@@ -499,7 +499,7 @@ Execution contract is being prepared. Human and/or agents may refine inputs.
 
 ### READY
 
-Machine-checkable readiness gate passed.
+Machine-checkable readiness gate passed. The Execution Unit has sufficient authoritative and resolved/recovered context for autonomous execution.
 
 ### EXECUTING
 
@@ -523,43 +523,210 @@ No Execution Unit may become DONE merely because an agent claims completion.
 
 # 6. READY Gate
 
-READY is a machine-checkable contract.
+READY is a machine-checkable contract and the only operational gate between preparation and autonomous execution.
 
 At minimum the readiness evaluator must verify:
 
 ```
-source decision exists                         ✓
-source decision is approved                   ✓
-required specification exists                 ✓
-required architecture context exists          ✓
-required ADR references resolve               ✓
-acceptance criteria exist                     ✓
-non-goals / scope boundary exists             ✓
-execution policy exists                       ✓
-repository target resolves                    ✓
-workspace resolves                            ✓
-agent execution entry exists                  ✓
-required constraints resolve                  ✓
+source decision exists                              ✓
+source decision has required decision status        ✓
+required specification exists                      ✓
+required specification is in docs/specs/approved/  ✓
+required architecture context is resolved          ✓
+required ADR references resolve                    ✓
+context sufficiency check passes                   ✓
+acceptance criteria exist                          ✓
+non-goals / scope boundary exists                  ✓
+execution policy exists                            ✓
+repository target resolves                         ✓
+workspace resolves                                 ✓
+agent execution entry exists                       ✓
+required constraints resolve                       ✓
+relevant Reality Engine checks pass                ✓
 ```
 
 The exact checks must be represented declaratively where practical.
 
 A failed READY check must produce actionable findings rather than a generic failure.
 
+A missing fact may be recoverable. A contradictory or authority-sensitive fact is not silently filled by an agent; it produces a failed gate and, when required, an Escalation.
+
 Example:
 
 ```
 NOT READY
 
-✗ workspace "naprolom-linux" does not resolve
-✗ acceptance criteria missing
 ✓ source decision approved
 ✓ specification found
+✓ workspace resolved
+⚠ architecture context recovered from code/history
+✗ conflicting sender identity semantics have no authoritative resolution
+
+Reason:
+human decision required
 ```
 
 ---
 
-# 7. Autonomy Policy
+# 7. Context Recovery and Execution Context
+
+## 7.1 Why this exists
+
+Underboss knowledge is not always complete even when the right files exist. Important engineering context can be distributed across architecture documents, ADRs, specifications, audits, code, configuration, dependency declarations, filesystem structure, Git history, and current project reality.
+
+An agent cannot safely execute merely because it was given a list of document paths. Before autonomous work begins, Underboss must determine whether the relevant engineering context is actually present and trustworthy.
+
+This capability is the evolution of the former Context Recovery Engine idea. It is not a separate product and does not create a second knowledge plane. It is an internal Underboss capability used primarily to construct and validate an Execution Context.
+
+The human mental model should remain memorable:
+
+```
+Decision
+   ↓
+Execution Unit
+   ↓
+Underboss gathers the context
+   ↓
+"Do we know enough to let the agent act?"
+   ↓
+      ┌───────────────┐
+      │               │
+     YES              NO
+      │               │
+      ↓               ↓
+    READY          ESCALATION
+      │
+      ↓
+    AGENT
+```
+
+The point is not to make Underboss "smart for its own sake". The point is to prevent an agent from having to invent missing project knowledge while executing approved work.
+
+## 7.2 Scanner
+
+The scanner is deterministic and produces only observable Findings. It must never declare architectural meaning merely because a pattern was found.
+
+Conceptually:
+
+```
+Repository / project reality
+        ↓
+     Scanner
+        ↓
+     Finding
+```
+
+A Finding records provenance, category, evidence, source, and raw payload.
+
+Initial technical categories may include:
+
+- code;
+- configuration;
+- dependency;
+- documentation;
+- filesystem;
+- vcs.
+
+The scanner does not decide that something is an Architecture, Entity, Decision, Constraint, or Invariant.
+
+## 7.3 Recovery / interpretation
+
+Recovery interprets findings and reconciles them with authoritative Underboss knowledge and Reality Engine evidence.
+
+```
+Finding(s)
+   ↓
+Recovery / interpretation
+   ↓
+Recovered Context Candidate
+   ↓
+Evidence + provenance + confidence
+```
+
+Recovered context can include candidates for:
+
+- architecture/components;
+- relationships/dependencies;
+- entities;
+- constraints;
+- invariants;
+- decisions/ADR candidates.
+
+These are candidates or recovered observations, not authoritative project knowledge by default.
+
+LLM interpretation must never silently create or overwrite an ADR, Decision, invariant, specification, or other authoritative artifact. If recovered evidence exposes a missing or contradictory architectural/product decision, the correct result is an Escalation or a proposed authoritative artifact for human resolution.
+
+## 7.4 Evidence First
+
+Every recovered claim must retain enough evidence to answer:
+
+> Where did this conclusion come from?
+
+Evidence should preserve at minimum source, reference, and provenance.
+
+Confidence must account for source quality, independence, agreement, contradictions, and recency where relevant. A simple count of evidence items is not sufficient by itself.
+
+The exact confidence schema may follow existing Underboss contracts, but provenance and authority must remain inspectable.
+
+## 7.5 Context Sufficiency
+
+Recovery is useful only if its result can be evaluated against the needs of an Execution Unit.
+
+The Context Sufficiency check must distinguish at least:
+
+- sufficient authoritative context;
+- sufficient context with explicitly bounded recovery/inference;
+- insufficient context;
+- contradictory context.
+
+Insufficient or contradictory context must not be silently filled by the agent. It should produce actionable READY findings and, when human judgment is required, an Escalation.
+
+Example:
+
+```
+Execution-042
+
+Context resolution:
+✓ specification
+✓ ADR
+✓ repository
+✓ workspace
+✓ acceptance criteria
+✓ current reality
+⚠ sender identity semantics recovered from code and history
+✗ no authoritative decision resolves conflicting implementations
+
+Result: NOT READY
+Reason: domain semantics require human decision
+```
+
+## 7.6 No separate Context Model SSOT
+
+The old CRE concept of a standalone context.json canonical model is intentionally not adopted as an Underboss source of truth.
+
+Underboss already owns authoritative Architecture, ADR, Specs, Audits, Principles, SOPs, and Reality. Recovered context is a derived/projection layer used to resolve execution context, not a parallel knowledge repository.
+
+A machine-readable representation may be generated for a specific operation, but it must not become a second canonical knowledge store.
+
+## 7.7 No separate CRE product boundary
+
+Do not create cre-core, cre publish, a separate Publisher subsystem, or a separate Context Governance layer for this implementation.
+
+The current architecture is:
+
+```
+Underboss
+  ├── Knowledge
+  ├── Reality
+  ├── Control Runtime
+  └── Context Recovery / Resolution
+```
+
+The recovery capability is part of Underboss execution preparation rather than an external product.
+
+---
+
+# 8. Autonomy Policy
 
 Execution policy is part of the Execution Unit.
 
@@ -626,7 +793,7 @@ Runtime progress belongs to operational state.
 
 ---
 
-# 9. Reality Engine Integration
+# 10. Reality Engine Integration
 
 Reality Engine remains the source for reconstructing actual project state.
 
@@ -644,7 +811,7 @@ Do not duplicate Reality Engine inventory logic inside the Control Plane.
 
 ---
 
-# 10. Documentation Integration
+# 11. Documentation Integration
 
 The new entities must follow the existing Underboss documentation conventions. The existing docs/specs/approved/ path remains the single canonical accepted specification path. Do not introduce docs/specs/ready/ as a parallel lifecycle directory.
 
@@ -669,7 +836,7 @@ Registry remains SSOT for runtime structure.
 
 ---
 
-# 11. Control Plane
+# 12. Control Plane
 
 The Control Plane is a read-oriented projection over canonical operational state.
 
@@ -690,7 +857,7 @@ The first implementation should prioritize CLI output over a web UI.
 
 ---
 
-# 12. CLI Surface
+# 13. CLI Surface
 
 The initial CLI should expose at least:
 
@@ -720,7 +887,7 @@ The CLI is a projection/control interface, not a second storage system.
 
 ---
 
-# 13. Human Attention Queue
+# 14. Human Attention Queue
 
 The primary human-facing derived view is:
 
@@ -764,7 +931,7 @@ The key derived metric is human attention demand, not task count.
 
 ---
 
-# 14. Workspace and Environment Model
+# 15. Workspace and Environment Model
 
 The implementation must support multiple workspaces for one project.
 
@@ -795,7 +962,7 @@ Deployment target metadata is descriptive in this phase. Actual deployment orche
 
 ---
 
-# 15. Agent Contract
+# 16. Agent Contract
 
 Claude Code and OpenCode remain interchangeable execution providers where capability permits.
 
@@ -820,7 +987,7 @@ A conversational transcript is not the canonical execution state.
 
 ---
 
-# 16. Observation Lifecycle
+# 17. Observation Lifecycle
 
 Observation creation should occur at meaningful lifecycle boundaries:
 
@@ -839,7 +1006,7 @@ The latest valid observation is the current operational snapshot unless a strong
 
 ---
 
-# 17. Escalation Lifecycle
+# 18. Escalation Lifecycle
 
 ```
 OPEN
@@ -857,7 +1024,7 @@ An escalation must never be silently discarded.
 
 ---
 
-# 18. Vibe Kanban and External Execution Tools
+# 19. Vibe Kanban and External Execution Tools
 
 Vibe Kanban, GitHub Issues, agent-native task lists, and similar tools are not authoritative sources for Decisions or project state.
 
@@ -886,7 +1053,7 @@ Do not make Vibe Kanban a required dependency of the first implementation.
 
 ---
 
-# 19. Web UI
+# 20. Web UI
 
 A web Control Center is not part of the first implementation.
 
@@ -896,7 +1063,7 @@ This follows the existing Underboss architectural intent that Runtime API provid
 
 ---
 
-# 20. Storage and Persistence
+# 21. Storage and Persistence
 
 The implementation must first inspect the existing Underboss storage model and select the smallest mechanism compatible with current architecture.
 
@@ -919,7 +1086,7 @@ If a database becomes demonstrably necessary, stop and create an ADR before intr
 
 ---
 
-# 21. Compatibility
+# 22. Compatibility
 
 Existing projects using Underboss v2 must continue to bootstrap.
 
@@ -941,7 +1108,7 @@ No consumer project should be forced to adopt the complete Control Plane merely 
 
 ---
 
-# 22. Implementation Phases
+# 23. Implementation Phases
 
 ## Phase 0 — Repository archaeology
 
@@ -1070,7 +1237,7 @@ Use realistic project examples where possible.
 
 ---
 
-# 23. Explicit Non-Goals
+# 24. Explicit Non-Goals
 
 The first implementation must NOT:
 
@@ -1093,7 +1260,7 @@ The first implementation must NOT:
 
 ---
 
-# 24. Acceptance Criteria
+# 25. Acceptance Criteria
 
 The implementation is accepted only when all of the following are true.
 
@@ -1165,7 +1332,7 @@ No parallel hidden configuration system is introduced.
 
 ---
 
-# 25. Required Tests
+# 26. Required Tests
 
 At minimum add tests for:
 
@@ -1200,7 +1367,7 @@ At minimum add tests for:
 
 ---
 
-# 26. Agent Implementation Instructions
+# 27. Agent Implementation Instructions
 
 You are implementing this specification inside the existing `akturt/underboss` repository.
 
@@ -1252,7 +1419,7 @@ Do not invent additional product-management features.
 
 ---
 
-# 27. Completion Report
+# 28. Completion Report
 
 At completion, report:
 
