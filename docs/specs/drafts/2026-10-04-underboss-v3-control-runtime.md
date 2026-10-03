@@ -124,21 +124,31 @@ An Execution Unit represents a bounded piece of work that an agent is authorized
 
 It is not a task list. Agent-generated subtasks remain implementation details.
 
-## 3.4 Approval and readiness are different states
+## 3.4 One canonical specification state; READY is an execution state
 
-An approved specification or decision is not automatically executable.
+Underboss must not create two parallel document states or folders whose meaning is effectively "approved" and "ready".
 
-The system must distinguish:
+The existing documentation lifecycle already has docs/specs/approved/. Keep that path for compatibility and as the canonical location for specifications that have been accepted as authoritative execution inputs. Do not introduce a second docs/specs/ready/ directory.
 
-- designed;
-- approved;
+The important distinction is between a document and an execution instance:
+
+- docs/specs/approved/ means: the specification is authoritative and may be used as an execution input;
+- READY means: a concrete Execution Unit has passed all machine-checkable prerequisites and has enough resolved context to be executed autonomously.
+
+Therefore an Execution Unit does not need an APPROVED state. Its lifecycle begins with preparation/design and moves to READY once the execution contract and context are actually sufficient.
+
+A specification can be approved while no Execution Unit exists. A specification being present in approved/ does not itself start work and does not mean a particular workspace, repository state, context, or agent entry is ready.
+
+The operational Execution Unit states are:
+
+- design/preparing;
 - ready;
 - executing;
 - verifying;
-- completed;
+- done;
 - blocked.
 
-READY means the execution contract is sufficiently complete for autonomous execution.
+READY is the single operational gate for autonomous execution.
 
 ## 3.5 Observation is operational state
 
@@ -169,6 +179,26 @@ Underboss must identify the logical repository/project independently from its ph
 Do not replace Registry SSOT, Runtime API, Documentation Module, SOPs, Reality Engine, boundaries, or existing artifact lifecycle with parallel mechanisms.
 
 Extend them.
+
+## 3.9 Active backlog is active state, not project history
+
+docs/backlog/active.md must remain a genuinely active backlog.
+
+A recurring operational failure is that agents append newly discovered work to active.md but do not remove completed items. The file then becomes a mixture of active work, completed work, ideas, historical notes, and obsolete items. At that point its name and semantics become false, its signal-to-noise ratio collapses, and agents repeatedly need to be retrained on what belongs there.
+
+Underboss must enforce a simple lifecycle:
+
+Open work
+  ↓
+docs/backlog/active.md
+  ↓
+completed / cancelled / superseded
+  ↓
+docs/backlog/archive.md
+
+active.md contains only currently actionable open work. Completed work is not deleted from project history; it is moved to archive.md (or the canonical archival mechanism established by the Runtime). Archive is historical/reference state and must not participate in the normal active-work view.
+
+This is a lifecycle rule, not a second task-management system. The Control Plane may project active backlog information, but the backlog remains documentation/state owned by Underboss.
 
 ---
 
@@ -352,7 +382,30 @@ execution_policy:
     - scope
 ```
 
-## 4.6 Observation
+## 4.6 Execution Context
+
+Execution Context is a resolved, execution-specific view of the information an agent needs for one Execution Unit. It is not a second knowledge store and is not a new authoritative document type.
+
+It combines:
+
+- authoritative project knowledge;
+- relevant recovered context;
+- current Reality Engine evidence;
+- repository/workspace resolution;
+- constraints and invariants;
+- acceptance criteria;
+- autonomy policy;
+- current operational observations.
+
+Its purpose is to answer one question before autonomous execution begins:
+
+> Does this Execution Unit have enough trustworthy context to be executed safely without inventing missing project knowledge?
+
+Execution Context may contain both authoritative and recovered material, but provenance and authority must remain explicit. Recovered inference must never silently become an ADR, Decision, invariant, or other authoritative artifact.
+
+A resolved Execution Context is a projection. It may be recomputed when project reality changes.
+
+## 4.7 Observation
 
 Observation is an immutable machine-readable snapshot/event associated with an Execution Unit.
 
@@ -443,10 +496,6 @@ Definitions:
 ### DESIGN
 
 Execution contract is being prepared. Human and/or agents may refine inputs.
-
-### APPROVED
-
-The source decision/specification is approved, but execution prerequisites may still be incomplete.
 
 ### READY
 
@@ -597,7 +646,7 @@ Do not duplicate Reality Engine inventory logic inside the Control Plane.
 
 # 10. Documentation Integration
 
-The new entities must follow the existing Underboss documentation conventions.
+The new entities must follow the existing Underboss documentation conventions. The existing docs/specs/approved/ path remains the single canonical accepted specification path. Do not introduce docs/specs/ready/ as a parallel lifecycle directory.
 
 Do not create an unrelated storage format merely because YAML is convenient.
 
@@ -607,7 +656,8 @@ The implementation must first determine the canonical location and lifecycle for
 - Execution Units;
 - Observations;
 - Escalations;
-- Project/workspace metadata.
+- Project/workspace metadata;
+- backlog active/archive lifecycle.
 
 If the current documentation layout has a suitable canonical area, extend it.
 
@@ -660,6 +710,8 @@ underboss execution complete <id>
 underboss escalation list
 underboss escalation show <id>
 underboss escalation resolve <id>
+underboss backlog status
+underboss backlog archive <id>
 ```
 
 The exact command implementation may follow the existing Runtime API conventions.
@@ -919,8 +971,11 @@ Implement schemas/contracts for:
 - Workspace;
 - Decision;
 - Execution Unit;
+- Execution Context projection;
 - Observation;
 - Escalation.
+
+Do not create a separate canonical schema for recovered context that competes with existing Architecture/ADR/Spec/Decision artifacts.
 
 Add validators.
 
@@ -932,9 +987,11 @@ Implement:
 
 - state transition validation;
 - READY gate;
+- Context Resolution and Context Sufficiency;
 - autonomy policy validation;
 - Observation persistence;
-- Escalation lifecycle.
+- Escalation lifecycle;
+- active backlog lifecycle checks and archive transition support.
 
 Keep this layer independent from a UI.
 
@@ -975,13 +1032,15 @@ An agent must be able to:
 - create an Escalation when required;
 - leave the project in a verifiable state.
 
-## Phase 6 — Reality integration
+## Phase 6 — Reality and context integration
 
-Connect READY/VERIFYING/DONE with the existing Reality Engine.
+Connect Context Resolution and READY/VERIFYING/DONE with the existing Reality Engine.
 
 Do not duplicate inventory or drift logic.
 
-## Phase 7 — Documentation and migration
+Recovery may consume Reality Engine evidence but must not become a second Reality Engine.
+
+## Phase 7 — Documentation, backlog lifecycle, and migration
 
 Update:
 
@@ -992,9 +1051,12 @@ Update:
 - validators;
 - templates;
 - agent entry documentation;
-- README/usage documentation.
+- README/usage documentation;
+- backlog workflow documentation, including the active → archive transition rule.
 
 Add migration support for existing consumers.
+
+Migration must not leave completed work in active.md when the canonical backlog lifecycle is adopted. Existing mixed backlogs should be explicitly reconciled rather than silently ignored.
 
 ## Phase 8 — Operational validation
 
@@ -1015,6 +1077,8 @@ The first implementation must NOT:
 - build a second project-management application;
 - replace ADRs;
 - replace SOPs;
+- create a second ready/ specification directory alongside approved/;
+- retain completed work in docs/backlog/active.md after completion;
 - replace Reality Engine;
 - require a database service;
 - require a web UI;
@@ -1108,6 +1172,11 @@ At minimum add tests for:
 - valid/invalid entity schemas;
 - Decision lifecycle;
 - Execution state transitions;
+- absence of a separate APPROVED Execution Unit state;
+- docs/specs/approved/ as the single canonical accepted specification directory;
+- Context Recovery finding/evidence contracts;
+- Context Sufficiency success/failure/contradiction;
+- recovered inference cannot silently become authoritative knowledge;
 - illegal state transitions;
 - READY gate success;
 - READY gate failure;
@@ -1123,6 +1192,10 @@ At minimum add tests for:
 - unresolved artifact references;
 - Reality Engine verification failure;
 - Control Plane attention filtering;
+- active backlog contains only actionable open work;
+- completed backlog entries move to archive;
+- archived work is excluded from the normal active-work projection;
+- backlog archive operation is idempotent;
 - backward-compatible Runtime bootstrap.
 
 ---
@@ -1145,6 +1218,7 @@ Before implementation:
 8. Read Reality Engine collectors/analyzers/reporters.
 9. Read existing documentation validators and generators.
 10. Inspect recent ADRs and specs.
+11. Inspect the current backlog workflow and existing active.md / archive conventions.
 
 Then produce a concise archaeology report identifying the exact extension points.
 
@@ -1159,6 +1233,9 @@ Implementation rules:
 - Reality Engine remains reality reconstruction.
 - Documentation remains authoritative for human-readable project knowledge.
 - Operational state is separate from immutable architectural knowledge.
+- docs/specs/approved/ remains the single canonical accepted specification path; do not introduce ready/ as a parallel spec lifecycle.
+- Context Recovery produces evidence-backed derived context; it does not create a second knowledge SSOT.
+- docs/backlog/active.md contains only open actionable work; completed work belongs in the archive.
 - Do not duplicate existing logic.
 - Do not hardcode paths that Registry or project metadata can resolve.
 - Preserve idempotent bootstrap/migration behavior.
@@ -1188,7 +1265,9 @@ At completion, report:
 7. migration behavior;
 8. compatibility results;
 9. known limitations;
-10. explicit list of decisions that still require human approval.
+10. explicit list of decisions that still require human approval;
+11. Context Resolution/Sufficiency behavior and evidence provenance;
+12. backlog active/archive migration and validation results.
 
 The completion report must distinguish:
 
