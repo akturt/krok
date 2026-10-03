@@ -759,7 +759,7 @@ Agents must not silently expand scope when an escalation condition is reached.
 
 ---
 
-# 8. SOP Integration
+# 9. SOP Integration
 
 Existing SOPs remain workflow definitions.
 
