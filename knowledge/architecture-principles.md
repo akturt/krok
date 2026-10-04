@@ -14,7 +14,7 @@ priority: P1
 
 # Architecture Principles
 
-14 principles of architectural analysis + 3 meta-patterns. Used by `architecture-reviewer` during review.
+15 principles of architectural analysis + 3 meta-patterns. Used by `architecture-reviewer` during review.
 
 ## Basic Principles (7)
 
@@ -26,7 +26,7 @@ priority: P1
 6. **Immutability After Acceptance** — the body of an ADR with `status: accepted` is immutable. Only FM transitions (`status:` change) are allowed. Violation = REJECT.
 7. **Entity Refs Integrity** — `entity_refs` in spec/audit point to actually existing `id:` values in `docs/architecture/`. Broken ref = warning.
 
-## Operational Principles (7)
+## Operational Principles (8)
 
 8. **Schema v1 Compliance** — every `.md` in `docs/` must have Schema v1 frontmatter with 6 mandatory fields. CI checks this automatically.
 9. **Template-First Creation** — new documents are created via `cp documentation/templates/<type>.md`, not "from scratch". The template guarantees canonical structure.
@@ -35,6 +35,7 @@ priority: P1
 12. **DRY Knowledge** — shared knowledge lives in `knowledge/`, not duplicated inline in Roles. Roles reference it by short-id.
 13. **Artifact Contracts** — the DAG is connected via artifacts (`consumes:`/`produces:`), not via implicit depends_on. Data flow ≠ control flow.
 14. **Gate: Manual** — human steps in SOP are marked with `gate: manual`, not `role: human`. Human is not a Runtime role.
+15. **No Compatibility Layers** — a superseded mechanism is deleted, not aliased. No fallback, no dual-read, no dual-write, no legacy mode, no deprecated-but-supported path. A one-time migration script is not compatibility; after it runs, the old form is unsupported.
 
 ## Meta-Patterns (3)
 
