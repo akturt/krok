@@ -1,4 +1,5 @@
 name: forensic-layer-audit
+version: 1
 description: 11-phase single-agent forensic audit of any layer/section/subsystem (replaces phantom-subagent forensic-orchestrator)
 triggers:
   - manual invocation for deep architectural forensic of one layer

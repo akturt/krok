@@ -1,4 +1,5 @@
 name: new-service
+version: 1
 description: Adding a new service/microservice to the infrastructure — from proposal to deploy + audit
 triggers:
   - Spec created with type «new service»

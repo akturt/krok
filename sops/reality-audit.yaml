@@ -1,4 +1,5 @@
 name: reality-audit
+version: 1
 description: Automated project state reconstruction and drift detection via Reality Engine
 engine: reality-engine
 triggers:

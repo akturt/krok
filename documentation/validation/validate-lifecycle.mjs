@@ -15,6 +15,7 @@
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { acceptanceCriteria } from '../../core/control/spec.mjs';
 
 export const SPEC_DIRS = { drafts: 'draft', approved: 'approved', implemented: 'implemented', superseded: 'superseded' };
 export const SPEC_TRANSITIONS = {
@@ -52,15 +53,6 @@ export function normalizeBody(body, cutResult) {
     if (i >= 0) b = b.slice(0, i);
   }
   return b.split('\n').map((l) => l.replace(/\s+$/, '')).join('\n').replace(/\n+$/, '');
-}
-
-export function acceptanceCriteria(body) {
-  const m = /^## Acceptance criteria\s*$/m.exec(body);
-  if (!m) return null;
-  const rest = body.slice(m.index + m[0].length);
-  const next = rest.search(/^## /m);
-  const section = next >= 0 ? rest.slice(0, next) : rest;
-  return [...section.matchAll(/^\s*-\s+\*\*(AC-\d{3})\*\*/gm)].map((x) => x[1]);
 }
 
 function walk(dir) {

@@ -1,4 +1,5 @@
 name: release
+version: 1
 description: Release of a new version — from prep to verify and optional post-release audit
 triggers:
   - milestone complete (N tasks from backlog closed)

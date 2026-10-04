@@ -120,9 +120,12 @@ test('bootstrap against a fresh project creates the registry layout without revi
 
 test('planner: gate: manual is a human step and role: human is not an alias', () => {
   const dir = tmp('underboss-planner-');
-  copyFileSync(join(REPO, 'sops', 'planner.mjs'), join(dir, 'planner.mjs'));
-  put(dir, 'x.yaml', 'name: x\ndescription: d\nsteps:\n  - id: 1\n    name: a\n    gate: manual\n    depends_on: []\n  - id: 2\n    name: b\n    role: human\n    depends_on: [1]\n');
-  const out = execFileSync('node', [join(dir, 'planner.mjs'), 'x'], { encoding: 'utf8' });
+  mkdirSync(join(dir, 'sops'), { recursive: true });
+  mkdirSync(join(dir, 'core', 'control'), { recursive: true });
+  copyFileSync(join(REPO, 'sops', 'planner.mjs'), join(dir, 'sops', 'planner.mjs'));
+  copyFileSync(join(REPO, 'core', 'control', 'yaml.mjs'), join(dir, 'core', 'control', 'yaml.mjs'));
+  put(dir, 'sops/x.yaml', 'name: x\ndescription: d\nsteps:\n  - id: 1\n    name: a\n    gate: manual\n    depends_on: []\n  - id: 2\n    name: b\n    role: human\n    depends_on: [1]\n');
+  const out = execFileSync('node', [join(dir, 'sops', 'planner.mjs'), 'x'], { encoding: 'utf8' });
   assert.match(out, /\[1\] a\s+→\s+gate: manual/);
   assert.match(out, /\[2\] b\s+→\s+role: human/);
 });

@@ -55,6 +55,17 @@ validation:
         - "archive.md contains only [x] and [-] items"
       scope: docs/backlog/
 
+    - name: validate-execution
+      path: documentation/validation/validate-execution.mjs
+      description: "Validates Execution Units and Execution Records under .context/execution/"
+      checks:
+        - "unit.yml and every record satisfy their schema; the directory name equals the unit id"
+        - "record seq starts at 1 and has no gaps; file name equals seq, UTC time and type"
+        - "transition records form a legal chain from DESIGN; unit.yml state equals the latest transition"
+        - "every escalation-resolved refers to an escalation-opened of the same unit"
+        - "a written record is unmodified relative to git; serialization is canonical"
+      scope: .context/execution/
+
     - name: validate-vocabulary
       path: documentation/validation/validate-vocabulary.mjs
       description: "Rejects removed vocabulary in operational files"

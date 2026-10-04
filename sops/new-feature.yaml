@@ -1,4 +1,5 @@
 name: new-feature
+version: 1
 description: Adding a new user-facing feature — from spec draft to implemented + audit
 triggers:
   - Created .md in docs/specs/drafts/

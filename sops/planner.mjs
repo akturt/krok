@@ -13,12 +13,12 @@
 // v1.1: reads capability:, consumes:, produces:, gate: from steps.
 // D-HG: `gate: manual` = human step.
 //
-// No external deps. Simple YAML reader tailored to SOP format (flat key/value,
-// nested lists of objects with flat keys, no flow-style nesting).
+// No external deps. YAML is read by the shared subset reader core/control/yaml.mjs.
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parse } from '../core/control/yaml.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOPS_DIR = join(__dirname);
@@ -34,88 +34,9 @@ const HIDE_HUMAN = args.includes('--hide-human');
 const PLATFORM = arg('--platform') || 'any';
 const sopName = args.find(a => !a.startsWith('--'));
 
-// ---------- YAML parser (minimal, tailored to SOPs) ----------
+// ---------- YAML: the shared restricted-subset reader ----------
 
-function parseYAML(text) {
-  // Very small parser: supports flat top-level keys, list of objects (each with flat keys).
-  // Handles: `key: value`, `key:` (block to follow), `- key: value` (list item with inline mapping),
-  // nested keys under `- ` items, inline `[a, b]` lists, and quoted scalars.
-  const lines = text.split(/\r?\n/);
-  const root = {};
-  let currentKey = null;
-  let pendingList = null;
-  let pendingListItem = null;
-
-  for (const raw of lines) {
-    const line = raw.replace(/\r$/, '');
-    if (line.trim() === '' || line.trim().startsWith('#')) continue;
-
-    const indent = line.search(/\S/);
-    const content = line.slice(indent);
-
-    // list item start
-    if (content.startsWith('- ')) {
-      const rest = content.slice(2);
-      // list item with inline mapping key
-      const kv = rest.match(/^([a-zA-Z_]+):\s*(.*)$/);
-      if (kv) {
-        const [, k, v] = kv;
-        if (pendingList === null) {
-          pendingList = [];
-          root[currentKey] = pendingList;
-        }
-        const item = {};
-        item[k] = parseScalar(v.trim());
-        pendingList.push(item);
-        pendingListItem = item;
-      } else {
-        // plain list item scalar
-        if (pendingList === null) {
-          pendingList = [];
-          root[currentKey] = pendingList;
-        }
-        pendingList.push(parseScalar(rest.trim()));
-        pendingListItem = null;
-      }
-      continue;
-    }
-
-    // nested key under last list item (indent > parent `key:` indent)
-    const m = content.match(/^([a-zA-Z_]+):\s*(.*)$/);
-    if (m && pendingListItem !== null && indent > 0) {
-      const [, k, v] = m;
-      pendingListItem[k] = v.trim() === '' ? [] : parseScalar(v.trim());
-      continue;
-    }
-
-    // top-level key
-    pendingList = null;
-    pendingListItem = null;
-    if (m) {
-      const [, k, v] = m;
-      currentKey = k;
-      if (v.trim() === '') {
-        // block (list) follows; set up lazy
-        pendingList = null; // will lazily become list when first `- ` line arrives
-      } else {
-        root[k] = parseScalar(v.trim());
-        currentKey = null;
-      }
-    }
-  }
-  return root;
-}
-
-function parseScalar(v) {
-  if (v === '') return '';
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-    return v.slice(1, -1);
-  }
-  if (v.startsWith('[') && v.endsWith(']')) {
-    return v.slice(1, -1).split(',').map(s => s.trim().replace(/^['"]|['"]$/g, '')).filter(s => s.length);
-  }
-  return v;
-}
+const parseYAML = parse;
 
 // ---------- DAG computation ----------
 

@@ -1,4 +1,5 @@
 name: incident
+version: 1
 description: Production incident — from detection to postmortem and incident audit
 triggers:
   - alert fired (PagerDuty / Slack alert)

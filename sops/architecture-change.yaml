@@ -1,4 +1,5 @@
 name: architecture-change
+version: 1
 description: Architecture change — from proposal to accepted ADR with docs/architecture/ update
 triggers:
   - proposal of a new ADR in docs/adr/

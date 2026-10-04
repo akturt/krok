@@ -1,4 +1,5 @@
 name: pipeline-topology-audit
+version: 1
 description: 3-layer progressive forensic reconstruction of a multi-hop data pipeline's runtime reality (Execution Topology -> Structural Topology -> Content Topology) before any coverage matrix or replacement-layer design is allowed to proceed
 triggers:
   - manual invocation before designing a coverage matrix or migration plan for an existing multi-hop pipeline

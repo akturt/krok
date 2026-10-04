@@ -37,6 +37,18 @@ entrypoints:
   installer: bootstrap/install.sh
   validator: documentation/validation/validate-integrity.sh
 
+vocabularies:
+  escalation_kinds:
+    - protected-path
+    - invariant
+    - architecture
+    - security
+    - public-contract
+    - domain-semantics
+    - scope
+    - manual-gate
+    - context-gap
+
 directories:
   docs:
     - path: architecture/
@@ -112,6 +124,8 @@ validators:
     path: documentation/validation/validate-backlog.mjs
   - name: validate-vocabulary
     path: documentation/validation/validate-vocabulary.mjs
+  - name: validate-execution
+    path: documentation/validation/validate-execution.mjs
 
 generators:
   - name: architecture-readme

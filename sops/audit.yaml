@@ -1,4 +1,5 @@
 name: audit
+version: 1
 description: Conducting an audit — from defining scope to an append-only completed audit document
 triggers:
   - periodic check (quarterly/monthly)
@@ -8,7 +9,7 @@ triggers:
 
 input:
   required:
-     - type: trigger
+    - type: trigger
       description: "one of: periodic / incident / pre-release / external"
     - type: scope
       description: "list of entities (entity_refs) that will be checked"

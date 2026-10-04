@@ -1,4 +1,5 @@
 name: bugfix
+version: 1
 description: Bug fix — from reproduction to closing the bug report with minimal bureaucracy
 triggers:
   - Opened GitHub Issue with label bug

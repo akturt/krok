@@ -1,4 +1,5 @@
 name: architecture-review
+version: 1
 description: Formal architecture-review DAG (reality → arch review → doc review → adversary optional → human)
 triggers:
   - PR touching docs/specs/drafts/
