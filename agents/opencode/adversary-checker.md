@@ -16,7 +16,7 @@ permission:
 color: "\U0001F528"
 hidden: false
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 capabilities: [claim-validation, assumption-analysis]
 knowledge: [audit-principles, report-formats]
 touches: [docs/architecture, docs/adr, docs/specs]

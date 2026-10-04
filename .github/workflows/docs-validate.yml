@@ -6,29 +6,32 @@ on:
       - "knowledge/**"
       - "documentation/**"
       - "engine/reality-engine/**"
-      - "runtime/**"
+      - "core/**"
       - "sops/**"
       - "agents/**"
       - "bootstrap/**"
       - "playbook/**"
 
 jobs:
-  schema-v1:
+  validate:
     runs-on: ubuntu-latest
-    env:
-      # Brownfield rollout: set "true" during the warn-only period (see playbook/migrate-legacy.md).
-      # Greenfield (this repo): leave empty → strict from the first PR.
-      WARN_ONLY: ""
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
+          fetch-depth: 0
       - name: Validate Canonical Schema v1 frontmatter (own docs/)
         run: |
           bash documentation/validation/validate-frontmatter.sh
       - name: Validate knowledge/ frontmatter
         run: |
           ROOT=knowledge bash documentation/validation/validate-frontmatter.sh knowledge
+      - name: Validate Spec and ADR lifecycle
+        run: |
+          BASE_REF="origin/${{ github.base_ref }}" node documentation/validation/validate-lifecycle.mjs docs
+      - name: Validate backlog
+        run: |
+          node documentation/validation/validate-backlog.mjs docs
       - name: Validate templates (canonical Schema v1 placeholders)
         run: |
           # documentation/templates/ live outside docs/ → CI does not check them automatically.
@@ -42,6 +45,12 @@ jobs:
             done
           done
           echo "templates: OK"
-      - name: Validate Runtime dependency graph
+      - name: Validate dependency graph
         run: |
-          bash documentation/validation/validate-runtime.sh
+          bash documentation/validation/validate-integrity.sh
+      - name: Validate vocabulary
+        run: |
+          node documentation/validation/validate-vocabulary.mjs .
+      - name: Tests
+        run: |
+          node --test documentation/validation/tests/*.test.mjs

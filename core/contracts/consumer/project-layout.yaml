@@ -1,10 +1,10 @@
 # AUTO-SYNCED — structure is the single source of truth in registry.yaml.
-# Edit runtime/registry.yaml `directories:` to change layout; this file only
+# Edit core/registry.yaml `directories:` to change layout; this file only
 # carries consumer-facing policy and points at the SSOT. Do not duplicate paths.
 project_layout:
   description: Expected directory structure in consumer project
   version: 2
-  source_of_truth: ../../runtime/registry.yaml#/directories
+  source_of_truth: ../../core/registry.yaml#/directories
 
   allowed_root:
     - README.md
@@ -16,7 +16,7 @@ project_layout:
   invariant: "consumer repo contains exactly one root-level directory: docs/"
 
   # docs/ and .context/ directory lists are defined once in registry.yaml
-  # (directories.docs / directories.context) and read by bootstrap at runtime.
+  # (directories.docs / directories.context) and read by bootstrap.
   docs:
     description: "User-owned documentation (only root-level directory in consumer)"
     source: registry.yaml#/directories/docs

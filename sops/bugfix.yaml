@@ -27,13 +27,13 @@ output:
 steps:
   - id: 1
     name: Reproduce
-    role: human
+    gate: manual
     produces: "bug reproduced locally or a rationale of «not reproducible»"
     depends_on: []
 
   - id: 2
     name: Triage — is a spec needed?
-    role: human
+    gate: manual
     produces: "decision trivial-fix vs non-trivial. For non-trivial — create a spec in docs/specs/drafts/"
     depends_on: [1]
 
@@ -47,13 +47,13 @@ steps:
 
   - id: 4
     name: Fix code
-    role: human
+    gate: manual
     produces: "PR with the fix and tests"
     depends_on: [2]
 
   - id: 5
     name: Tests green
-    role: human
+    gate: manual
     produces: "local and CI tests green"
     depends_on: [4]
 
@@ -67,13 +67,13 @@ steps:
 
   - id: 7
     name: Documentation update (if docs are affected)
-    role: human
+    gate: manual
     produces: "docs/architecture/, runbook, secrets updated as needed"
     depends_on: [5]
 
   - id: 8
     name: Audit (only for hotfix/security)
-    role: human
+    gate: manual
     platform: any
     produces: "docs/audits/YYYY-MM-DD-bugfix-<slug>.md if the fix is a hotfix or security-related"
     depends_on: [5, 7]
@@ -81,6 +81,6 @@ steps:
 
   - id: 9
     name: Merge + close issue
-    role: human
+    gate: manual
     produces: "PR merged, Issue closed"
     depends_on: [5, 6, 8]

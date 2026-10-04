@@ -2,7 +2,7 @@
 # engine/reality-engine/collectors/architecture-inventory.sh
 #
 # Real architecture inventory of a project (read-only investigation).
-# Detects stack via the Runtime API (detect_all) and inventories the
+# Detects stack via the Core SDK (detect_all) and inventories the
 # actual directory tree + file types.
 #
 # Usage:
@@ -16,11 +16,11 @@ PROJECT_ROOT="${1:-.}"
 [ -d "$PROJECT_ROOT" ] || { echo "ERROR: project root '$PROJECT_ROOT' not found" >&2; exit 1; }
 PROJECT_ROOT="$(cd "$PROJECT_ROOT" && pwd)"
 
-# --- Runtime API (stack detection + expected structure) ---
-RUNTIME_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-if [ -f "${RUNTIME_ROOT}/runtime/lib/api.sh" ]; then
+# --- Core SDK (stack detection + expected structure) ---
+CONTROL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+if [ -f "${CONTROL_ROOT}/core/lib/api.sh" ]; then
   # shellcheck disable=SC1090
-  source "${RUNTIME_ROOT}/runtime/lib/api.sh"
+  source "${CONTROL_ROOT}/core/lib/api.sh"
 fi
 
 TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -31,8 +31,8 @@ if declare -f detect_all >/dev/null 2>&1; then
   detect_all "$PROJECT_ROOT"
 fi
 
-# --- directory inventory (top 2 levels, exclude VCS/deps/runtime) ---
-EXCLUDE_GLOB=("${PROJECT_ROOT}/.git" "${PROJECT_ROOT}/node_modules" "${PROJECT_ROOT}/.runtime")
+# --- directory inventory (top 2 levels, exclude VCS, deps and the Underboss mount) ---
+EXCLUDE_GLOB=("${PROJECT_ROOT}/.git" "${PROJECT_ROOT}/node_modules" "${PROJECT_ROOT}/.control")
 dirs_json=""
 first=1
 while IFS= read -r dir; do
@@ -43,7 +43,7 @@ while IFS= read -r dir; do
   if [ "$first" -eq 1 ]; then first=0; else entry=",$entry"; fi
   dirs_json="$dirs_json$entry"
 done < <(find "$PROJECT_ROOT" -maxdepth 2 -type d \
-            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.runtime/*" | sort)
+            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.control/*" | sort)
 
 # --- file extensions ---
 declare -A ext_count
@@ -52,7 +52,7 @@ while IFS= read -r f; do
   if [[ "$base" == *.* ]]; then ext="${base##*.}"; else ext="(none)"; fi
   ext_count["$ext"]=$(( ${ext_count["$ext"]:-0} + 1 ))
 done < <(find "$PROJECT_ROOT" -type f \
-            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.runtime/*")
+            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.control/*")
 ext_json=""
 first=1
 for e in $(printf '%s\n' "${!ext_count[@]}" | sort); do
@@ -62,7 +62,7 @@ for e in $(printf '%s\n' "${!ext_count[@]}" | sort); do
 done
 
 total=$(find "$PROJECT_ROOT" -type f \
-          -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.runtime/*" \
+          -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.control/*" \
           | wc -l | tr -d ' ')
 
 cat <<EOF

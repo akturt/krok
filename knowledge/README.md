@@ -7,7 +7,7 @@ status: active
 date: 2026-07-08
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 tags: [knowledge, index, reference]
 priority: P1
 ---
@@ -20,7 +20,7 @@ Knowledge used by Roles. Loaded into context by **short-id** from the Role FM:
 knowledge: [architecture-principles, report-formats]
 ```
 
-The Runtime resolves the path: `knowledge/<short-id>.md`. This allows restructuring `knowledge/` without rewriting Roles.
+Underboss resolves the path: `knowledge/<short-id>.md`. This allows restructuring `knowledge/` without rewriting Roles.
 
 ## Contained
 

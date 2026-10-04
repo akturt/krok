@@ -1,6 +1,6 @@
 # Underboss
 
-**Documentation Runtime для современных проектов с AI coding agents.**
+**Engineering control plane for projects built with AI coding agents**
 
 Underboss — это система, которая помогает поддерживать проект в актуальном состоянии во время активной разработки.
 
@@ -89,17 +89,17 @@ AI получает только тот инженерный контекст, �
 
 ## Что входит
 
-* Documentation Runtime
+* Underboss
 * Canonical Documentation Schema
-* Runtime Registry
-* AI Agent Runtime
+* Registry
+* AI Agent Roles
 * Reality Engine
 * Documentation Validators
 * Bootstrap System
 * Migration Tools
 * Architecture Review Workflow
 * Adversarial Review
-* Runtime API
+* Core SDK
 
 ## Для каких проектов
 

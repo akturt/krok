@@ -7,7 +7,7 @@ status: active
 date: 2026-07-08
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 tags: [knowledge, architecture, principles, review]
 priority: P1
 ---
@@ -22,9 +22,9 @@ priority: P1
 2. **Explicit Dependencies** — dependencies between modules are declared explicitly (imports, APIs, events), not implicitly via shared state.
 3. **Invariants Over Implementation** — critical system invariants are fixed in `docs/architecture/README.md` and verified on every review. Implementation may change; invariants do not.
 4. **ADR Before Code** — an architectural decision is recorded as an ADR (`docs/adr/`) before merging the code that implements it.
-5. **Path-Status Contract** — a document's lifecycle position (draft/review/approved/implemented) is determined by its directory + `status:` FM. Mismatch = error.
+5. **Path-Status Contract** — a document's lifecycle position (draft/approved/implemented) is determined by its directory + `status:` FM. Mismatch = error.
 6. **Immutability After Acceptance** — the body of an ADR with `status: accepted` is immutable. Only FM transitions (`status:` change) are allowed. Violation = REJECT.
-7. **Entity Refs Integrity** — `entity_refs` in spec/audit point to actually existing `id:` values in `docs/architecture/`. Broken ref = warning.
+7. **Entity Refs Integrity** — `entity_refs` in spec/audit point to actually existing `id:` values in `docs/architecture/`. Broken ref = error.
 
 ## Operational Principles (8)
 
@@ -34,7 +34,7 @@ priority: P1
 11. **Separation of Concerns** — Role = identity (who I am), Knowledge = knowledge (what I know), SOP = process (when I apply it), Capability = skill (what I can do). Do not mix them.
 12. **DRY Knowledge** — shared knowledge lives in `knowledge/`, not duplicated inline in Roles. Roles reference it by short-id.
 13. **Artifact Contracts** — the DAG is connected via artifacts (`consumes:`/`produces:`), not via implicit depends_on. Data flow ≠ control flow.
-14. **Gate: Manual** — human steps in SOP are marked with `gate: manual`, not `role: human`. Human is not a Runtime role.
+14. **Gate: Manual** — human steps in SOP are marked with `gate: manual`, not `role: human`. Human is not an agent role.
 15. **No Compatibility Layers** — a superseded mechanism is deleted, not aliased. No fallback, no dual-read, no dual-write, no legacy mode, no deprecated-but-supported path. A one-time migration script is not compatibility; after it runs, the old form is unsupported.
 
 ## Meta-Patterns (3)

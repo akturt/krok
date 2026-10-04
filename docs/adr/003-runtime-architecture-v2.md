@@ -2,11 +2,11 @@
 schema: 1
 id: adr-003-runtime-architecture-v2
 type: adr
-status: accepted
+status: superseded
 date: 2026-07-09
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer, adr-002-runtime-v1.2-operating-platform]
+entity_refs: [agentic-layer, adr-002-runtime-v1.2-operating-platform]
 tags: [adr, runtime, v1.6, runtime-api, registry, bootstrap-engine, architecture]
 depends_on: [adr-002-runtime-v1.2-operating-platform]
 priority: P0

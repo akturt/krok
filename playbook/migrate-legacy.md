@@ -33,7 +33,7 @@ This document is a **ready-made prompt** for an AI agent (Claude Code, opencode)
 
 ## Prerequisites
 
-- The `underboss` submodule is already attached at `docs/.runtime/underboss/` (see `../../INSTALL.md`).
+- The `underboss` submodule is already attached at `docs/.control/` (see `../../INSTALL.md`).
 - The repository has already run `bootstrap/bootstrap.sh` (`.context/`, `docs/` skeleton, `CLAUDE.md` snippet created).
 - Node.js 18+ is available for `engine/scripts/migrate-legacy.mjs`.
 
@@ -41,12 +41,11 @@ This document is a **ready-made prompt** for an AI agent (Claude Code, opencode)
 
 ```
 Audit legacy → Run migration script → Manual review
-            → Warn-only CI (several days)
-            → Manual cleanup of forgotten documents
-            → Strict CI
+            → Cleanup of forgotten documents
+            → Enable CI (the same rules as greenfield)
 ```
 
-Greenfield — strict from the first PR. Brownfield goes through `Warn → Strict`. Never enable strict CI immediately on brownfield — forgotten `docs/archive/`, `docs/old/`, `docs/wiki/` would break every PR.
+CI is enabled only when the validators pass. There is no warn-only period: documents that cannot pass (forgotten `docs/archive/`, `docs/old/`, `docs/wiki/`) are migrated, moved outside `docs/`, or deleted before CI is enabled.
 
 ---
 
@@ -56,7 +55,7 @@ Greenfield — strict from the first PR. Brownfield goes through `Warn → Stric
 
 ```bash
 # How many .md files in the project (outside submodule)?
-find docs/ -name "*.md" -not -path "*/docs/.runtime/*" | wc -l
+find docs/ -name "*.md" -not -path "*/docs/.control/*" | wc -l
 
 # What frontmatter fields are present?
 grep -rE "^(schema:|author:|title:|created:|lifecycle:|type:|status:)" docs/ \
@@ -69,7 +68,7 @@ for f in $(find docs/ -name "*.md"); do
 done
 
 # What directories don't fit the 5-layer model?
-find docs/ -type d -not -path "*/docs/.runtime/*" \
+find docs/ -type d -not -path "*/docs/.control/*" \
   | grep -E "archive|old|wiki|tmp|legacy|draft|misc" || true
 ```
 
@@ -90,8 +89,8 @@ Split all `.md` files into 3 buckets:
 | Bucket | Criterion | Action |
 |---------|---------|----------|
 | **Active** | Used right now, referenced from code / docs / issues | Migrate first |
-| **Archive** | Old version, outdated, historical | Leave in `docs/archive/` **without** canonical FM, exclude from CI (the warn-only period will catch it) |
-| **Orphan** | References nothing, > 1 year without updates | Delete or move to `docs/archive/` — operator decides |
+| **Archive** | Old version, outdated, historical | Move outside `docs/` (for example `archive/` at the repository root) or delete — `docs/` holds only documents with canonical FM |
+| **Orphan** | References nothing, > 1 year without updates | Delete or move outside `docs/` — operator decides |
 
 **Checkpoint 2:** present the operator the list of files by bucket. Delete only with explicit confirmation (`Orphan → delete`).
 
@@ -101,17 +100,17 @@ Split all `.md` files into 3 buckets:
 
 ## Step 3 — Runnable migration (5–30 minutes)
 
-Run the migration script from the Runtime:
+Run the migration script from Underboss:
 
 ```bash
 # Dry-run: shows what would change, without writing
-node docs/.runtime/underboss/engine/scripts/migrate-legacy.mjs --dry-run
+node docs/.control/engine/scripts/migrate-legacy.mjs --dry-run
 
 # Real run
-node docs/.runtime/underboss/engine/scripts/migrate-legacy.mjs --owner <team-name>
+node docs/.control/engine/scripts/migrate-legacy.mjs --owner <team-name>
 
 # Quiet mode (summary only)
-node docs/.runtime/underboss/engine/scripts/migrate-legacy.mjs --quiet --owner <team-name>
+node docs/.control/engine/scripts/migrate-legacy.mjs --quiet --owner <team-name>
 ```
 **What the script does:**
 
@@ -163,37 +162,11 @@ Additionally verify during manual review:
 
 ---
 
-## Step 5 — Warn-only CI (several days)
+## Step 5 — Cleanup of forgotten directories
 
-Enable the CI guard in warn-only mode for the rollout period. In `.github/workflows/docs-validate.yml` (created by bootstrap):
+Clean up non-standard documents before CI is enabled:
 
-```yaml
-jobs:
-  schema-v1:
-    env:
-      WARN_ONLY: "true"   # brownfield rollout: WARNING instead of FAIL
-```
-
-Push the changes. CI will print warnings but will not fail. This is a "soft" period during which forgotten `docs/archive/`, `docs/old/`, `docs/wiki/`, `docs/tmp/` do not break PRs.
-
-In this mode, local validation:
-
-```bash
-# What warn-only CI reports
-WARN_ONLY=true bash docs/.runtime/underboss/documentation/validation/validate-frontmatter.sh
-```
-
-Warn-only duration: 3–7 days, or until several PRs in a row show no warnings.
-
-**Checkpoint 5:** confirm that warn-only is enabled and CI is green.
-
----
-
-## Step 6 — Cleanup of forgotten directories
-
-During the warn-only period, clean up non-standard documents:
-
-- `docs/archive/` → either add canonical FM, or delete (operator decides).
+- `docs/archive/` → migrate to canonical FM, move outside `docs/`, or delete (operator decides).
 - `docs/old/` → migrate with `engine/scripts/migrate-legacy.mjs` or delete.
 - `docs/wiki/` → move what is relevant to `docs/architecture/` / `docs/adr/`, delete the rest.
 - `docs/tmp/` → delete (these are usually session files, not documentation).
@@ -201,33 +174,29 @@ During the warn-only period, clean up non-standard documents:
 
 ```bash
 # Find forgotten directories
-find docs/ -type d -not -path "*/docs/.runtime/*" \
-  | grep -E "archive|old|wiki|tmp|misc"
+find docs/ -type d -not -path "*/docs/.control/*"   | grep -E "archive|old|wiki|tmp|misc"
 
 # Find session files (usually not documentation)
 find docs/ -name "*.log" -o -name "PHASE_*" -o -name "*_verification_*"
 ```
 
-For each, clarify with the operator: migrate (canonical FM per Schema v1) or delete.
+For each, clarify with the operator: migrate (canonical FM per Schema v1), move outside `docs/`, or delete.
 
-**Checkpoint 6:** warn-only CI emits no warnings.
+**Checkpoint 5:** the validators pass locally:
+
+```bash
+bash docs/.control/documentation/validation/validate-frontmatter.sh
+node docs/.control/documentation/validation/validate-lifecycle.mjs docs
+bash docs/.control/documentation/validation/validate-integrity.sh
+```
 
 ---
 
-## Step 7 — Switch to strict CI
+## Step 6 — Enable CI
 
-When warn-only has produced no warnings for several days — switch the guard back to strict mode:
+Push the workflow created by bootstrap (`.github/workflows/docs-validate.yml`). From this point the brownfield repository lives under the same rules as greenfield: any new `.md` without canonical FM breaks the PR.
 
-```yaml
-jobs:
-  schema-v1:
-    env:
-      WARN_ONLY: ""   # greenfield-strict
-```
-
-From this point the brownfield repository lives under the same strict rules as greenfield. Any new `.md` without canonical FM breaks the PR.
-
-**Checkpoint 7:** strict CI is green, rollback is impossible.
+**Checkpoint 6:** CI is green.
 
 ---
 
@@ -235,15 +204,15 @@ From this point the brownfield repository lives under the same strict rules as g
 
 Migration is complete when:
 
-- [ ] `schema: 1` is present in all `.md` files in `docs/` (outside `docs/archive/`).
+- [ ] `schema: 1` is present in all `.md` files in `docs/`.
 - [ ] `id`, `type`, `status`, `date`, `owners` are filled in on all `.md`.
-- [ ] `owners` ≠ `unassigned` for active documents (only Archive may be `unassigned`).
+- [ ] `owners` ≠ `unassigned` for active documents.
 - [ ] `updated` was set by the migrator.
 - [ ] `entity_refs` is filled in (no `TODO_ENTITY_REF`) for `spec`/`audit` (min 1 ref).
 - [ ] No legacy fields in frontmatter (CI forbids them).
 - [ ] `.context/` bootstrapped (`project.yml`, `boundaries.yml`, `agent-entry.md`).
 - [ ] `docs/architecture/entity-catalog.md` created.
-- [ ] Warn-only CI passed, switched to strict.
+- [ ] The validators pass locally and CI is enabled.
 - [ ] CI never fails on frontmatter in any PR.
 
 ---
@@ -264,7 +233,7 @@ The field is removed as an anti-pattern. If it is important to state explicitly 
 
 ### Orphan spec without entity
 
-The script sets `TODO_ENTITY_REF`. If the domain entity really cannot be identified — that is a signal that the document is too general or outdated. Split it into several specs or move it to `docs/archive/`.
+The script sets `TODO_ENTITY_REF`. If the domain entity really cannot be identified — that is a signal that the document is too general or outdated. Split it into several specs or move it outside `docs/`.
 
 ### ADR with `status: proposed` in the body, but missing from the FM
 
@@ -276,10 +245,9 @@ The script does not parse the body. Check during manual review: if the body has 
 
 | Mistake | Why it is bad | Solution |
 |--------|-------------|---------|
-| Enable strict CI immediately on brownfield | Forgotten `docs/archive/` would break every PR | Warn-only period is mandatory |
+| Enable CI before the validators pass | Forgotten `docs/archive/` would break every PR | Clean up first (Step 5), then enable CI |
 | `entity_refs: []` on spec/audit | The model requires min 1 ref for spec/audit | The script sets `TODO_ENTITY_REF`, replace it in Step 4 |
 | `updated` not set | The document really changed during migration → freshness not tracked | The script sets `updated = today` automatically |
 | `excludes-from-scope:` left in place | CI forbids it; anti-pattern | The script removes it; replace with `tags: [not-X]` |
-| Migrate an outdated archive | Wasting time on dead docs | Leave in `docs/archive/` without migration |
-| Delete `docs/archive/` entirely | Losing decision history | Only add canonical FM or leave it |
+| Migrate an outdated archive | Wasting time on dead docs | Move it outside `docs/` without migration |
 | Manual review skipped | The script may have derived `type`/`status`/`id` imprecisely | Mandatory: review 10–20% of files manually |

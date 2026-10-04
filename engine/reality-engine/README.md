@@ -7,7 +7,7 @@ status: active
 date: 2026-07-08
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 tags: [engine, reality-engine, collectors, analyzers, reporters]
 priority: P1
 ---
@@ -75,6 +75,6 @@ steps:
 
 ## Integration
 
-The engine is designed to be invoked by the Reality Auditor agent through SOPs. It is not a standalone tool — it requires context from the project's Runtime (knowledge, contracts, boundaries).
+The engine is designed to be invoked by the Reality Auditor agent through SOPs. It is not a standalone tool — it requires context from the project's Underboss installation (knowledge, contracts, boundaries).
 
 See `sops/reality-audit.yaml` for the orchestration SOP.

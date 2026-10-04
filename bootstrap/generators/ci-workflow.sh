@@ -27,7 +27,7 @@ on:
       - 'knowledge/**'
       - 'sops/**'
       - 'bootstrap/**'
-      - 'runtime/**'
+      - 'core/**'
       - 'engine/**'
   pull_request:
     paths:
@@ -37,7 +37,7 @@ on:
       - 'knowledge/**'
       - 'sops/**'
       - 'bootstrap/**'
-      - 'runtime/**'
+      - 'core/**'
       - 'engine/**'
 
 jobs:
@@ -46,18 +46,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Validate frontmatter
-        run: |
-          if [ -f "docs/.runtime/documentation/validation/validate-frontmatter.sh" ]; then
-            bash docs/.runtime/documentation/validation/validate-frontmatter.sh
-          fi
+        run: bash docs/.control/documentation/validation/validate-frontmatter.sh
 
-      - name: Validate runtime integrity
-        run: |
-          if [ -f "docs/.runtime/documentation/validation/validate-runtime.sh" ]; then
-            bash docs/.runtime/documentation/validation/validate-runtime.sh
-          fi
+      - name: Validate lifecycle
+        run: node docs/.control/documentation/validation/validate-lifecycle.mjs docs
+
+      - name: Validate backlog
+        run: node docs/.control/documentation/validation/validate-backlog.mjs docs
+
+      - name: Validate integrity
+        run: bash docs/.control/documentation/validation/validate-integrity.sh
 HEREDOC
   echo "  → .github/workflows/docs-validate.yml created."
 }

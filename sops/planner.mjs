@@ -4,14 +4,14 @@
 // Reads YAML SOPs from sops/*.yaml, prints execution plan for a given SOP.
 // Computes parallel groups automatically based on `depends_on` field.
 //
-// Usage (from runtime root, i.e. docs/.runtime/naprolom-docs/):
+// Usage (from the Underboss root, i.e. docs/.control/):
 //   node sops/planner.mjs                       # list available SOPs
 //   node sops/planner.mjs new-feature           # print plan for new-feature SOP
 //   node sops/planner.mjs new-feature --platform claude-code
-//   node sops/planner.mjs incident --hide-human # hide steps where gate: manual or role: human
+//   node sops/planner.mjs incident --hide-human # hide steps where gate: manual
 //
 // v1.1: reads capability:, consumes:, produces:, gate: from steps.
-// D-HG: `gate: manual` = human step; v1.0 `role: human` = alias for `gate: manual`.
+// D-HG: `gate: manual` = human step.
 //
 // No external deps. Simple YAML reader tailored to SOP format (flat key/value,
 // nested lists of objects with flat keys, no flow-style nesting).
@@ -193,18 +193,18 @@ function printPlan(sopName) {
   const groups = computeParallelGroups(steps);
 
   // Optional: hide human-only steps from output (but keep their dependencies in DAG computation).
-  // D-HG: `gate: manual` = human step; v1.0 compat: `role: human` → treated as `gate: manual`.
+  // D-HG: `gate: manual` = human step.
   let groupIdx = 0;
   for (const group of groups) {
     const visibleGroup = HIDE_HUMAN
-      ? group.filter(s => !s.gate && s.role !== 'human')
+      ? group.filter(s => !s.gate)
       : group;
     if (visibleGroup.length === 0) continue;
     groupIdx++;
     const label = visibleGroup.length > 1 ? `Group ${groupIdx} (parallel)` : `Group ${groupIdx} (sequential or solo)`;
     console.log(label + ':');
     for (const s of visibleGroup) {
-      const isGate = s.gate === 'manual' || s.role === 'human';
+      const isGate = s.gate === 'manual';
       if (isGate) {
         console.log(`  [${s.id}] ${s.name}   →   gate: manual`);
       } else {

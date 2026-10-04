@@ -25,7 +25,7 @@ sops/
 ├── release.yaml           ← v1.0
 ├── incident.yaml          ← v1.0
 ├── architecture-review.yaml ← v1.1: sequential review pipeline
-├── forensic-audit.yaml    ← v1.1: 8-step forensic pipeline (domain-specific, legacy)
+├── forensic-audit.yaml    ← v1.1: 8-step forensic pipeline (domain-specific)
 ├── forensic-layer-audit.yaml ← v1.2: 11-phase single-agent layer-agnostic forensic audit
 └── pipeline-topology-audit.yaml ← v1.0: 3-layer progressive pipeline-agnostic forensic audit (Execution/Structural/Content Topology)
 ```
@@ -34,7 +34,7 @@ sops/
 
 | SOP | Purpose | Steps | Role |
 |-----|---------|-------|------|
-| `new-feature` | New feature lifecycle (spec → implementation → review) | 3 | mixed |
+| `new-feature` | New feature lifecycle (spec → approval → implementation) | 3 | mixed |
 | `bugfix` | Bug fix with documentation update | 3 | mixed |
 | `new-service` | New service with ADR + architecture docs | 4 | mixed |
 | `architecture-change` | Architecture change with ADR + review | 4 | mixed |
@@ -42,7 +42,7 @@ sops/
 | `release` | Release with changelog + version bump | 3 | mixed |
 | `incident` | Incident response with post-mortem | 8 | mixed |
 | **`architecture-review`** | Sequential review: Reality → Arch → Doc → Adversary → Human | 5 | multi-role |
-| **`forensic-audit`** | 8-step forensic audit pipeline (domain-specific legacy) | 8 | multi-role |
+| **`forensic-audit`** | 8-step forensic audit pipeline (domain-specific) | 8 | multi-role |
 | **`forensic-layer-audit`** | 11-phase single-agent forensic audit of any layer/section/subsystem | 11 | `forensic-auditor` only |
 | **`pipeline-topology-audit`** | 3-layer progressive reconstruction of a multi-hop data pipeline's runtime reality (Execution → Structural → Content Topology) before any coverage matrix is built | 6 | `pipeline-archaeologist` only |
 
@@ -66,7 +66,7 @@ SOP steps declare **data flow** via `consumes:` / `produces:` and **control flow
 
 ## gate: manual (v1.1)
 
-Human steps use `gate: manual`, not `role: human`. Human is not a Runtime role:
+Human steps use `gate: manual`, not `role: human`. Human is not an agent role:
 
 ```yaml
 - id: 5
@@ -75,8 +75,6 @@ Human steps use `gate: manual`, not `role: human`. Human is not a Runtime role:
   consumes: [architecture-findings, documentation-report]
   depends_on: [3]
 ```
-
-**Backward compat:** existing v1.0 SOPs with `role: human` are treated as `gate: manual` alias by planner.
 
 ## Parametrized Input (v1.1)
 
@@ -138,6 +136,6 @@ Add a new SOP — create `sops/<name>.yaml`. The planner will pick it up automat
 
 ## What is NOT included (intentionally)
 
-- **No runtime state.** A SOP does not store progress between runs.
+- **No execution state in a SOP.** A SOP does not store progress between runs.
 - **No execution engine.** Not Temporal, not Airflow. YAML + planner.
 - **No built-in validators.** Validation logic is the responsibility of the role (D-3).

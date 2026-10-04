@@ -1,0 +1,64 @@
+validation:
+  description: What validators check, in machine-readable form
+  version: 1
+
+  validators:
+    - name: validate-frontmatter
+      path: documentation/validation/validate-frontmatter.sh
+      description: "Validates Canonical Schema v1 frontmatter in all .md files"
+      checks:
+        - "schema: 1 present"
+        - "mandatory fields: id, type, status, date, owners"
+        - "forbidden fields: lifecycle, author, title, created, referenced_by, supersedes_adr, excludes-from-scope"
+        - "spec path-status match (status equals parent directory)"
+        - "runbook requires kind: field"
+        - "spec/audit have non-empty entity_refs"
+        - "api status is active or deprecated"
+      scope: docs/**/*.md, knowledge/**/*.md
+      configurable:
+        - name: ROOT
+          description: "Override docs root directory"
+          default: "docs"
+
+    - name: validate-integrity
+      path: documentation/validation/validate-integrity.sh
+      description: "Validates the dependency graph of Underboss itself"
+      checks:
+        - "Role → Capability: every capabilities: entry exists in knowledge/capabilities.md"
+        - "Capability → Knowledge: every capability references existing knowledge file"
+        - "Knowledge exists: every knowledge: short-id resolves to knowledge/<id>.md"
+        - "Registry consistency: every component in registry has matching file on disk"
+        - "Contract consistency: every contract referenced by registry exists and is valid YAML"
+        - "Bootstrap consistency: bootstrap references components that exist in registry"
+        - "Workflow consistency: every SOP role: has matching agent, every capability: exists"
+        - "Template conformance: every documentation/templates/*.md has valid Schema v1 FM"
+        - "Internal links: all entity_refs resolve to existing id: fields"
+        - "Engine components: every collector/analyzer/reporter referenced by SOP exists"
+      scope: core/ (full dependency graph)
+      depends_on: registry
+
+    - name: validate-lifecycle
+      path: documentation/validation/validate-lifecycle.mjs
+      description: "Validates Spec lifecycle: statuses, path-status, Acceptance criteria"
+      checks:
+        - "spec status is one of draft, approved, implemented, superseded"
+        - "spec status equals its directory under docs/specs/"
+        - "specs in approved/ have Acceptance criteria with unique AC-NNN ids"
+        - "no directory under docs/specs/ other than drafts, approved, implemented, superseded"
+      scope: docs/specs/
+
+    - name: validate-backlog
+      path: documentation/validation/validate-backlog.mjs
+      description: "Validates backlog: active.md holds only open items, archive.md none"
+      checks:
+        - "active.md contains only [ ] items"
+        - "archive.md contains only [x] and [-] items"
+      scope: docs/backlog/
+
+    - name: validate-vocabulary
+      path: documentation/validation/validate-vocabulary.mjs
+      description: "Rejects removed vocabulary in operational files"
+      checks:
+        - "forbidden identifiers (former mount path, variables, entity ref, removed spec status) absent"
+        - "the former product term is absent outside allowed domain terms"
+      scope: operational files (see v3 Spec section 13.3)

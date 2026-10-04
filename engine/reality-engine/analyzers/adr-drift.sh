@@ -42,7 +42,7 @@ while IFS= read -r f; do
     fi
   done
 done < <(find "$PROJECT_ROOT" -type f -name "*.md" \
-            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.runtime/*" | sort)
+            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.control/*" | sort)
 
 cat <<EOF
 {

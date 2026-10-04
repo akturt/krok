@@ -7,7 +7,7 @@ status: active
 date: 2026-07-08
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 tags: [knowledge, evidence, trust, reality-audit]
 priority: P1
 ---

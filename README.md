@@ -1,6 +1,6 @@
 ---
 schema: 1
-id: readme-runtime
+id: readme
 type: guide
 kind: index
 status: active
@@ -8,18 +8,18 @@ date: 2026-07-10
 updated: 2026-07-10
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer, schema-v1, canonical-frontmatter]
+entity_refs: [agentic-layer, schema-v1, canonical-frontmatter]
 touches: []
 docs: [INSTALL.md, playbook/playbook-v2.md, playbook/migrate-legacy.md]
 refs: []
 depends_on: []
-tags: [runtime, index, landing]
+tags: [index, landing]
 priority: P0
 ---
 
 # Underboss
 
-**Documentation Runtime for modern projects with AI coding agents.**
+**Engineering control plane for projects built with AI coding agents**
 
 Underboss keeps your project coherent during active development — architecture, ADRs,
 specs, domain knowledge, and engineering context stay aligned with reality as the
@@ -119,7 +119,7 @@ and queryable — not buried in a growing markdown dump.
 - **5-layer architecture** — Entry → Architecture → ADR → Spec → Operations
 - **CI guard** — no `.md` without canonical frontmatter enters the repo
 - **Reality Engine** — reconstructs project state, detects drift
-- **Registry** — single source of truth for all Runtime components
+- **Registry** — single source of truth for all Underboss components
 - **SOPs** — declarative process descriptions with DAG planner
 - **AI Agent Roles** — architecture-reviewer, documentation-reviewer, reality-auditor, adversary-checker
 - **Knowledge layer** — architecture-principles, evidence-model, audit-principles, report-formats, capabilities
@@ -151,13 +151,13 @@ bash <(curl -s https://raw.githubusercontent.com/akturt/underboss/master/bootstr
 
 ```bash
 # 1. Add submodule INSIDE docs/
-mkdir -p docs/.runtime
-git submodule add https://github.com/akturt/underboss.git docs/.runtime/underboss
-git config -f .gitmodules submodule."docs/.runtime/underboss".branch master
-git commit -m "chore: add Underboss Runtime via submodule"
+mkdir -p docs/.control
+git submodule add https://github.com/akturt/underboss.git docs/.control
+git config -f .gitmodules submodule."docs/.control".branch master
+git commit -m "chore: add Underboss via submodule"
 
 # 2. Run bootstrap
-bash docs/.runtime/underboss/bootstrap/bootstrap.sh
+bash docs/.control/bootstrap/bootstrap.sh
 
 # 3. Fill in .context/project.yml and .context/boundaries.yml
 ```
@@ -168,26 +168,26 @@ Full details: [`INSTALL.md`](INSTALL.md).
 
 ---
 
-## What is included (Runtime layout)
+## What is included
 
 ```text
 underboss/ ← product repo
 ├── README.md ← this file
 ├── INSTALL.md ← consumer integration guide
-├── bootstrap/ ← Runtime Core: loader, install one-liner, deploy prompt
-├── runtime/ ← Runtime Core: registry, state machine, contracts, API
-├── engine/ ← Runtime Core: Reality Engine + migration script
+├── bootstrap/ ← Core: loader, install one-liner, deploy prompt
+├── core/ ← Core: registry, installation state machine, contracts, Core SDK
+├── engine/ ← Core: Reality Engine + migration script
 ├── documentation/ ← Documentation Module: templates, validation, schemas
 ├── knowledge/ ← Documentation Module: principles, capabilities
 ├── agents/ ← Documentation Module: claude-code + opencode roles
 ├── sops/ ← Documentation Module: YAML process descriptions
 ├── playbook/ ← Documentation Module: greenfield + brownfield guides
-├── docs/ ← dogfood: Runtime's own audits, ADRs, specs
+├── docs/ ← dogfood: Underboss's own audits, ADRs, specs
 └── .github/workflows/ ← CI guard
 ```
 
 > **Note:** In consumer repos only `docs/` appears at the root.
-> Everything else lives inside `docs/.runtime/underboss/` (git submodule).
+> Everything else lives inside `docs/.control/` (git submodule).
 > See the Two-repo model in [`INSTALL.md`](INSTALL.md).
 
 ---
@@ -197,14 +197,14 @@ underboss/ ← product repo
 ```bash
 # Manually (five seconds, recommended)
 git submodule update --remote --merge
-git add docs/.runtime/underboss
+git add docs/.control
 git commit -m "chore: update Underboss"
 ```
 
 Or re-run bootstrap — it detects the current version and updates idempotently:
 
 ```bash
-bash docs/.runtime/underboss/bootstrap/bootstrap.sh
+bash docs/.control/bootstrap/bootstrap.sh
 ```
 
 Details: [`bootstrap/DEPLOY-PROMPT.md`](bootstrap/DEPLOY-PROMPT.md).
@@ -229,10 +229,10 @@ The longer the project lives, the more valuable Underboss becomes.
 
 ## Changelog
 
-- **2026-07-10** — **v2.0.0 — Underboss rebrand + Registry SSOT**. Identity (name, version, codename) centralized in `runtime/registry.yaml`. All components read from registry API — zero hardcoded strings. Submodule path changed to `docs/.runtime/underboss`. Consumer upgrade prompt covers v1.0 → v2.0 migration.
+- **2026-07-10** — **v2.0.0 — Underboss rebrand + Registry SSOT**. Identity (name, version, codename) centralized in `core/registry.yaml`. All components read from registry API — zero hardcoded strings. Submodule path changed to `docs/.control`. Consumer upgrade prompt covers v1.0 → v2.0 migration.
 - **2026-07-10** — **v1.9 — Bash prefix + registry bugfix**. Fixed `reality-report.sh` calling collectors/analyzers without `bash` prefix (Permission denied on Linux/macOS). Fixed `registry_list_directories` returning non-path YAML keys, which caused empty dirs in `docs/`.
 - **2026-07-09** — **v1.8 — Architecture Invariants Support**.
-- **2026-07-09** — **v1.6 — Runtime API & Orchestrator Maturity**.
+- **2026-07-09** — **v1.6 — Core SDK & Orchestrator Maturity**.
 - **2026-07-09** — **v1.5 — Module Decomposition + Registry SSOT**.
 - **2026-07-08** — **v1.2 — Operating Platform**.
 - **2026-07-08** — **v1.1 — Agentic Layer Separation**.
@@ -244,7 +244,7 @@ The longer the project lives, the more valuable Underboss becomes.
 
 | Stage | State |
 |------|-------|
-| Runtime v2.0.0 | ✅ implemented |
+| Underboss v2.0.0 | ✅ implemented |
 | Playbook v2 (greenfield model) | ✅ implemented |
 | Migration Prompt (brownfield) | ✅ implemented |
 | Bootstrap (idempotent, POSIX + Windows) | ✅ implemented |
@@ -252,5 +252,5 @@ The longer the project lives, the more valuable Underboss becomes.
 | SOPs (10 protocols + planner) | ✅ implemented |
 | knowledge/ (5 files, capability catalog) | ✅ implemented |
 | Reality Engine (collectors, analyzers, reporters) | ✅ implemented |
-| CI guard (validate-frontmatter + validate-runtime) | ✅ implemented |
+| CI guard (validate-frontmatter + validate-integrity) | ✅ implemented |
 | Dogfooding on production projects | ✅ active |

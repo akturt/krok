@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://naprolom-docs/schemas/frontmatter.schema.json",
   "title": "Documentation Frontmatter — Canonical Schema v1",
-  "description": "Schema for the YAML frontmatter of every .md file under docs/. Validates Schema v1 base fields, per-type extensions, status enums, and forbidden legacy fields. Used by validators/validate-frontmatter.sh.",
+  "description": "Schema for the YAML frontmatter of every .md file under docs/. Validates Schema v1 base fields, per-type extensions, status enums, and forbidden fields. Used by validators/validate-frontmatter.sh.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "id", "type", "status", "date", "owners"],
@@ -85,7 +85,7 @@
     },
     "kind": {
       "type": "string",
-      "description": "Per-type discriminator. Required for runbook. Optional for guide. Allowed values: runbook (deploy|cicd|ops|troubleshoot|edge-hub|secrets|integration|legacy), guide (index|onboarding|legacy)."
+      "description": "Per-type discriminator. Required for runbook. Optional for guide. Allowed values: runbook (deploy|cicd|ops|troubleshoot|edge-hub|secrets|integration), guide (index|onboarding)."
     },
     "scope": {
       "type": "string",
@@ -104,14 +104,14 @@
     {
       "if": {"properties": {"type": {"const": "spec"}}},
       "then": {
-        "properties": {"status": {"enum": ["draft", "review", "approved", "implemented", "superseded"]}},
+        "properties": {"status": {"enum": ["draft", "approved", "implemented", "superseded"]}},
         "required": ["entity_refs"]
       }
     },
     {
       "if": {"properties": {"type": {"const": "api"}}},
       "then": {
-        "properties": {"status": {"enum": ["draft", "review", "approved", "implemented", "superseded"]}}
+        "properties": {"status": {"enum": ["active", "deprecated"]}}
       }
     },
     {
@@ -132,7 +132,7 @@
       "then": {
         "properties": {
           "status": {"enum": ["active", "deprecated"]},
-          "kind": {"enum": ["deploy", "cicd", "ops", "troubleshoot", "edge-hub", "secrets", "integration", "legacy"]}
+          "kind": {"enum": ["deploy", "cicd", "ops", "troubleshoot", "edge-hub", "secrets", "integration"]}
         },
         "required": ["kind"]
       }
@@ -142,7 +142,7 @@
       "then": {
         "properties": {
           "status": {"enum": ["active", "deprecated"]},
-          "kind": {"enum": ["index", "onboarding", "legacy"]}
+          "kind": {"enum": ["index", "onboarding"]}
         }
       }
     },
@@ -175,7 +175,7 @@
       {"required": ["supersedes_adr"]},
       {"required": ["excludes-from-scope"]}
     ],
-    "description": "Legacy fields forbidden in frontmatter. lifecycle is computed from path for specs/api (not stored in FM)."
+    "description": "Fields forbidden in frontmatter. A spec lifecycle position is its directory, not a stored field."
   },
-  "$comment": "When validating a spec or api, also enforce that frontmatter `status` matches the parent directory name (drafts|review|approved|implemented|superseded). This is enforced by the path-status check in validators/validate-frontmatter.sh, not by JSON Schema (JSON Schema sees only the FM, not the file path)."
+  "$comment": "When validating a spec, also enforce that frontmatter `status` matches the parent directory name (drafts|approved|implemented|superseded). This is enforced by validators/validate-lifecycle.sh, not by JSON Schema (JSON Schema sees only the FM, not the file path)."
 }

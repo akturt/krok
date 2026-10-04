@@ -8,7 +8,7 @@ date: 2026-07-08
 updated: 2026-07-09
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 touches: []
 docs: [../README.md, ../INSTALL.md, ../playbook/playbook-v2.md]
 refs: []
@@ -19,7 +19,7 @@ priority: P1
 
 # agents/ — Repository of AI agent roles
 
-Runtime v1.10 contains 6 roles, each a ready-to-use prompt configuration for a specific platform (Claude Code, opencode).
+Underboss contains 6 roles, each a ready-to-use prompt configuration for a specific platform (Claude Code, opencode).
 
 ## Roles
 
@@ -65,7 +65,7 @@ Each role declares `knowledge:` in frontmatter as **short-id list** (D-KR):
 knowledge: [architecture-principles, report-formats]
 ```
 
-Runtime resolves `knowledge/<short-id>.md`. Roles never hardcode knowledge paths — they reference by short-id.
+Underboss resolves `knowledge/<short-id>.md`. Roles never hardcode knowledge paths — they reference by short-id.
 
 | Role | Knowledge refs |
 |------|---------------|
@@ -110,7 +110,7 @@ Or use the `CLAUDE.md` snippet from `INSTALL.md`.
 
 Roles are invoked **by name** from declarative SOPs (`../sops/*.yaml`). Each YAML references a role via `role: <name>` or `capability: <name>` + `role: <name>`. The planner prints a DAG listing roles and artifacts.
 
-Human steps are marked with `gate: manual` (D-HG). Existing SOP v1.0 with `role: human` are backward-compatible — the planner treats them as an alias for `gate: manual`.
+Human steps are marked with `gate: manual` (D-HG). A human is not an agent role.
 
 ## Extending
 

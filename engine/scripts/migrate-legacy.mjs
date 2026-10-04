@@ -5,9 +5,9 @@
 // Implements playbook/migrate-legacy.md.
 //
 // Run from the ROOT of the consumer project:
-//   node docs/.runtime/naprolom-docs/engine/scripts/migrate-legacy.mjs
-//   node docs/.runtime/naprolom-docs/engine/scripts/migrate-legacy.mjs --docs docs --dry-run
-//   node docs/.runtime/naprolom-docs/engine/scripts/migrate-legacy.mjs --owner team-x
+//   node docs/.control/engine/scripts/migrate-legacy.mjs
+//   node docs/.control/engine/scripts/migrate-legacy.mjs --docs docs --dry-run
+//   node docs/.control/engine/scripts/migrate-legacy.mjs --owner team-x
 //
 // What it does:
 //   - For every .md in docs/:
@@ -205,16 +205,11 @@ function inferIdFromPath(filePath) {
 }
 
 function inferStatus(fmFromLegacy, type, relPath) {
-  // for specs/api: infer from path (status is singular, directory is plural for drafts)
+  // for specs: infer from path (status is singular, directory is plural for drafts)
   const p = relPath.replace(/\\/g, '/');
-  const specStatusMatch = p.match(/\/specs\/(drafts|review|approved|implemented|superseded)\//);
-  if (specStatusMatch && (type === 'spec' || type === 'api')) {
+  const specStatusMatch = p.match(/\/specs\/(drafts|approved|implemented|superseded)\//);
+  if (specStatusMatch && type === 'spec') {
     return specStatusMatch[1] === 'drafts' ? 'draft' : specStatusMatch[1];
-  }
-
-  const apiStatusMatch = p.match(/\/api\/(drafts|review|approved|implemented|superseded)\//);
-  if (apiStatusMatch) {
-    return apiStatusMatch[1] === 'drafts' ? 'draft' : apiStatusMatch[1];
   }
 
   if (type === 'adr') {

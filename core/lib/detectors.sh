@@ -1,5 +1,5 @@
 #!/bin/bash
-# runtime/lib/detectors.sh — Detector plugin API
+# core/lib/detectors.sh — Detector plugin API
 #
 # Contract: each detector is a .sh file with detect() function.
 # detect() must output exactly: "backend|database|infrastructure"
@@ -36,7 +36,7 @@ detect_all() {
       dpath=$(registry_get_detector_path "$name")
       [ -z "$dpath" ] && continue
 
-      local full_path="${RUNTIME_ROOT}/${dpath}"
+      local full_path="${CONTROL_ROOT}/${dpath}"
       [ -f "$full_path" ] || continue
 
       local result

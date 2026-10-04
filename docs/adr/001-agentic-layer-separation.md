@@ -2,14 +2,14 @@
 schema: 1
 id: adr-001-agentic-layer-separation
 type: adr
-status: accepted
+status: superseded
 date: 2026-07-08
 updated: 2026-07-08
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 tags: [adr, agentic, layers, knowledge, roles, capabilities, artifacts, v1.1]
-implements: [runtime-agentic-layer]
+implements: [agentic-layer]
 depends_on: []
 supersedes: []
 priority: P0

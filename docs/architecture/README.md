@@ -36,16 +36,16 @@ underboss/
     api/              # API documentation
   src/                # application source code
   tests/              # tests
-  .context/           # runtime context
+  .context/           # agent entry metadata
 ```
 
 ## Boundaries
 
 See `.context/boundaries.yml` for detailed boundary definitions.
 
-- **Pristine**: underboss/, src/, tests/, docs/, .context/
-- **Editable**: docs/** (except runtime/)
-- **Generated**: docs/.runtime/, node_modules/
+- **Pristine**: docs/.control/
+- **Editable**: docs/** (except docs/.control/), src/, tests/
+- **Generated**: .context/*, CLAUDE.md, node_modules/
 - **Secret**: .env, *.key, *.pem
 
 ## See Also

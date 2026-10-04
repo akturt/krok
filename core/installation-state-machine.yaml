@@ -1,12 +1,12 @@
 states:
   fresh:
-    description: No Runtime installed
+    description: Nothing installed
     transitions:
       - action: bootstrap
         target: installed
 
   installed:
-    description: Runtime fully deployed
+    description: Fully deployed
     transitions:
       - action: manual-edit
         target: broken
@@ -17,14 +17,8 @@ states:
       - action: bootstrap
         target: installed
 
-  legacy:
-    description: Old .context/runtime/ layout detected
-    transitions:
-      - action: migration
-        target: installed
-
   broken:
-    description: Runtime integrity compromised
+    description: Integrity compromised
     transitions:
       - action: re-bootstrap
         target: installed

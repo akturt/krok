@@ -38,43 +38,37 @@ steps:
     name: Documentation Review — spec frontmatter
     role: documentation-reviewer
     platform: any
-    produces: "spec with valid Schema v1 FM; frontmatter status=draft ready for review"
+    produces: "spec with valid Schema v1 FM; frontmatter status=draft ready for approval"
     depends_on: []
 
   - id: 3
-    name: Promote spec drafts→review
-    role: human
-    produces: "git mv docs/specs/drafts/<spec>.md → docs/specs/review/; frontmatter status=review"
+    name: Promote spec draft→approved
+    gate: manual
+    produces: "git mv docs/specs/drafts/<spec>.md → docs/specs/approved/; frontmatter status=approved; Acceptance criteria (AC-NNN) present"
     depends_on: [1, 2]
 
   - id: 4
-    name: Promote spec review→approved
-    role: human
-    produces: "git mv → docs/specs/approved/; frontmatter status=approved"
+    name: Implementation (code + tests)
+    gate: manual
+    produces: "PR with implementation and green tests"
     depends_on: [3]
 
   - id: 5
-    name: Implementation (code + tests)
-    role: human
-    produces: "PR with implementation and green tests"
-    depends_on: [4]
-
-  - id: 6
     name: Documentation Review — post-implementation docs update
     role: documentation-reviewer
     platform: any
     produces: "docs/architecture/, docs/adr/, runbook updated if necessary"
-    depends_on: [5]
+    depends_on: [4]
+
+  - id: 6
+    name: Promote spec approved→implemented + fill ## Result
+    gate: manual
+    produces: "git mv → docs/specs/implemented/; frontmatter status=implemented; ## Result filled"
+    depends_on: [4, 5]
 
   - id: 7
-    name: Promote spec approved→implemented + fill ## Result
-    role: human
-    produces: "git mv → docs/specs/implemented/; frontmatter status=implemented; ## Result filled"
-    depends_on: [5, 6]
-
-  - id: 8
     name: Audit — post-implementation review
-    role: human
+    gate: manual
     platform: any
     produces: "docs/audits/YYYY-MM-DD-<slug>.md; frontmatter status=completed; body append-only"
-    depends_on: [7]
+    depends_on: [6]

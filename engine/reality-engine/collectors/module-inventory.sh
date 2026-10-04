@@ -28,7 +28,7 @@ first=true
 for dir in "$PROJECT_ROOT"/*/; do
   [ -d "$dir" ] || continue
   dirname=$(basename "$dir")
-  [ "$dirname" = ".git" ] || [ "$dirname" = "node_modules" ] || [ "$dirname" = ".runtime" ] && continue
+  [ "$dirname" = ".git" ] || [ "$dirname" = "node_modules" ] || [ "$dirname" = ".control" ] && continue
   if [ "$first" = true ]; then
     first=false
   else

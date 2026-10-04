@@ -43,7 +43,8 @@ add_drift() {
 for sid in "${!spec_status[@]}"; do
   st="${spec_status[$sid]}"
   dr="${spec_dir[$sid]}"
-  # normalize: implemented specs may live in /implemented, etc.
+  # the directory `drafts` holds status `draft`; every other directory equals its status
+  [ "$dr" = "drafts" ] && dr="draft"
   if [ "$st" != "$dr" ]; then
     add_drift "$(printf '    {"type": "status_dir_mismatch", "spec": "%s", "dir": "%s", "status": "%s"}' "$sid" "$dr" "$st")"
   fi
@@ -59,7 +60,7 @@ while IFS= read -r f; do
     fi
   done
 done < <(find "$PROJECT_ROOT" -type f -name "*.md" \
-            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.runtime/*" | sort)
+            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.control/*" | sort)
 
 cat <<EOF
 {

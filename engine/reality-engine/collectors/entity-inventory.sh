@@ -28,7 +28,7 @@ while IFS= read -r f; do
     ref_count["$ref"]=$(( ${ref_count["$ref"]:-0} + 1 ))
   done
 done < <(find "$PROJECT_ROOT" -type f -name "*.md" \
-            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.runtime/*" | sort)
+            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.control/*" | sort)
 
 # --- resolve each entity to a real artifact ---
 entities_json=""

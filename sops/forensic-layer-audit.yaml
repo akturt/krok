@@ -32,7 +32,7 @@ input:
       note: "shallow skips Phases 4-7 (emits stubs); normal executes all 11; deep permits HYPOTHESIS with refutation recipe"
     - type: string
       name: output_path
-      note: "default: docs/audits/YYYY-MM-DD-forensic-<layer>-<topic>.md if doc runtime present, else ./forensic-audit-<layer>-<topic>_YYYY-MM-DD.md"
+      note: "default: docs/audits/YYYY-MM-DD-forensic-<layer>-<topic>.md if Underboss is installed, else ./forensic-audit-<layer>-<topic>_YYYY-MM-DD.md"
 output:
   - artifact: forensic-report
     final_path: docs/audits/YYYY-MM-DD-forensic-<layer>-<topic>.md

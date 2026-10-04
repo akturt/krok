@@ -13,7 +13,7 @@ generate() {
     return
   fi
 
-  # Read stack info from runtime/lib if available
+  # Read stack info from core/lib if available
   local stack="" domain="" name="" backend="" database="" infrastructure=""
   name=$(basename "$target_dir")
 
@@ -50,13 +50,13 @@ ${name}/
   docs/
     architecture/     # topology, domain model, invariants
     adr/              # Architecture Decision Records
-    specs/            # specifications (draft → review → approved → implemented)
+    specs/            # specifications (draft → approved → implemented)
     audits/           # audit reports, reality checks
-    backlog/          # backlog, TODO, wishlist
+    backlog/          # backlog: active.md (open work), archive.md (everything else)
     api/              # API documentation
   src/                # application source code
   tests/              # tests
-  .context/           # runtime context
+  .context/           # agent entry metadata
 \`\`\`
 
 ## Boundaries
@@ -66,7 +66,7 @@ See \`.context/boundaries.yml\` for detailed boundary definitions.
 ## See Also
 
 - [ADR](../adr/) — Architecture Decision Records
-- [Backlog](../backlog/) — TODO, Wishlist, Experiments
+- [Backlog](../backlog/) — active and archive
 - [Boundaries](../../.context/boundaries.yml) — Boundary definitions
 HEREDOC
   echo "  → docs/architecture/README.md created."

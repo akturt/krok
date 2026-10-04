@@ -41,9 +41,9 @@ This agent runs on every PR that contains changes to `docs/**/*.md`. Invoked by 
    git diff origin/master...HEAD --name-only -- 'docs/**/*.md'
    ```
 
-2. **Run Runtime validator** as the primary source of truth:
+2. **Run integrity validator** as the primary source of truth:
    ```bash
-   bash docs/.runtime/underboss/documentation/validation/validate-frontmatter.sh
+   bash docs/.control/documentation/validation/validate-frontmatter.sh
    ```
    - Exit code `0` → all green. Proceed to manual checks.
    - Non-zero → CI should already fail in strict mode. Surface the validator's specific output in your review, do not duplicate logic.
@@ -54,8 +54,9 @@ This agent runs on every PR that contains changes to `docs/**/*.md`. Invoked by 
    - `schema: 1`
    - `id` (kebab-case, ≥ 2 chars, stable across the document's lifetime)
    - `type` in enum: `spec | adr | audit | runbook | guide | api | architecture | backlog | prompt`
-   - `status` per type (see `docs/.runtime/underboss/playbook/playbook-v2.md` §Status enum):
-     - spec, api: `draft | review | approved | implemented | superseded`
+   - `status` per type (see `docs/.control/playbook/playbook-v2.md` §Status enum):
+     - spec: `draft | approved | implemented | superseded`
+     - api: `active | deprecated`
      - adr: `proposed | accepted | deprecated | superseded`
      - audit: `draft | completed`
      - architecture, runbook, guide, backlog, prompt: `active | deprecated`
@@ -63,20 +64,19 @@ This agent runs on every PR that contains changes to `docs/**/*.md`. Invoked by 
    - `owners` non-empty array
 
    3.2. No forbidden legacy fields:
-   - `lifecycle` (computed from path for specs/api, not stored)
+   - `lifecycle` (a spec's position is its directory, not a stored field)
    - `author`, `title`, `created`, `referenced_by`, `supersedes_adr`, `excludes-from-scope`
 
    3.3. Path-status match (CI enforced, but double-check):
    - `docs/specs/drafts/*.md` → `status: draft`
-   - `docs/specs/review/*.md` → `status: review`
    - `docs/specs/approved/*.md` → `status: approved`
    - `docs/specs/implemented/*.md` → `status: implemented`
    - `docs/specs/superseded/*.md` → `status: superseded`
    - Exact same for `docs/api/{drafts,review,approved,implemented,superseded}/`
 
    3.4. Per-type extension rules:
-   - `type: runbook` → must have `kind:` in `deploy | cicd | ops | troubleshoot | edge-hub | secrets | integration | legacy`
-   - `type: guide` → optional `kind:` in `index | onboarding | legacy`
+   - `type: runbook` → must have `kind:` in `deploy | cicd | ops | troubleshoot | edge-hub | secrets | integration`
+   - `type: guide` → optional `kind:` in `index | onboarding`
    - `type: audit` → optional `scope:` and `trigger:` (free-form strings)
    - `type: api` → optional `version:` (semantic version)
 
@@ -96,7 +96,7 @@ This agent runs on every PR that contains changes to `docs/**/*.md`. Invoked by 
    - Max 10 refs per doc.
 
 4. **For new documents check that author started from template:**
-   - Compare structure to corresponding `docs/.runtime/underboss/documentation/templates/<type>.md` in Runtime.
+   - Compare structure to corresponding `docs/.control/documentation/templates/<type>.md` in Underboss.
    - Missing canonical sections (`# H1`, `## Goal`, body sections per-type) → flag.
 
 5. **For spec lifecycle transitions** (`git mv` between path-status dirs):
@@ -104,7 +104,7 @@ This agent runs on every PR that contains changes to `docs/**/*.md`. Invoked by 
    git diff origin/master...HEAD --name-status -- 'docs/specs/**/*.md' | grep "^R"
    ```
    - Verify `git mv` happened AND `status:` field was updated in the same PR.
-   - Direct content edit to `docs/specs/approved/*.md` without `git mv` from `drafts/` or `review/` → flag.
+   - Direct content edit to `docs/specs/approved/*.md` without `git mv` from `drafts/` → flag.
 
 6. **For deletions** in `docs/specs/implemented/`, `docs/specs/superseded/`, `docs/adr/`:
    - These are NEVER to be deleted (history of decisions). Flag deletion of any file in these dirs as REJECT.
@@ -130,7 +130,7 @@ Evidence: <file path / line / diff snippet>
 
 ### Per-file conformance summary
 
-| File | schema | id | type | status | date | owners | legacy | path-status | notes |
+| File | schema | id | type | status | date | owners | forbidden | path-status | notes |
 |------|--------|----|------|--------|------|--------|--------|-------------|-------|
 | docs/specs/drafts/2026-07-08-x.md | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ none | ✅ | — |
 | docs/adr/005-y.md                 | ✅ | ✅ | ✅ | ⚠ wrong | ✅ | ✅ | ⚠ `lifecycle:` | n/a | status should be `accepted` not `proposed` (body says accepted) |
@@ -140,7 +140,7 @@ Evidence: <file path / line / diff snippet>
 - [ ] (only if REQUEST_CHANGES / REJECTED)
 
 ### Read context
-- docs/.runtime/underboss/playbook/playbook-v2.md: sections reviewed
+- docs/.control/playbook/playbook-v2.md: sections reviewed
 - templates referred: spec.md, adr.md (or whichever types appear in this PR)
 ```
 
@@ -165,5 +165,5 @@ You do NOT rewrite body content unless explicitly instructed by author. Your pri
 - Don't review code quality, tests, or commit message conventions.
 - Don't enforce prose style or grammar.
 - Don't reformat unrelated files.
-- Don't run on files outside `docs/**/*.md` (documentation/templates/, documentation/schemas/, etc. live in Runtime submodule at `docs/.runtime/underboss/` and are out of scope for consumer PR review).
+- Don't run on files outside `docs/**/*.md` (documentation/templates/, documentation/schemas/, etc. live in the Underboss submodule at `docs/.control/` and are out of scope for consumer PR review).
 - Don't over-block: low-severity findings do not warrant REQUEST_CHANGES.

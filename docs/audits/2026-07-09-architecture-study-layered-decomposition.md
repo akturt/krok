@@ -1,11 +1,11 @@
 ---
 schema: 1
 id: architecture-study-layered-decomposition
-type: spec
-status: approved
+type: audit
+status: completed
 date: 2026-07-09
 owners: [underboss]
-entity_refs: [runtime, registry, state-machine, capabilities]
+entity_refs: [core, registry, installation-state-machine, capabilities]
 ---
 
 # Architecture Study: Layered Decomposition of Underboss v1.3

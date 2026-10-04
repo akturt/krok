@@ -68,7 +68,7 @@ emit_edge() {
   emit_node "$to" "doc"
 }
 
-# Iterate all markdown docs (exclude VCS/deps/runtime)
+# Iterate all markdown docs (exclude VCS, deps and the Underboss mount)
 while IFS= read -r f; do
   rel="${f#$PROJECT_ROOT/}"
   emit_node "$rel" "doc"
@@ -95,7 +95,7 @@ while IFS= read -r f; do
     fi
   done < <(grep -oE '\]\(([^)]+\.md)[^)]*\)' "$f" 2>/dev/null | sed -E 's/\]\(|\)//g; s/#.*$//')
 done < <(find "$PROJECT_ROOT" -type f -name "*.md" \
-            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.runtime/*" | sort)
+            -not -path "*/.git/*" -not -path "*/node_modules/*" -not -path "*/.control/*" | sort)
 
 cat <<EOF
 {

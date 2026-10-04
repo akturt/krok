@@ -1,8 +1,8 @@
 #!/bin/bash
 # bootstrap/install.sh
 #
-# One-liner installer for Underboss Runtime.
-# Uses the Runtime API (runtime/lib/api.sh) to read all paths and versions
+# One-liner installer for Underboss.
+# Uses the Core SDK (core/lib/api.sh) to read all paths and versions
 # from registry.yaml — no grep/sed/awk parsing of the registry.
 #
 # Usage: bash <(curl -s https://raw.githubusercontent.com/akturt/underboss/master/bootstrap/install.sh)
@@ -20,49 +20,36 @@ fi
 
 echo "→ Project: $PROJECT_ROOT"
 
-# Candidate locations of the Runtime submodule
-SUBMODULE_CANDIDATES=("docs/.runtime/underboss" ".context/runtime/underboss")
+# Underboss submodule location
+SUBMODULE_PATH="docs/.control"
 
-# Load the unified Runtime API for a given runtime root.
+# Load the unified Core SDK for a given Underboss root.
 load_api() {
-  RUNTIME_ROOT="$1"
+  CONTROL_ROOT="$1"
   # shellcheck disable=SC1090
-  source "${RUNTIME_ROOT}/runtime/lib/api.sh"
+  source "${CONTROL_ROOT}/core/lib/api.sh"
 }
 
-RUNTIME_DIR=""
-for candidate in "${SUBMODULE_CANDIDATES[@]}"; do
-  if [ -f "$PROJECT_ROOT/$candidate/runtime/registry.yaml" ]; then
-    RUNTIME_DIR="$PROJECT_ROOT/$candidate"
-    break
-  fi
-done
+CONTROL_DIR=""
+if [ -f "$PROJECT_ROOT/$SUBMODULE_PATH/core/registry.yaml" ]; then
+  CONTROL_DIR="$PROJECT_ROOT/$SUBMODULE_PATH"
+fi
 
-if [ -n "$RUNTIME_DIR" ]; then
-  load_api "$RUNTIME_DIR"
-  RUNTIME_NAME=$(registry_name 2>/dev/null || echo "Underboss")
-  VERSION=$(registry_version 2>/dev/null || echo "unknown")
+if [ -n "$CONTROL_DIR" ]; then
+  load_api "$CONTROL_DIR"
+  CONTROL_NAME=$(registry_name)
+  VERSION=$(registry_version)
   BOOTSTRAP_PATH=$(registry_entrypoint "bootstrap")
-  BOOTSTRAP_PATH="${BOOTSTRAP_PATH:-bootstrap/bootstrap.sh}"
-  echo "→ ${RUNTIME_NAME} v${VERSION:-unknown} already installed. Running bootstrap..."
-  bash "$RUNTIME_DIR/$BOOTSTRAP_PATH" "$PROJECT_ROOT"
+  echo "→ ${CONTROL_NAME} v${VERSION} already installed. Running bootstrap..."
+  bash "$CONTROL_DIR/$BOOTSTRAP_PATH" --target "$PROJECT_ROOT"
   exit 0
 fi
 
-# Check for legacy v1.0 layout (old underboss path)
-if [ -d "$PROJECT_ROOT/.context/runtime" ]; then
-  echo "→ Legacy v1.0 layout detected. Upgrade to Underboss v2.0 first:"
-  echo " See https://github.com/akturt/underboss/blob/master/bootstrap/DEPLOY-PROMPT.md (Step B or C)"
-  exit 1
-fi
-
 # Fresh install
-echo "→ Installing Underboss Runtime..."
+echo "→ Installing Underboss..."
 
-# Ensure docs/.runtime exists
-mkdir -p "$PROJECT_ROOT/docs/.runtime"
-
-SUBMODULE_PATH="docs/.runtime/underboss"
+# Ensure docs/.control exists
+mkdir -p "$PROJECT_ROOT/docs/.control"
 
 if [ -d "$PROJECT_ROOT/$SUBMODULE_PATH" ]; then
   echo "→ Submodule directory exists. Updating..."
@@ -75,20 +62,17 @@ else
   git config -f .gitmodules submodule."$SUBMODULE_PATH".branch master
 fi
 
-# Read bootstrap entrypoint from the freshly installed registry via Runtime API
-if [ -f "$PROJECT_ROOT/$SUBMODULE_PATH/runtime/registry.yaml" ]; then
-  load_api "$PROJECT_ROOT/$SUBMODULE_PATH"
-  RUNTIME_NAME=$(registry_name 2>/dev/null || echo "Underboss")
-  VERSION=$(registry_version 2>/dev/null || echo "unknown")
-  BOOTSTRAP_PATH=$(registry_entrypoint "bootstrap")
-  BOOTSTRAP_PATH="${BOOTSTRAP_PATH:-bootstrap/bootstrap.sh}"
-else
-  BOOTSTRAP_PATH="bootstrap/bootstrap.sh"
+# Read bootstrap entrypoint from the freshly installed registry via Core SDK
+if [ ! -f "$PROJECT_ROOT/$SUBMODULE_PATH/core/registry.yaml" ]; then
+  echo "ERROR: registry not found: $SUBMODULE_PATH/core/registry.yaml" >&2
+  exit 1
 fi
+load_api "$PROJECT_ROOT/$SUBMODULE_PATH"
+BOOTSTRAP_PATH=$(registry_entrypoint "bootstrap")
 
 # Run bootstrap
 echo "→ Running bootstrap..."
-bash "$PROJECT_ROOT/$SUBMODULE_PATH/$BOOTSTRAP_PATH" "$PROJECT_ROOT"
+bash "$PROJECT_ROOT/$SUBMODULE_PATH/$BOOTSTRAP_PATH" --target "$PROJECT_ROOT"
 
 echo ""
 echo "✅ Installation complete."
@@ -99,4 +83,4 @@ echo " 2. Complete docs/architecture/README.md"
 echo " 3. Create your first ADR"
 echo ""
 echo "Commit with:"
-echo " git add -A && git commit -m 'docs: install Underboss Runtime'"
+echo " git add -A && git commit -m 'docs: install Underboss'"

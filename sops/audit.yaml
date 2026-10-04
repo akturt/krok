@@ -22,25 +22,25 @@ output:
 steps:
   - id: 1
     name: Define scope and trigger
-    role: human
+    gate: manual
     produces: "scope of factors defined, trigger fully recorded in FM field trigger; entity_refs in FM point to the entities being checked"
     depends_on: []
 
   - id: 2
     name: Copy template to target path
-    role: human
-    produces: "cp docs/.runtime/underboss/documentation/templates/audit.md docs/audits/YYYY-MM-DD-<slug>.md"
+    gate: manual
+    produces: "cp docs/.control/documentation/templates/audit.md docs/audits/YYYY-MM-DD-<slug>.md"
     depends_on: [1]
 
   - id: 3
     name: Fill frontmatter
-    role: human
+    gate: manual
     produces: "frontmatter filled: schema=1, id=audit-<slug>, type=audit, status=draft, date, owners, scope, trigger, entity_refs, touches"
     depends_on: [2]
 
   - id: 4
     name: Conduct audit — gather findings
-    role: human
+    gate: manual
     produces: "Findings table (Severity, File, Evidence, Recommendation); Conflicts section if there are contradictions; Delta section — what changed since the last audit"
     depends_on: [3]
 
@@ -61,12 +61,12 @@ steps:
 
   - id: 7
     name: Resolution — plan addressing findings
-    role: human
+    gate: manual
     produces: "Resolution section: for each non-trivial finding — assign a follow-up action (issue, ADR, spec, manual fix)"
     depends_on: [4, 5, 6]
 
   - id: 8
     name: Promote audit draft→completed + freeze body
-    role: human
+    gate: manual
     produces: "frontmatter status=completed; body append-only — no longer edited; follow-up actions moved to GitHub Issues or backlog"
     depends_on: [7]

@@ -43,7 +43,7 @@ The goal of the system: **documentation = infrastructure**, not arbitrary text f
 
 ## Bootstrap (creating the structure)
 
-Bootstrap is the single source of truth for creating the directory structure. The script lives in the Runtime repository, not in the playbook itself:
+Bootstrap is the single source of truth for creating the directory structure. The script lives in Underboss repository, not in the playbook itself:
 
 ```bash
 # Linux / macOS / WSL
@@ -57,7 +57,7 @@ Bootstrap is idempotent and minimal: it creates the `docs/` skeleton (5-layer ar
 
 The full document templates (`.md`) live separately from bootstrap — see `documentation/templates/`, they are not embedded in the script. This eliminates drift between the playbook and the real artifacts.
 
-**Runtime:** ~5 seconds vs 2–3 hours of manual creation.
+**Bootstrap:** ~5 seconds vs 2–3 hours of manual creation.
 
 ---
 
@@ -129,7 +129,8 @@ spec | adr | audit | runbook | guide | api | architecture | backlog | prompt
 
 | Type | Valid `status` |
 |------|----------------|
-| spec, api | draft, review, approved, implemented, superseded |
+| spec | draft, approved, implemented, superseded |
+| api | active, deprecated |
 | adr | proposed, accepted, deprecated, superseded |
 | audit | draft, completed |
 | architecture, runbook, guide, backlog, prompt | active, deprecated |
@@ -144,13 +145,13 @@ audit:
   trigger: "<why this audit was conducted>"            # optional, free-form
 
 runbook:
-  kind: deploy | cicd | ops | troubleshoot | edge-hub | secrets | integration | legacy  # optional
+  kind: deploy | cicd | ops | troubleshoot | edge-hub | secrets | integration  # optional
 
 api:
   version: "<semantic version>"                 # optional
 
 guide:
-  kind: index | onboarding | legacy             # optional
+  kind: index | onboarding             # optional
 
 architecture: {}                                 # no extensions
 adr: {}                                          # no extensions
@@ -161,11 +162,10 @@ backlog: {}                                      # no extensions
 
 ### The `lifecycle` field — **EXCLUDED**
 
-`lifecycle` is not part of the canonical schema. The spec lifecycle is computed from the path:
+`lifecycle` is not part of the canonical schema. A spec's lifecycle position is its directory:
 
 ```
 docs/specs/drafts/*         → drafts
-docs/specs/review/*         → review
 docs/specs/approved/*       → approved
 docs/specs/implemented/*    → implemented
 docs/specs/superseded/*     → superseded
@@ -297,9 +297,9 @@ Client received 500 instead of 400 on invalid JSON.
 | `.context/` | Project metadata for AI agents | Always read first |
 | `docs/architecture/` | Living architecture (topology, data model, invariants) | Updated on every topology/schema change |
 | `docs/adr/` | Architecture Decision Records | Body immutable after `accepted`. Frontmatter = metadata, may be updated |
-| `docs/specs/` | Specification lifecycle | `drafts/ → review/ → approved/ → implemented/ → superseded/` |
+| `docs/specs/` | Specification lifecycle | `drafts/ → approved/ → implemented/` (and `superseded/`) |
 | `docs/audits/` | Audits and forensic reports | Body append-only, FM = metadata (mutable) |
-| `docs/backlog/` | Single task backlog | Free-form → split into GitHub Issues |
+| `docs/backlog/` | Backlog | `active.md`: open work; `archive.md`: everything else |
 | `docs/prompts/` | AI context prompts | type: prompt — answered by the LLM, not a human |
 | `docs/api/` | API specifications | type: api, versioned |
 | `.claude/rules/` | Rules for the AI agent (Claude Code) | Tied to ADR and docs/ |
@@ -390,18 +390,7 @@ boundaries:
       note: "private keys"
 ```
 
-#### 1.3 `.context/decisions.yml`
-
-```yaml
-decisions:
-  - id: ADR-001
-    title: "Orchestrator choice"
-    file: docs/adr/001-orchestrator-choice.md
-    status: accepted
-    summary: "Docker Compose for dev, Kubernetes for prod"
-```
-
-#### 1.4 `.context/agent-entry.md`
+#### 1.3 `.context/agent-entry.md`
 
 ```markdown
 # Agent Entry Protocol
@@ -525,7 +514,7 @@ Create as needed:
 #### 3.1 Creating an ADR
 
 ```bash
-cp docs/.runtime/underboss/documentation/templates/adr.md docs/adr/NNN-<slug>.md
+cp docs/.control/documentation/templates/adr.md docs/adr/NNN-<slug>.md
 # NN — next free number (zero-padded to 3 digits)
 # slug — kebab-case, describes the decision (not the implementation)
 ```
@@ -558,17 +547,16 @@ Fill in:
 #### 4.1 Creating a spec
 
 ```bash
-cp docs/.runtime/underboss/documentation/templates/spec.md docs/specs/drafts/YYYY-MM-DD-<slug>.md
+cp docs/.control/documentation/templates/spec.md docs/specs/drafts/YYYY-MM-DD-<slug>.md
 # fill frontmatter: status: draft (must match the directory!)
-# fill body: Goal, Context, Scope, Technical approach, Affected files, Open questions
+# fill body: Goal, Context, Scope, Technical approach, Affected files, Open questions, Acceptance criteria
 ```
 
 #### 4.2 Lifecycle
 
 ```
 docs/specs/drafts/     → draft, WIP, status: draft
-docs/specs/review/     → ready for review, status: review
-docs/specs/approved/   → ready for implementation, status: approved
+docs/specs/approved/   → approved by a human, ready for implementation, status: approved; Acceptance criteria (AC-NNN) required; semantic body immutable
 docs/specs/implemented/ → archive (never delete), status: implemented
 docs/specs/superseded/ → replaced by new (never delete), status: superseded
 ```
@@ -576,13 +564,9 @@ docs/specs/superseded/ → replaced by new (never delete), status: superseded
 Promotion via `git mv` + `status` update in the frontmatter:
 
 ```bash
-# draft → review
-git mv docs/specs/drafts/2026-07-06-feature.md docs/specs/review/
-# then in the file: status: draft → status: review
-
-# review → approved
-git mv docs/specs/review/2026-07-06-feature.md docs/specs/approved/
-# in file: status: review -> status: approved
+# draft → approved (a human act: review is what people do, approval is the transition)
+git mv docs/specs/drafts/2026-07-06-feature.md docs/specs/approved/
+# in file: status: draft -> status: approved
 
 # approved -> implemented (after completion)
 git mv docs/specs/approved/2026-07-06-feature.md docs/specs/implemented/
@@ -599,7 +583,7 @@ git mv docs/specs/approved/2026-07-06-feature.md docs/specs/superseded/
 
 #### 4.3 Rules
 
-- **Creation:** `cp docs/.runtime/underboss/documentation/templates/spec.md docs/specs/drafts/YYYY-MM-DD-<slug>.md`
+- **Creation:** `cp docs/.control/documentation/templates/spec.md docs/specs/drafts/YYYY-MM-DD-<slug>.md`
 - **You cannot implement** a spec that is not in `approved/` (CI FAILS on a PR that changes code without the corresponding spec in `approved/`)
 - **After implementation:** fill in `## Result`, move it to `implemented/`, `status: implemented`
 - **Supersede:** if a new spec replaces an old one — move the old one to `superseded/` with `status: superseded`, and in the new one specify `supersedes: [<old-id>]`
@@ -697,7 +681,7 @@ applies-to: path("docs/specs/**")
 
 Creation:
 
-1. `cp docs/.runtime/underboss/documentation/templates/spec.md docs/specs/drafts/YYYY-MM-DD-<slug>.md`
+1. `cp docs/.control/documentation/templates/spec.md docs/specs/drafts/YYYY-MM-DD-<slug>.md`
 2. fill FM:
    - `id`: `<slug>` (no date, stable)
    - `status`: `draft` (mandatory — matches the drafts/ directory)
@@ -706,15 +690,14 @@ Creation:
    - `owners`: team
    - `touches`: subsystems
    - `entity_refs`: entities this spec is about
-3. fill body: Goal, Context, Scope, Technical approach, Affected files, Open questions
+3. fill body: Goal, Context, Scope, Technical approach, Affected files, Open questions, Acceptance criteria
 
 Lifecycle (path == status, no separate `lifecycle` field):
 
 ```
-drafts/  (status: draft)  →  review/   (status: review)
-review/  (status: review)  →  approved/ (status: approved)
-approved/(status: approved)→  implemented/ (status: implemented)
-approved/(status: approved)→  superseded/  (status: superseded)
+drafts/  (status: draft)    →  approved/    (status: approved)
+approved/(status: approved) →  implemented/ (status: implemented)
+approved/ | implemented/    →  superseded/  (status: superseded)
 ```
 
 Each transition — git `mv` + update `status` in FM. CI validates path-status match.
@@ -737,7 +720,7 @@ applies-to: path("docs/audits/**")
 
 When creating a new audit:
 
-1. Copy `docs/.runtime/underboss/documentation/templates/audit.md` to `docs/audits/YYYY-MM-DD-<slug>.md`
+1. Copy `docs/.control/documentation/templates/audit.md` to `docs/audits/YYYY-MM-DD-<slug>.md`
 2. Fill in frontmatter:
    - `id`: `audit-<slug>` (slug without date)
    - `status`: `draft` (if in progress) or `completed` (if done)
@@ -870,7 +853,7 @@ In case of conflicting information, read the canonical source.
 
 ### Creating a new audit
 
-1. `cp docs/.runtime/underboss/documentation/templates/audit.md docs/audits/YYYY-MM-DD-<slug>.md`
+1. `cp docs/.control/documentation/templates/audit.md docs/audits/YYYY-MM-DD-<slug>.md`
 2. Fill in the frontmatter: `id`, `status: draft`, `date`, `scope`, `trigger`, `entity_refs`, `touches`
 3. Fill in the body: `# Audit: <title>`, Summary, Findings, Conflicts (optional), Resolution, Delta
 4. If the audit is complete — `status: completed` (terminal)
@@ -925,29 +908,14 @@ In case of conflicting information, read the canonical source.
 > The body is not edited after `status: completed`. A new audit = a new file with a new date.
 ---
 
-## Backlog: from ideas to Issues
+## Backlog: active and archive
 
 ```
-docs/backlog/active.md       ← rough basket (free-form)
-         -> team: "slice the backlog into tasks"
-GitHub Issues <- atomic tasks with acceptance criteria
-         -> after implementation
-Issue closes            ← backlog → Done section
+docs/backlog/active.md    ← open actionable work only: items `[ ]`
+docs/backlog/archive.md   ← everything else: `[x]` completed, `[-]` cancelled, deferred, dropped or superseded
 ```
 
-The file `docs/backlog/active.md` has canonical frontmatter:
-
-```yaml
----
-schema: 1
-id: backlog-active
-type: backlog
-status: active
-date: YYYY-MM-DD
-owners: [underboss-team]
----
-```
-
+An item leaves `active.md` the moment it is no longer open work and moves to `archive.md`. Both files have canonical frontmatter (`type: backlog`, `status: active`); templates are `documentation/templates/backlog-active.md` and `backlog-archive.md`. `validate-backlog.mjs` fails on a `[x]` or `[-]` item in `active.md` and on a `[ ]` item in `archive.md`.
 ---
 
 ## Documentation quality metrics
@@ -1010,7 +978,7 @@ echo "Legacy fields: $legacy (should be 0)"
 # 4. Spec status distribution
 echo ""
 echo "Spec status distribution:"
-for dir in drafts review approved implemented superseded; do
+for dir in drafts approved implemented superseded; do
   count=$(ls docs/specs/$dir/*.md 2>/dev/null | wc -l)
   echo "  $dir: $count"
 done
@@ -1031,16 +999,16 @@ done
 | Document type | type | Valid status | Where stored | Rules |
 |--------------|------|--------------|-------------|---------|
 | ADR | `adr` | `proposed → accepted → deprecated → superseded` | `docs/adr/` | Body immutable after acceptance; FM = metadata |
-| Spec | `spec` | `draft → review → approved → implemented → superseded` | `docs/specs/{drafts,review,approved,implemented,superseded}/` | Git mv + update `status`, never delete |
+| Spec | `spec` | `draft → approved → implemented`; `approved \| implemented → superseded` | `docs/specs/{drafts,approved,implemented,superseded}/` | Git mv + update `status`, never delete |
 | Audit | `audit` | `draft → completed` | `docs/audits/` | Body never edit after completed; FM mutable |
 | Runbook | `runbook` | `active → deprecated` | `docs/*.md` | Updated on changes; kind distinguishes |
 | Architecture | `architecture` | `active → deprecated` | `docs/architecture/` | Updated on topology/schema changes |
 | Guide | `guide` | `active → deprecated` | `docs/*.md` (index, README) | Navigation entrance |
-| API | `api` | `draft → review → approved → implemented → superseded` | `docs/api/` | Versioned spec |
-| Backlog | `backlog` | `active → deprecated` | `docs/backlog/` | Free-form |
+| API | `api` | `active → deprecated` | `docs/api/` | Versioned spec |
+| Backlog | `backlog` | `active → deprecated` | `docs/backlog/{active,archive}.md` | `active.md`: open `[ ]` items only; `archive.md`: `[x]` completed, `[-]` cancelled/deferred/dropped/superseded |
 | Prompt | `prompt` | `active → deprecated` | `docs/prompts/` | Context for the LLM |
 
-> **Note:** `lifecycle` is not a column in the table — it is computed from the path for specs/api. For other types lifecycle = status (there is no separate directory).
+> **Note:** `lifecycle` is not a column in the table — a spec's position is its directory. For other types lifecycle = status (there is no separate directory).
 
 ---
 
@@ -1057,7 +1025,7 @@ done
 | Duplication in .claude/rules/ | They fall out of sync | Thin pointers → canonical source in docs/ |
 | Runbooks without `kind:` | Cannot distinguish deploy from troubleshoot | `type: runbook` always with `kind:` |
 | ADR body modified when adding FM | Violates immutability | Carve-out rule: FM ≠ body. The body is left byte-for-byte untouched, any update is FM only |
-| Audit without the canonical template | Body structure varies, hard to parse | Always `cp docs/.runtime/underboss/documentation/templates/audit.md ...` |
+| Audit without the canonical template | Body structure varies, hard to parse | Always `cp docs/.control/documentation/templates/audit.md ...` |
 | Creating .md without a template | FM is not canonical, no `schema:`/`id` | Greenfield invariant: start from `cp <type>/_template.md`, not from an empty file |
 | Deleting completed specs | Loss of decision history | Never delete, store in `implemented/` |
 | `supersedes_adr:` instead of `supersedes:` | Legacy field, breaks the parser | `supersedes: [<id>]` — a list (may have several) |
@@ -1073,9 +1041,9 @@ Check that the system was adopted from day one:
 - [ ] `.context/project.yml` exists and contains the stack
 - [ ] `.context/boundaries.yml` classifies files
 - [ ] `docs/architecture/README.md` exists, has canonical FM, contains invariants and module index
-- [ ] `docs/.runtime/underboss/documentation/templates/spec.md` exists with the Canonical Schema v1 Base
-- [ ] `docs/.runtime/underboss/documentation/templates/audit.md` exists with the audit extension (`scope`, `trigger`)
-- [ ] `docs/.runtime/underboss/documentation/templates/adr.md` exists with the canonical ADR FM
+- [ ] `docs/.control/documentation/templates/spec.md` exists with the Canonical Schema v1 Base
+- [ ] `docs/.control/documentation/templates/audit.md` exists with the audit extension (`scope`, `trigger`)
+- [ ] `docs/.control/documentation/templates/adr.md` exists with the canonical ADR FM
 - [ ] At least 1 ADR in `docs/adr/` with `accepted` status (or proposed)
 - [ ] `docs/README.md` exists, has canonical FM (`type: guide, kind: index`), START HERE section
 - [ ] `.claude/rules/doc-update.md` defines the doc-update protocol
@@ -1128,27 +1096,21 @@ on:
 jobs:
   schema-v1:
     runs-on: ubuntu-latest
-    env:
-      WARN_ONLY: ""   # brownfield: "true" during rollout period
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Validate Canonical Schema v1 frontmatter
         run: |
-          bash docs/.runtime/underboss/documentation/validation/validate-frontmatter.sh
+          bash docs/.control/documentation/validation/validate-frontmatter.sh
 ```
 
 
 **Why this way:**
 - `awk` cuts only the FM block → legacy fields in the document body (prose/tables/code) do not cause false positives.
-- `WARN_ONLY=true` enables warn-only mode for the brownfield rollout (Migration Prompt, §Warn-only CI). Greenfield leaves the variable empty → strict.
 - Validation of `schema: 1` and the mandatory fields is performed on the FM, not on the whole file.
 
-**Greenfield:** strict from the first PR (the `WARN_ONLY` variable is empty).
-**Brownfield:** during the rollout period set `WARN_ONLY: "true"`, then switch back to strict after cleanup.
-
-This guard **is enabled from the first PR** (greenfield). No transition periods, no warn-only.
+This guard is enabled from the first PR. There are no transition periods and no warn-only mode.
 
 ---
 
@@ -1156,23 +1118,23 @@ This guard **is enabled from the first PR** (greenfield). No transition periods,
 
 **status:** implemented
 
-**changed (this Runtime refactor):**
+**changed (this refactor):**
 - `playbook/playbook-v2.md` — this file (previously at the repo root, renamed and moved).
 - `playbook/migrate-legacy.md` — agent prompt for brownfield migration (previously `docs/guides/legacy-migration.md`).
-- `documentation/templates/architecture.md`, `documentation/templates/adr.md`, `documentation/templates/spec.md`, `documentation/templates/audit.md`, `documentation/templates/runbook.md`, `documentation/templates/backlog.md` — canonical templates, extracted from the playbook as standalone files.
+- `documentation/templates/architecture.md`, `documentation/templates/adr.md`, `documentation/templates/spec.md`, `documentation/templates/audit.md`, `documentation/templates/runbook.md`, `documentation/templates/backlog-active.md`, `documentation/templates/backlog-archive.md` — canonical templates, extracted from the playbook as standalone files.
 - `documentation/schemas/frontmatter.schema.json` — JSON Schema for Canonical Schema v1 (base + per-type extensions + forbidden legacy fields).
-- `documentation/validation/validate-frontmatter.sh` — frontmatter-only validator (with a `WARN_ONLY` switch, path-status match with `drafts→draft` normalization, and a `kind:` check for runbooks).
+- `documentation/validation/validate-frontmatter.sh` — frontmatter-only validator (all findings are errors; a `kind:` check for runbooks; the spec path-status match moved to `validate-lifecycle.mjs`).
 - `bootstrap/bootstrap.sh`, `bootstrap/bootstrap.ps1` — minimal idempotent bootstrap (creates the `docs/` skeleton, `.context/` stubs, the `CLAUDE.md` snippet, and the `docs-validate.yml` workflow).
 - `engine/scripts/migrate-legacy.mjs` — runnable brownfield migration (no external dependencies).
 - `INSTALL.md` — consumer integration: submodule add, `.gitmodules` branch=master, CLAUDE.md snippet, manual update, Dependabot submodule.
-- `README.md` — rewritten as the Runtime Landing Page (not as the repository's canonical index).
+- `README.md` — rewritten as Underboss Landing Page (not as the repository's canonical index).
 - `.github/workflows/docs-validate.yml` — workflow that calls `documentation/validation/validate-frontmatter.sh` (locally; push awaits a new PAT with `workflow` scope).
 - `agents/{claude-code,opencode}/` — `architecture-reviewer` and `documentation-reviewer` roles for both platforms.
 
 **deviations (vs. the original v2 plan):**
-- Runtime layout is split into Runtime Core and Documentation Module: `engine/reality-engine/`, `engine/scripts/` (Runtime Core) → `documentation/` (templates, validation, schemas) + `knowledge/` + `agents/` + `sops/` + `playbook/` (Documentation Module). This eliminates the visual drift of a "jumble of directories at the root".
+- The layout is split into Core and Documentation Module: `engine/reality-engine/`, `engine/scripts/` (Core) → `documentation/` (templates, validation, schemas) + `knowledge/` + `agents/` + `sops/` + `playbook/` (Documentation Module). This eliminates the visual drift of a "jumble of directories at the root".
 - `documentation/templates/` are extracted from the playbook as standalone canonical files — this eliminates drift between the documentation and the real artifacts.
 - `bootstrap/` is minimized: it creates only `docs/` + `.context/` + the `CLAUDE.md` snippet + the workflow — no magic that modifies existing files.
-- The validator supports normalization of `drafts` → `draft` (directory plural, status singular).
+- `validate-lifecycle.mjs` normalizes `drafts` → `draft` (directory plural, status singular).
 - The CI guard calls `documentation/validation/validate-frontmatter.sh` and contains no inline checks — a single source of truth.
 - The inline `docs/bootstrap script` in the playbook is removed — the playbook now references `bootstrap/bootstrap.sh`.

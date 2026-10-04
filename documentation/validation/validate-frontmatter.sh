@@ -3,37 +3,29 @@
 #
 # Validates that every .md file under docs/ has Canonical Schema v1 frontmatter.
 # Frontmatter-only checks (no false positives on prose/code blocks).
-# Based on schemas/frontmatter.schema.json.
+# Based on schemas/frontmatter.schema.json. Every finding is an error.
 #
 # Exit codes:
-#   0 — all OK (or WARN_ONLY=1 with only warnings)
-#   1 — at least one error (when WARN_ONLY unset/empty)
+#   0 — all OK
+#   1 — at least one error
 #
 # Usage:
 #   ./documentation/validation/validate-frontmatter.sh [docs-root]
-#   WARN_ONLY=1 ./documentation/validation/validate-frontmatter.sh      # warn-only (brownfield rollout)
 #   ROOT=docs ./documentation/validation/validate-frontmatter.sh        # override default docs/ root
 
 set -u
 
 DOCS_ROOT="${1:-${ROOT:-docs}}"
-WARN_ONLY="${WARN_ONLY:-}"
 fail=0
-warning=0
 
 if [ ! -d "$DOCS_ROOT" ]; then
-  echo "docs-validate: docs root '$DOCS_ROOT' not found, nothing to validate"
-  exit 0
+  echo "ERROR: docs root '$DOCS_ROOT' not found"
+  exit 1
 fi
 
-warn() {
-  if [ -n "$WARN_ONLY" ]; then
-    echo "WARNING: $1"
-    warning=1
-  else
-    echo "ERROR: $1"
-    fail=1
-  fi
+err() {
+  echo "ERROR: $1"
+  fail=1
 }
 
 # extract_frontmatter <file>
@@ -51,54 +43,50 @@ check_file() {
   local first
   first=$(awk 'NR==1{print; exit}' "$f")
   if [ "$first" != "---" ]; then
-    warn "$f: no frontmatter at all"
+    err "$f: no frontmatter at all"
     return
   fi
 
   local fm
   fm=$(extract_frontmatter "$f")
-  [ -n "$fm" ] || { warn "$f: empty frontmatter"; return; }
+  [ -n "$fm" ] || { err "$f: empty frontmatter"; return; }
 
   # 1. schema: 1 mandatory
-  echo "$fm" | grep -qE "^schema:[[:space:]]*1[[:space:]]*$" || warn "$f: schema != 1"
+  echo "$fm" | grep -qE "^schema:[[:space:]]*1[[:space:]]*$" || err "$f: schema != 1"
 
   # 2. mandatory base fields
   for field in id type status date owners; do
-    echo "$fm" | grep -qE "^${field}:" || warn "$f: missing mandatory field '$field'"
+    echo "$fm" | grep -qE "^${field}:" || err "$f: missing mandatory field '$field'"
   done
 
-  # 3. legacy fields FORBIDDEN in frontmatter only
+  # 3. forbidden fields in frontmatter only
   for pat in "^lifecycle:" "^author:" "^title:" "^created:" "^supersedes_adr:" "^referenced_by:" "^excludes-from-scope:"; do
     if echo "$fm" | grep -qE "$pat"; then
-      warn "$f: legacy field '$pat' in frontmatter"
+      err "$f: forbidden field '$pat' in frontmatter"
     fi
   done
 
-  # 4. spec path-status match (status must equal parent directory, with 'drafts' → 'draft' normalization)
-  case "$f" in
-    */specs/drafts/*|*/specs/review/*|*/specs/approved/*|*/specs/implemented/*|*/specs/superseded/*)
-      local dir
-      dir=$(echo "$f" | awk -F/ '{print $(NF-1)}')
-      local status
-      status=$(echo "$fm" | grep -m1 -E "^status:" | sed -E 's/^status:[[:space:]]*//')
-      # 'drafts' directory corresponds to 'draft' status (singular); others match 1:1
-      local dir_normalized
-      dir_normalized=$([ "$dir" = "drafts" ] && echo "draft" || echo "$dir")
-      [ "$status" = "$dir_normalized" ] || warn "$f: status '$status' != path '$dir' (expected '$dir_normalized')"
-      ;;
-  esac
-
-  # 5. runbook must have kind:
-  local type
+  local type status
   type=$(echo "$fm" | grep -m1 -E "^type:" | sed -E 's/^type:[[:space:]]*//')
+  status=$(echo "$fm" | grep -m1 -E "^status:" | sed -E 's/^status:[[:space:]]*//')
+
+  # 4. runbook must have kind:
   if [ "$type" = "runbook" ]; then
-    echo "$fm" | grep -qE "^kind:" || warn "$f: type runbook requires 'kind:'"
+    echo "$fm" | grep -qE "^kind:" || err "$f: type runbook requires 'kind:'"
   fi
 
-  # 6. spec/audit should have non-empty entity_refs (warn always)
+  # 5. api has exactly two statuses
+  if [ "$type" = "api" ]; then
+    case "$status" in
+      active|deprecated) ;;
+      *) err "$f: api status '$status' must be active or deprecated" ;;
+    esac
+  fi
+
+  # 6. spec/audit must have non-empty entity_refs
   if [ "$type" = "spec" ] || [ "$type" = "audit" ]; then
-    if echo "$fm" | grep -qE "^entity_refs:[[:space:]]*\[\]"; then
-      echo "NOTE: $f: $type should define entity_refs (currently empty)"
+    if ! echo "$fm" | grep -qE "^entity_refs:[[:space:]]*\[[^]]+\]"; then
+      err "$f: $type requires non-empty entity_refs"
     fi
   fi
 }
@@ -116,11 +104,6 @@ fi
 
 if [ "$fail" -ne 0 ]; then
   echo "::error::docs-validate failed (see errors above)"
-  exit 1
-fi
-
-if [ "$warning" -ne 0 ] && [ -z "$WARN_ONLY" ]; then
-  # Should not happen, but defensive
   exit 1
 fi
 

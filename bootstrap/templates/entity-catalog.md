@@ -13,7 +13,7 @@ priority: P1
 
 # Entity Catalog
 
-> **Consumer must complete this catalog.** Runtime cannot know your domain entities.
+> **Consumer must complete this catalog.** Underboss cannot know your domain entities.
 > Bootstrap auto-generates sections from project structure. Fill in the details.
 
 ## Core Entities
@@ -36,7 +36,7 @@ priority: P1
 <!-- Data models, schemas, migrations -->
 <!-- Format: - **SchemaName**: description (location: path) -->
 
-## Runtime Components
+## Infrastructure Components
 
 <!-- Internal infrastructure: configs, deploy scripts, CI -->
 <!-- Format: - **ComponentName**: description (location: path) -->

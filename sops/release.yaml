@@ -44,43 +44,43 @@ steps:
 
   - id: 3
     name: Tests green (full suite)
-    role: human
+    gate: manual
     produces: "unit + integration + e2e tests green locally and in CI"
     depends_on: [1, 2]
 
   - id: 4
     name: Update changelog + version
-    role: human
+    gate: manual
     produces: "CHANGELOG.md (or equivalent) updated; version bump performed per semver"
     depends_on: [3]
 
   - id: 5
     name: Tag release
-    role: human
+    gate: manual
     produces: "git tag v<version>; tag annotated; release notes attached"
     depends_on: [4]
 
   - id: 6
     name: Deploy (staging → prod)
-    role: human
+    gate: manual
     produces: "artifact published; deploy to prod performed per runbook"
     depends_on: [5]
 
   - id: 7
     name: Verify — smoke tests prod
-    role: human
+    gate: manual
     produces: "prod smoke-tests green; key endpoints respond; metrics within normal range"
     depends_on: [6]
 
   - id: 8
     name: Promote spec approved→implemented
-    role: human
+    gate: manual
     produces: "git mv → docs/specs/implemented/; frontmatter status=implemented; ## Result filled"
     depends_on: [7]
 
   - id: 9
     name: Post-release audit (for major or security releases)
-    role: human
+    gate: manual
     platform: any
     produces: "docs/audits/YYYY-MM-DD-release-<version>.md (status=completed): what went well/badly, lessons learned"
     depends_on: [8]

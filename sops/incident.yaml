@@ -27,31 +27,31 @@ output:
 steps:
   - id: 1
     name: Detect + acknowledge
-    role: human
+    gate: manual
     produces: "alert ack; severity assigned (P0|P1|P2); on-call engineer identified"
     depends_on: []
 
   - id: 2
     name: Triage — scope, severity, stakeholders
-    role: human
+    gate: manual
     produces: "scope recorded: affected services/users; severity confirmed; stakeholders notified"
     depends_on: [1]
 
   - id: 3
     name: Mitigate — restore service
-    role: human
+    gate: manual
     produces: "service restored (rollback, hotfix, rate-limit, feature flag off) — the main thing is to stop the bleeding"
     depends_on: [2]
 
   - id: 4
     name: Communicate
-    role: human
+    gate: manual
     produces: "stakeholders updated; incident status page updated (if public); internal log updates every 30 min during active"
     depends_on: [3]
 
   - id: 5
     name: Root cause analysis (post-mitigation)
-    role: human
+    gate: manual
     produces: "RCA recorded: what happened, why, which 5 whys led to the root cause"
     depends_on: [3]
 
@@ -72,24 +72,24 @@ steps:
 
   - id: 8
     name: Write incident audit doc
-    role: human
-    produces: "cp docs/.runtime/underboss/documentation/templates/audit.md → docs/audits/YYYY-MM-DD-incident-<slug>.md; fill frontmatter (status=draft, scope=incident, trigger=<alert source>, entity_refs=affected services)"
+    gate: manual
+    produces: "cp docs/.control/documentation/templates/audit.md → docs/audits/YYYY-MM-DD-incident-<slug>.md; fill frontmatter (status=draft, scope=incident, trigger=<alert source>, entity_refs=affected services)"
     depends_on: [5, 6, 7]
 
   - id: 9
     name: Fill audit body — Summary, Findings (RCA), Resolution (mitigation + followup plan), Delta (what changed compared to the previous incident)
-    role: human
+    gate: manual
     produces: "audit body filled per canonical structure"
     depends_on: [8]
 
   - id: 10
     name: Promote audit draft→completed + freeze body
-    role: human
+    gate: manual
     produces: "frontmatter status=completed; body append-only; follow-up actions moved to Issues or specs/drafts/"
     depends_on: [9]
 
   - id: 11
     name: Follow-up tracking — open GitHub Issues for each follow-up action
-    role: human
+    gate: manual
     produces: "Issues created and linked to the audit doc via entity_refs; tracking labels (incident-followup) applied"
     depends_on: [10]

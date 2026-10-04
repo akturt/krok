@@ -6,7 +6,7 @@ status: active
 date: 2026-07-08
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 capabilities: [state-reconstruction, drift-analysis, architecture-extraction, attribution-analysis]
 knowledge: [evidence-model, report-formats]
 touches: [docs/architecture, docs/adr, docs/specs]
@@ -49,7 +49,7 @@ This agent is invoked on:
    git log --oneline -20                    # recent changes
    git diff --stat origin/master...HEAD     # what changed
    git show HEAD:docs/architecture/...      # current file state
-   find docs/ -name "*.md" -not -path "*/.runtime/*"  # file inventory
+   find docs/ -name "*.md" -not -path "*/.control/*"  # file inventory
    grep -r "pattern" src/ docs/            # search for specific patterns
    ```
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# runtime/lib/generators.sh — Generator plugin API
+# core/lib/generators.sh — Generator plugin API
 #
 # Contract: each generator is a .sh file with generate() function.
 # generate() must accept exactly 2 arguments:
@@ -21,7 +21,7 @@ run_generator() {
 
   (
     source "$generator_path"
-    generate "$target_dir" "$RUNTIME_REGISTRY"
+    generate "$target_dir" "$CONTROL_REGISTRY"
   )
 }
 
@@ -36,7 +36,7 @@ run_all_generators() {
       gpath=$(registry_get_generator_path "$name")
       [ -z "$gpath" ] && continue
 
-      local full_path="${RUNTIME_ROOT}/${gpath}"
+      local full_path="${CONTROL_ROOT}/${gpath}"
       [ -f "$full_path" ] || { echo "  ⚠ Generator '$name' not found at $gpath"; continue; }
 
       run_generator "$target_dir" "$full_path" || echo "  ⚠ Generator '$name' failed"

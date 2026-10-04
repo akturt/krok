@@ -1,14 +1,12 @@
 ﻿# bootstrap/bootstrap.ps1
 #
-# Minimal Documentation System Runtime bootstrap (Windows / PowerShell).
+# Minimal Underboss bootstrap (Windows / PowerShell).
 # Creates docs/ skeleton + .context/ stubs + drops CLAUDE.md snippet into the
 # consumer repository. Idempotent. Mirrors bootstrap.sh.
 #
-# v1.1 (D-BR): submodule resides inside docs/.runtime/naprolom-docs/, not .context/runtime/.
-#
 # Usage:
-#   powershell -File docs\.runtime\naprolom-docs\bootstrap\bootstrap.ps1
-#   powershell -File docs\.runtime\naprolom-docs\bootstrap\bootstrap.ps1 -ProjectPath C:\path\to\project
+#   powershell -File docs\.control\bootstrap\bootstrap.ps1
+#   powershell -File docs\.control\bootstrap\bootstrap.ps1 -ProjectPath C:\path\to\project
 
 [CmdletBinding()]
 param(
@@ -27,28 +25,15 @@ if (-not $ProjectPath) {
   }
 }
 
-$RuntimeRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$ControlRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
 Write-Host "-> Target project:  $ProjectPath"
-Write-Host "-> Runtime root:    $RuntimeRoot"
+Write-Host "-> Underboss root:  $ControlRoot"
 Write-Host ""
 
-# v1.1 (D-BR): advisory check for old v1.0 submodule path.
-$gitmodules = Join-Path $ProjectPath ".gitmodules"
-if (Test-Path $gitmodules) {
-  $gm = Get-Content -Path $gitmodules -Raw -ErrorAction SilentlyContinue
-  if ($gm -match '\.context/runtime/naprolom-docs') {
-    Write-Host "WARNING: .gitmodules references legacy v1.0 path '.context/runtime/naprolom-docs'." 2>&1
-    Write-Host "  v1.1 expects submodule mounted at 'docs/.runtime/naprolom-docs'." 2>&1
-    Write-Host "  To migrate: git mv .context/runtime docs/.runtime && git submodule absorbgitdirs" 2>&1
-    Write-Host "  (Advisory only — bootstrap continues.)" 2>&1
-    Write-Host ""
-  }
-}
-
 function Get-RegistryDirectories($scope) {
-  $reg = Join-Path $RuntimeRoot "runtime\registry.yaml"
-  if (-not (Test-Path $reg)) { return $null }
+  $reg = Join-Path $ControlRoot "core\registry.yaml"
+  if (-not (Test-Path $reg)) { throw "registry not found: $reg" }
   $lines = Get-Content -Path $reg
   $inDirs = $false; $inScope = $false; $result = @()
   foreach ($line in $lines) {
@@ -61,10 +46,6 @@ function Get-RegistryDirectories($scope) {
   return $result
 }
 $dirs = Get-RegistryDirectories "docs"
-if (-not $dirs) {
-  Write-Host "WARNING: runtime/registry.yaml not found; using built-in fallback list." 2>&1
-  $dirs = "architecture","adr","specs\drafts","specs\review","specs\approved","specs\implemented","specs\superseded","audits","backlog","api"
-}
 foreach ($d in $dirs) {
   $d = "docs\" + ($d -replace '/', '\')
   New-Item -ItemType Directory -Force -Path (Join-Path $ProjectPath $d) | Out-Null
@@ -104,8 +85,8 @@ Write-StubIfMissing (Join-Path $ctx 'project.yml') $projectYml
 $boundariesYml = @(
   'boundaries:',
   '  pristine:',
-  '    - path: docs/.runtime/',
-  '      reason: "Documentation System Runtime submodule (managed by git submodule update --remote)"',
+  '    - path: docs/.control/',
+  '      reason: "Underboss submodule (managed by git submodule update --remote)"',
   '  editable:',
   '    - path: docs/',
   '      reason: "all user-authored documentation"',
@@ -125,56 +106,56 @@ $agentEntry = @(
   '',
   'Before creating any .md in docs/:',
   '1. Identify `type` (spec|adr|audit|runbook|guide|api|architecture|backlog|prompt)',
-  '2. Copy template from runtime: `docs/.runtime/naprolom-docs/documentation/templates/<type>.md`',
+  '2. Copy template from Underboss: `docs/.control/documentation/templates/<type>.md`',
   '3. Fill the 6 mandatory fields: schema, id, type, status, date, owners',
-  '4. Never add `lifecycle:` to frontmatter (computed from path for specs/api)',
+  '4. Never add `lifecycle:` to frontmatter (a spec position is its directory)',
   '5. Never add legacy fields: author, title, created, referenced_by, supersedes_adr, excludes-from-scope'
 )
 Write-StubIfMissing (Join-Path $ctx "agent-entry.md") $agentEntry
 
 $snippet = @(
-  '## Documentation Runtime',
+  '## Underboss',
   '',
-  'Documentation System Runtime is connected as a Git Submodule:',
+  'Underboss is connected as a Git Submodule:',
   '',
-  '    docs/.runtime/naprolom-docs/',
+  '    docs/.control/',
   '',
   'Before any change to `docs/`:',
-  '1. Study `docs/.runtime/naprolom-docs/playbook/playbook-v2.md` (target model)',
-  '2. Use `docs/.runtime/naprolom-docs/documentation/templates/` - do NOT copy templates into the project',
-  '3. Follow `docs/.runtime/naprolom-docs/documentation/schemas/frontmatter.schema.json`',
-  '4. Run `docs/.runtime/naprolom-docs/documentation/validation/validate-frontmatter.sh` before commit',
-  '5. For brownfield migration, follow `docs/.runtime/naprolom-docs/playbook/migrate-legacy.md`',
-  '6. For typical processes, pick a SOP in `docs/.runtime/naprolom-docs/sops/` and run `node docs/.runtime/naprolom-docs/sops/planner.mjs <name>` - call roles by name',
-  '7. If task involves architectural review - see `docs/.runtime/naprolom-docs/sops/architecture-review.yaml`; foundation is `reality-auditor` BEFORE `architecture-reviewer`.',
-  '8. Common knowledge bases live in `docs/.runtime/naprolom-docs/knowledge/` (`architecture-principles`, `evidence-model`, `audit-principles`, `report-formats`, `capabilities`) - roles reference them by short-id, not inline.'
+  '1. Study `docs/.control/playbook/playbook-v2.md` (target model)',
+  '2. Use `docs/.control/documentation/templates/` - do NOT copy templates into the project',
+  '3. Follow `docs/.control/documentation/schemas/frontmatter.schema.json`',
+  '4. Run `docs/.control/documentation/validation/validate-frontmatter.sh` before commit',
+  '5. For brownfield migration, follow `docs/.control/playbook/migrate-legacy.md`',
+  '6. For typical processes, pick a SOP in `docs/.control/sops/` and run `node docs/.control/sops/planner.mjs <name>` - call roles by name',
+  '7. If task involves architectural review - see `docs/.control/sops/architecture-review.yaml`; foundation is `reality-auditor` BEFORE `architecture-reviewer`.',
+  '8. Common knowledge bases live in `docs/.control/knowledge/` (`architecture-principles`, `evidence-model`, `audit-principles`, `report-formats`, `capabilities`) - roles reference them by short-id, not inline.'
 )
 
 $claude = Join-Path $ProjectPath "CLAUDE.md"
 if (Test-Path $claude) {
   $existing = Get-Content -Path $claude -Raw -ErrorAction SilentlyContinue
-  if ($existing -notmatch "## Documentation Runtime") {
+  if ($existing -notmatch "## Underboss") {
     $newContent = ($snippet -join "`n") + "`n`n" + $existing
     $newContent | Set-Content -Path $claude -Encoding utf8
-    Write-Host "-> Prepended 'Documentation Runtime' section to existing CLAUDE.md"
+    Write-Host "-> Prepended 'Underboss' section to existing CLAUDE.md"
   } else {
-    Write-Host "-> CLAUDE.md already has 'Documentation Runtime' section, skipped"
+    Write-Host "-> CLAUDE.md already has 'Underboss' section, skipped"
   }
 } else {
   $snippet | Set-Content -Path $claude -Encoding utf8
-  Write-Host "-> Created CLAUDE.md with Documentation Runtime snippet"
+  Write-Host "-> Created CLAUDE.md with Underboss snippet"
 }
 
 # AGENTS.md — same content, only if the file already exists (Cursor, Windsurf, etc.)
 $agents = Join-Path $ProjectPath "AGENTS.md"
 if (Test-Path $agents) {
   $existing = Get-Content -Path $agents -Raw -ErrorAction SilentlyContinue
-  if ($existing -notmatch "## Documentation Runtime") {
+  if ($existing -notmatch "## Underboss") {
     $newContent = ($snippet -join "`n") + "`n`n" + $existing
     $newContent | Set-Content -Path $agents -Encoding utf8
-    Write-Host "-> Prepended 'Documentation Runtime' section to existing AGENTS.md"
+    Write-Host "-> Prepended 'Underboss' section to existing AGENTS.md"
   } else {
-    Write-Host "-> AGENTS.md already has 'Documentation Runtime' section, skipped"
+    Write-Host "-> AGENTS.md already has 'Underboss' section, skipped"
   }
 }
 
@@ -190,23 +171,24 @@ if (-not (Test-Path $wf)) {
     "jobs:",
     "  schema-v1:",
     "    runs-on: ubuntu-latest",
-    "    env:",
-    '      WARN_ONLY: ""',
     "    steps:",
     "      - uses: actions/checkout@v4",
     "        with:",
     "          submodules: true",
     "      - name: Validate Canonical Schema v1 frontmatter (docs/)",
     "        run: |",
-    "          bash docs/.runtime/naprolom-docs/documentation/validation/validate-frontmatter.sh",
-    "      - name: Validate knowledge/ frontmatter",
-    "        run: |",
-    "          ROOT=knowledge bash docs/.runtime/naprolom-docs/documentation/validation/validate-frontmatter.sh knowledge"
+    "          bash docs/.control/documentation/validation/validate-frontmatter.sh",
+    "      - name: Validate lifecycle",
+    "        run: node docs/.control/documentation/validation/validate-lifecycle.mjs docs",
+    "      - name: Validate backlog",
+    "        run: node docs/.control/documentation/validation/validate-backlog.mjs docs",
+    "      - name: Validate integrity",
+    "        run: bash docs/.control/documentation/validation/validate-integrity.sh"
   )
   $wfContent | Set-Content -Path $wf -Encoding utf8
   Write-Host "-> Created .github/workflows/docs-validate.yml"
 } else {
-  Write-Host "-> .github/workflows/docs-validate.yml exists, skipped (review manually if needed)"
+  Write-Host "-> .github/workflows/docs-validate.yml exists, skipped (inspect manually if needed)"
 }
 
 Write-Host ""
@@ -215,6 +197,6 @@ Write-Host ""
 Write-Host "Next steps:"
 Write-Host "  1. Fill .context/project.yml with project-specific stack and metadata"
 Write-Host "  2. Edit .context/boundaries.yml for pristine/secret paths of THIS project"
-Write-Host "  3. Copy template to create first ADR: copy docs/.runtime/naprolom-docs/documentation/templates/adr.md to docs/adr/001-<slug>.md"
+Write-Host "  3. Copy template to create first ADR: copy docs/.control/documentation/templates/adr.md to docs/adr/001-<slug>.md"
 Write-Host "  4. Create docs/architecture/README.md (topology + invariants)"
 Write-Host "  5. Commit the new structure"

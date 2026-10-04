@@ -45,69 +45,63 @@ steps:
     depends_on: []
 
   - id: 3
-    name: Promote spec drafts→review
-    role: human
-    produces: "git mv → docs/specs/review/; frontmatter status=review"
+    name: Promote spec draft→approved
+    gate: manual
+    produces: "git mv → docs/specs/approved/; frontmatter status=approved; Acceptance criteria (AC-NNN) present"
     depends_on: [1, 2]
 
   - id: 4
-    name: Promote spec review→approved
-    role: human
-    produces: "git mv → docs/specs/approved/; frontmatter status=approved"
+    name: Update architecture docs — topology, data model, invariants
+    gate: manual
+    produces: "docs/architecture/README.md Module Index updated; docs/architecture/topology.md updated (ports, networks)"
     depends_on: [3]
 
   - id: 5
-    name: Update architecture docs — topology, data model, invariants
-    role: human
-    produces: "docs/architecture/README.md Module Index updated; docs/architecture/topology.md updated (ports, networks)"
-    depends_on: [4]
+    name: Create service deploy runbook
+    gate: manual
+    produces: "docs/<service-name>-deploy.md (type: runbook, kind: deploy)"
+    depends_on: [3]
 
   - id: 6
-    name: Create service deploy runbook
-    role: human
-    produces: "docs/<service-name>-deploy.md (type: runbook, kind: deploy)"
-    depends_on: [4]
+    name: Add secrets references
+    gate: manual
+    produces: "docs/secrets.md updated (or a new docs/<service-name>-secrets.md if there are many secrets)"
+    depends_on: [3]
 
   - id: 7
-    name: Add secrets references
-    role: human
-    produces: "docs/secrets.md updated (or a new docs/<service-name>-secrets.md if there are many secrets)"
-    depends_on: [4]
+    name: Update ops runbook
+    gate: manual
+    produces: "docs/ops.md day-to-day operations includes the new service"
+    depends_on: [3]
 
   - id: 8
-    name: Update ops runbook
-    role: human
-    produces: "docs/ops.md day-to-day operations includes the new service"
-    depends_on: [4]
+    name: Implementation (docker-compose / k8s / Terraform / service code)
+    gate: manual
+    produces: "PR with infrastructure and service code, tests green"
+    depends_on: [4, 5, 6, 7]
 
   - id: 9
-    name: Implementation (docker-compose / k8s / Terraform / service code)
-    role: human
-    produces: "PR with infrastructure and service code, tests green"
-    depends_on: [5, 6, 7, 8]
+    name: Deploy (staging → prod)
+    gate: manual
+    produces: "service brought up in staging, smoke-tests green, release to prod"
+    depends_on: [8]
 
   - id: 10
-    name: Deploy (staging → prod)
-    role: human
-    produces: "service brought up in staging, smoke-tests green, release to prod"
-    depends_on: [9]
-
-  - id: 11
     name: Documentation Review — post-implementation
     role: documentation-reviewer
     platform: any
     produces: "all affected .md in docs/ have valid Schema v1 FM"
-    depends_on: [10]
+    depends_on: [9]
+
+  - id: 11
+    name: Promote spec approved→implemented + fill ## Result
+    gate: manual
+    produces: "git mv → docs/specs/implemented/; frontmatter status=implemented"
+    depends_on: [9]
 
   - id: 12
-    name: Promote spec approved→implemented + fill ## Result
-    role: human
-    produces: "git mv → docs/specs/implemented/; frontmatter status=implemented"
-    depends_on: [10]
-
-  - id: 13
     name: Audit — post-deploy review
-    role: human
+    gate: manual
     platform: any
     produces: "docs/audits/YYYY-MM-DD-<service-name>-service.md (status=completed)"
-    depends_on: [12]
+    depends_on: [11]

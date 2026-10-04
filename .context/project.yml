@@ -1,48 +1,13 @@
----
-# Project metadata
-# Universally-valid: no absolute paths, no OS-specific values.
-# Fields left empty are filled in by the bootstrap agent using DEPLOY-PROMPT.
-
 name: underboss
-domain: auto
+domain: unknown
 stack: unknown
 backend: unknown
 database: unknown
 infrastructure: unknown
-maintainer: unknown
+maintainer: akturt
 
-# Git context — bootstrap fills these in automatically
 repository:
-  owner: unknown
+  owner: akturt
   name: underboss
   branch: main
 
-# Paths are always relative to repo root; forward slashes.
-#扩充ляется bootstrap'ом при установке — не редактировать вручную.
-boundaries:
-  pristine:
-    - /
-    - /src/
-    - /tests/
-    - /docs/
-    - /.context/
-  generated:
-    - /node_modules/
-    - /dist/
-    - /build/
-    - /.next/
-    - /coverage/
-    - /docs/.runtime/
-    - /.claude/
-  secrets:
-    - /.env
-    - /.env.*
-    - /*.key
-    - /*.pem
-    - /secrets/
-
-# Populated by validate-runtime.sh / reality-engine after first full audit.
-reality:
-  status: fresh
-  lastCheck: null
-  drift: []

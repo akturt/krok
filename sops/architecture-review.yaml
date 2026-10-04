@@ -1,12 +1,12 @@
 name: architecture-review
-description: Formal review-pipeline DAG (reality → arch review → doc review → adversary optional → human)
+description: Formal architecture-review DAG (reality → arch review → doc review → adversary optional → human)
 triggers:
-  - PR touching docs/specs/drafts/ or docs/specs/review/
+  - PR touching docs/specs/drafts/
   - PR flagged with [architecture-review] label
 input:
   required:
     - type: spec
-      path_pattern: docs/specs/{drafts,review}/*.md
+      path_pattern: docs/specs/drafts/*.md
       artifact: subject-spec
 output:
   - artifact: arch-review-report

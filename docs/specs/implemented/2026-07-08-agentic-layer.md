@@ -2,12 +2,12 @@
 schema: 1
 id: agentic-layer
 type: spec
-status: approved
+status: implemented
 date: 2026-07-08
 updated: 2026-07-08
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer, agent-role-separation, sop-dag, capabilities]
+entity_refs: [agentic-layer, agent-role-separation, sop-dag, capabilities]
 touches: [agents, sops, knowledge, engine/templates, bootstrap, README, INSTALL]
 code: [.github/workflows/docs-validate.yml]
 docs: [../../README.md, ../../INSTALL.md, ../../agents/README.md, ../../sops/README.md]

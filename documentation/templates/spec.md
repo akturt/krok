@@ -38,6 +38,10 @@ Specific files, endpoints, tables.
 ## Open questions
 - Question 1
 
+## Acceptance criteria
+<!-- Required before the Spec is approved. Stable ids; other artifacts reference them and never restate them. -->
+- **AC-001** <observable condition>
+
 ---
 
 ## Result

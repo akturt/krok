@@ -1,11 +1,11 @@
 # AUTO-SYNCED — structure is the single source of truth in registry.yaml.
-# Bootstrap reads docs/ and .context/ layout from registry.yaml at runtime;
+# Bootstrap reads docs/ and .context/ layout from registry.yaml;
 # do not duplicate the path list here. Change structure in registry.yaml only.
 installation:
   description: What bootstrap creates and what state it expects
   version: 1
 
-  source_of_truth: ../../runtime/registry.yaml#/directories
+  source_of_truth: ../../core/registry.yaml#/directories
 
   creates:
     docs:
@@ -18,8 +18,8 @@ installation:
       - .github/workflows/docs-validate.yml
 
   expects:
-    state: fresh | partial | legacy | broken
-    gitmodules: "path = docs/.runtime/underboss"
+    state: fresh | partial | broken
+    gitmodules: "path = docs/.control"
 
   sources: "bootstrap reads component paths from registry.yaml (composition: section)"
 

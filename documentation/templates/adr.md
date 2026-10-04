@@ -13,9 +13,6 @@ tags: []
 
 # ADR-NNN: <Decision Title>
 
-## Status
-[proposed | accepted | deprecated | superseded]
-
 ## Context
 Why is this decision necessary? What alternatives were considered?
 

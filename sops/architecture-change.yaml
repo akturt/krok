@@ -36,20 +36,20 @@ steps:
 
   - id: 2
     name: Security Review
-    role: human
+    gate: manual
     produces: "confirmation that security model is not violated; marks ADR security-sensitive if so"
     depends_on: [1]
     condition: "if security-impact"
 
   - id: 3
     name: Acceptance — promote ADR proposed→accepted
-    role: human
+    gate: manual
     produces: "frontmatter status=accepted; ADR body remains byte-for-byte unchanged (only FM transition)"
     depends_on: [1, 2]
 
   - id: 4
     name: Update architecture docs
-    role: human
+    gate: manual
     produces: "docs/architecture/README.md Critical Invariants updated; corresponding docs/architecture/<topic>.md updated (not a new version, update of existing)"
     depends_on: [3]
     condition: "if topology or invariants changed"
@@ -64,14 +64,14 @@ steps:
 
   - id: 6
     name: Optional — create implementation spec
-    role: human
+    gate: manual
     produces: "optional: docs/specs/drafts/YYYY-MM-DD-<slug>.md (if the architectural decision requires explicit implementation)"
     depends_on: [3, 5]
     condition: "if implementation work needed"
 
   - id: 7
     name: Audit (if architectural change is high-impact)
-    role: human
+    gate: manual
     platform: any
     produces: "docs/audits/YYYY-MM-DD-<slug>.md (status=completed) — post-implementation assessment"
     depends_on: [3]

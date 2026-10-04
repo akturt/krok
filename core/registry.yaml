@@ -1,4 +1,4 @@
-runtime:
+control:
   name: Underboss
   version: "2.0.0"
   codename: Consigliere
@@ -15,20 +15,11 @@ contracts:
 registry:
   version: 1
 
-compatibility:
-  schema:
-    - 1
-  consumer:
-    - "1.1"
-    - "1.2"
-  bootstrap:
-    - 2
-
 composition:
   core:
-    description: "Infrastructure layer: registry, state machine, contracts, bootstrap engine, reality engine"
+    description: "Infrastructure layer: registry, installation state machine, contracts, bootstrap engine, reality engine"
     directories:
-      - runtime/
+      - core/
       - bootstrap/
       - engine/reality-engine/
 
@@ -44,7 +35,7 @@ composition:
 entrypoints:
   bootstrap: bootstrap/bootstrap.sh
   installer: bootstrap/install.sh
-  validator: documentation/validation/validate-runtime.sh
+  validator: documentation/validation/validate-integrity.sh
 
 directories:
   docs:
@@ -56,9 +47,6 @@ directories:
       required: false
     - path: specs/drafts/
       description: "specifications in draft"
-      required: false
-    - path: specs/review/
-      description: "specifications under review"
       required: false
     - path: specs/approved/
       description: "approved specifications"
@@ -73,7 +61,7 @@ directories:
       description: "audit reports and reality checks"
       required: false
     - path: backlog/
-      description: "backlog items"
+      description: "backlog: active.md (open work) and archive.md (everything else)"
       required: false
     - path: api/
       description: "API documentation"
@@ -106,15 +94,24 @@ templates:
   - name: runbook
     type: runbook
     path: documentation/templates/runbook.md
-  - name: backlog
+  - name: backlog-active
     type: backlog
-    path: documentation/templates/backlog.md
+    path: documentation/templates/backlog-active.md
+  - name: backlog-archive
+    type: backlog
+    path: documentation/templates/backlog-archive.md
 
 validators:
   - name: validate-frontmatter
     path: documentation/validation/validate-frontmatter.sh
-  - name: validate-runtime
-    path: documentation/validation/validate-runtime.sh
+  - name: validate-integrity
+    path: documentation/validation/validate-integrity.sh
+  - name: validate-lifecycle
+    path: documentation/validation/validate-lifecycle.mjs
+  - name: validate-backlog
+    path: documentation/validation/validate-backlog.mjs
+  - name: validate-vocabulary
+    path: documentation/validation/validate-vocabulary.mjs
 
 generators:
   - name: architecture-readme
@@ -194,7 +191,7 @@ components:
     - incident
 
   contracts:
-    runtime:
+    product:
       - installation
       - migration
       - validation

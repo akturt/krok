@@ -8,7 +8,7 @@ generate() {
 
   mkdir -p "${target_dir}/.context"
 
-  if [ -f "${target_dir}/.context/project.yml" ]; then
+  if [ -s "${target_dir}/.context/project.yml" ]; then
     echo "  → .context/project.yml already exists, skipping."
     return
   fi
@@ -31,27 +31,6 @@ repository:
   name: ${name}
   branch: ${GIT_DEFAULT_BRANCH:-main}
 
-boundaries:
-  pristine:
-    - ${target_dir}/
-    - ${target_dir}/src/
-    - ${target_dir}/tests/
-    - ${target_dir}/docs/
-  generated:
-    - node_modules/
-    - dist/
-    - docs/.runtime/
-  secrets:
-    - .env
-    - .env.*
-    - "*.key"
-    - "*.pem"
-    - secrets/
-
-reality:
-  status: fresh
-  lastCheck: null
-  drift: []
 HEREDOC
 
   echo "  → .context/project.yml created."

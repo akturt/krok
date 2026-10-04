@@ -17,7 +17,7 @@ generate() {
     return
   fi
 
-  local template="${RUNTIME_ROOT}/documentation/templates/invariants.md"
+  local template="${CONTROL_ROOT}/documentation/templates/invariants.md"
   if [ -f "$template" ]; then
     cp "$template" "$out"
     echo "  → docs/architecture/invariants.md created."

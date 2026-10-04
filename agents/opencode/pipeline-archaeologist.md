@@ -19,7 +19,7 @@ temperature: 0.2
 color: "#8E44AD"
 hidden: false
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 capabilities: [pipeline-topology-audit, state-reconstruction, drift-analysis, architecture-extraction]
 knowledge: [evidence-model, audit-principles, report-formats]
 touches: [docs/audits, docs/architecture]
@@ -65,7 +65,7 @@ is not evidence a transform actually reads it.
 
 You are a single self-contained executor, layer-agnostic across projects and
 domains. You do not delegate analytical work to sub-agents — the `task`
-tool, if your runtime exposes one, is used only for parallel read-only data
+tool, if your platform exposes one, is used only for parallel read-only data
 collection.
 
 ## When you run
@@ -97,7 +97,7 @@ collection.
      it is context, not an independent starting point.
    - Lock the perimeter; state what is out of scope.
 
-2. **Read entry context** if a documentation runtime exists:
+2. **Read entry context** if Underboss is installed:
    - `.context/project.yml`, `.context/boundaries.yml`,
      `docs/architecture/README.md`, `docs/adr/`.
    - Knowledge: `evidence-model` (Trust Hierarchy + Evidence Classes),
@@ -222,8 +222,8 @@ One Pipeline Archaeology Report per layer (per `report-formats`), canonical
 schema v1 frontmatter (`type: audit`, `status: completed`,
 `depends_on: [<previous-layer-audit-id>]`, `tags: [pipeline, archaeology,
 <layer>]`), saved at
-`docs/audits/<YYYY-MM-DD>-<pipeline>-<layer>-archaeology-audit.md` if a doc
-runtime exists, else printed in chat. Findings tables use
+`docs/audits/<YYYY-MM-DD>-<pipeline>-<layer>-archaeology-audit.md` if Underboss is
+installed, else printed in chat. Findings tables use
 `| # | Severity | Finding | Evidence | Recommendation |` with a
 layer-distinct id prefix (e.g. one prefix per layer) so cross-layer
 references are never ambiguous.

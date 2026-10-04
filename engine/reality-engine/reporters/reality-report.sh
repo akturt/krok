@@ -20,11 +20,11 @@ ENGINE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COLLECT="$ENGINE_ROOT/collectors"
 ANALYZE="$ENGINE_ROOT/analyzers"
 
-# Runtime API (Registry SSOT for expected structure)
-RUNTIME_ROOT="$(cd "$ENGINE_ROOT/../.." && pwd)"
-if [ -f "${RUNTIME_ROOT}/runtime/lib/api.sh" ]; then
+# Core SDK (Registry SSOT for expected structure)
+CONTROL_ROOT="$(cd "$ENGINE_ROOT/../.." && pwd)"
+if [ -f "${CONTROL_ROOT}/core/lib/api.sh" ]; then
   # shellcheck disable=SC1090
-  source "${RUNTIME_ROOT}/runtime/lib/api.sh"
+  source "${CONTROL_ROOT}/core/lib/api.sh"
 fi
 
 # --- JSON helpers (python3 preferred) ---

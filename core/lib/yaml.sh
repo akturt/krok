@@ -1,5 +1,5 @@
 #!/bin/bash
-# runtime/lib/yaml.sh — Minimal YAML parser for underboss registry
+# core/lib/yaml.sh — Minimal YAML parser for underboss registry
 #
 # NOT a general YAML parser. Handles only the registry format.
 # All functions take a file path as first argument.
@@ -77,7 +77,7 @@ yaml_get_map_field() {
 }
 
 # yaml_get_nested_list <file> <parent> <child> — list under nested section
-#   contracts.runtime, components.agents, etc.
+#   contracts.product, components.agents, etc.
 yaml_get_nested_list() {
   local file="$1" parent="$2" child="$3"
   [ -f "$file" ] || return 1
@@ -113,7 +113,7 @@ yaml_get_version() {
 }
 
 # yaml_get_deep_list <file> <dotted.path> — extract list from deeply nested section
-#   yaml_get_deep_list registry.yaml "components.contracts.runtime" → list
+#   yaml_get_deep_list registry.yaml "components.contracts.product" → list
 yaml_get_deep_list() {
   local file="$1" path="$2"
   [ -f "$file" ] || return 1

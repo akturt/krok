@@ -2,11 +2,11 @@
 schema: 1
 id: adr-002-runtime-v1.2-operating-platform
 type: adr
-status: accepted
+status: superseded
 date: 2026-07-08
 owners: [underboss-team]
 
-entity_refs: [runtime-agentic-layer]
+entity_refs: [agentic-layer]
 tags: [adr, runtime, v1.2, registry, state-machine, contracts, reality-engine]
 depends_on: [adr-001-agentic-layer-separation]
 priority: P0
