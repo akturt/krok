@@ -20,19 +20,19 @@ Hand the agent this prompt:
 
 <!-- migration-source:start -->
 ```
-Install or update Underboss in this repository.
+You are in a consumer repository. Update Underboss to the current v3.
 
-Follow the canonical runbook INSTALL.md exactly:
+Follow INSTALL.md (the canonical runbook):
 - if docs/.control/INSTALL.md exists, read it there;
 - if docs/.runtime/underboss/INSTALL.md exists, read it there;
 - otherwise read https://raw.githubusercontent.com/akturt/underboss/master/INSTALL.md
 
-Start with its section "For an AI coding agent": run the detection, choose
-INSTALL, UPDATE or MIGRATE from its output, and follow only that flow. If the
-detection prints STOP, change nothing and report why. Do not edit files inside
-docs/.control/ or docs/.runtime/underboss/. Do not pass --implemented unless I
-gave you the Spec ids. Do not push. When done, report the verification results
-and every manual action that remains.
+First determine the mode: run the detection in its section "For an AI coding
+agent" and take INSTALL, UPDATE or MIGRATE from its output. Execute only that
+flow, step by step. Do not edit files inside the submodule. Do not invent a
+migration path. If the detection prints STOP, change nothing and report why.
+Do not pass --implemented unless I gave you the Spec ids. Do not push.
+When done, report the verification results and every manual action that remains.
 ```
 <!-- migration-source:end -->
 

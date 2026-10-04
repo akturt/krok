@@ -262,6 +262,48 @@ Installation/update complete when:
 
 <!-- migration-source:end -->
 
+## Consumer rollout order
+
+The order in which real projects move to v3. Each line is a step of the flow named in brackets; the commands are those of the flow, unchanged. Choose the list by the detection result.
+
+**Existing v3 consumers** (`UPDATE`, flow B):
+
+```text
+1. clean consumer                      [B.1]
+2. update submodule to v3 commit       [B.2]
+3. run bootstrap/update flow           [B.3]
+4. run verification                    [B.4, Verification]
+5. review generated changes            [B.5]
+6. commit consumer changes             [B.5]
+```
+
+<!-- migration-source:start -->
+**Existing v2 consumers** (`MIGRATE`, flow C):
+
+```text
+1. clean consumer                                                          [C.1]
+2. update submodule while still mounted at docs/.runtime/underboss         [C.2]
+3. commit updated submodule pointer                                        [C.2]
+4. run explicit v2→v3 migration (dry run, then apply)                      [C.3, C.4]
+5. run verification                                                        [C.6, Verification]
+6. review migration diff                                                   [C.7]
+7. resolve reported user-owned warnings manually                           [C.5]
+8. commit migrated consumer                                                [C.7]
+```
+
+Why step 3 comes before step 4: the migration refuses a dirty tracked tree, and moving the submodule pointer is a tracked change. The pointer is committed first, so the migration starts from a clean `HEAD` and its diff contains only the migration.
+<!-- migration-source:end -->
+
+**New consumers** (`INSTALL`, flow A):
+
+```text
+1. add v3 submodule at docs/.control   [A.1]
+2. run bootstrap                       [A.2]
+3. fill .context/project.yml           [A.3]
+4. run verification                    [A.5, Verification]
+5. commit                              [A.5]
+```
+
 ## Using the Control Plane after installation
 
 `bash docs/.control/core/bin/underboss status` shows executions, stale READY and open Escalations; `attention` shows open Escalations only. Execution commands: `execution create | ready | start | verify | complete | cancel | record | resume | rework`, and `escalation list | show | open | resolve`; state-changing commands need `--actor <identity>`. All commands accept `--json` and `--project <path>`. Processes are described in `docs/.control/sops/`; run `node docs/.control/sops/planner.mjs <name>` to print a plan.
