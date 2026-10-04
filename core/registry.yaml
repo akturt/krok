@@ -36,6 +36,7 @@ entrypoints:
   bootstrap: bootstrap/bootstrap.sh
   installer: bootstrap/install.sh
   validator: documentation/validation/validate-integrity.sh
+  cli: core/bin/underboss
 
 vocabularies:
   escalation_kinds:

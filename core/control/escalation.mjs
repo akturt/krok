@@ -7,8 +7,8 @@ import { readUnit, listRecords, appendRecord, nextSeq, transitionUnit, utc, DEFA
 import { isTerminal } from './states.mjs';
 
 // escalate_on defaults to every kind. It is a trigger to stop, not a permission list.
-export function defaultAutonomy(root) {
-  return { escalate_on: [...escalationKinds(root)] };
+export function defaultAutonomy() {
+  return { escalate_on: [...escalationKinds()] };
 }
 
 export function mustEscalate(unit, kind) {

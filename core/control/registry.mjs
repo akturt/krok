@@ -41,3 +41,14 @@ export function resolveSop(name, version) {
   if (sop.version !== version) return { ok: false, reason: `SOP '${name}' has version ${sop.version}, unit requires ${version}` };
   return { ok: true, sop };
 }
+
+// The version a registered SOP carries.
+export function sopVersion(name) {
+  const names = loadRegistry()?.components?.sops || [];
+  if (!names.includes(name)) throw new Error(`SOP '${name}' is not registered`);
+  const file = join(CONTROL_ROOT, 'sops', `${name}.yaml`);
+  if (!existsSync(file)) throw new Error(`SOP file sops/${name}.yaml not found`);
+  const v = parse(readFileSync(file, 'utf8')).version;
+  if (!Number.isInteger(v)) throw new Error(`SOP '${name}' has no integer version`);
+  return v;
+}
