@@ -2,7 +2,7 @@
 schema: 1
 id: spec-underboss-v3-control-plane
 type: spec
-status: approved
+status: superseded
 date: 2026-10-04
 owners: [underboss-team]
 
