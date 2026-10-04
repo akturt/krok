@@ -32,8 +32,9 @@ project grows.
 > **To install:** give your AI agent the link to this repo
 > (`https://github.com/akturt/underboss`) and say:
 > **"Install Underboss."**
-> The agent reads `bootstrap/DEPLOY-PROMPT.md` and does everything automatically.
-> Or run the one-liner:
+> The agent reads [`INSTALL.md`](INSTALL.md), the canonical runbook, and does everything automatically.
+> To update an existing installation say **"Update Underboss. Follow the canonical runbook."**
+> For a fresh install you can also run the one-liner:
 > `bash <(curl -s https://raw.githubusercontent.com/akturt/underboss/master/bootstrap/install.sh)`
 
 ---
@@ -136,12 +137,13 @@ Give your AI agent the link to this repo and say:
 
 > **"Install Underboss."**
 
-That's it. The agent reads [`bootstrap/DEPLOY-PROMPT.md`](bootstrap/DEPLOY-PROMPT.md),
-detects the current state (fresh install / v1.0 migration / v1.1–v1.9 auto-upgrade /
-v2.0 update), executes the correct path, runs all verifications, and reports back.
+That's it. The agent reads [`INSTALL.md`](INSTALL.md), the single canonical runbook,
+detects the current state (not installed / v3 installed / v2 installed), executes the
+matching flow (install / update / explicit v2 → v3 migration), runs all verifications,
+and reports back.
 Works with opencode, Claude Code, Cursor, and any other agent that can run shell commands.
 
-### Option 2 — One-liner
+### Option 2 — One-liner (fresh install)
 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/akturt/underboss/master/bootstrap/install.sh)
@@ -162,7 +164,9 @@ bash docs/.control/bootstrap/bootstrap.sh
 # 3. Fill in .context/project.yml and .context/boundaries.yml
 ```
 
-**Brownfield repo** (already has `docs/` with `.md` files)? Follow [`playbook/migrate-legacy.md`](playbook/migrate-legacy.md) — agent prompt with runnable migration script. Don't run `bootstrap.sh` directly on brownfield.
+**Repo whose `docs/` already has `.md` files without Schema v1 frontmatter?** Bring them to Schema v1 with [`playbook/migrate-legacy.md`](playbook/migrate-legacy.md) (onboarding of foreign documentation).
+
+**Underboss already installed?** Do not repeat the install: [`INSTALL.md`](INSTALL.md) decides between update (v3) and the explicit v2 → v3 migration.
 
 Full details: [`INSTALL.md`](INSTALL.md).
 
@@ -173,7 +177,7 @@ Full details: [`INSTALL.md`](INSTALL.md).
 ```text
 underboss/ ← product repo
 ├── README.md ← this file
-├── INSTALL.md ← consumer integration guide
+├── INSTALL.md ← canonical install / update / migration runbook
 ├── bootstrap/ ← Core: loader, install one-liner, deploy prompt
 ├── core/ ← Core: registry, installation state machine, contracts, Core SDK
 ├── engine/ ← Core: Reality Engine + migration script
@@ -207,7 +211,7 @@ Or re-run bootstrap — it detects the current version and updates idempotently:
 bash docs/.control/bootstrap/bootstrap.sh
 ```
 
-Details: [`bootstrap/DEPLOY-PROMPT.md`](bootstrap/DEPLOY-PROMPT.md).
+Details: [`INSTALL.md`](INSTALL.md); the prompt to hand to an agent: [`bootstrap/DEPLOY-PROMPT.md`](bootstrap/DEPLOY-PROMPT.md).
 
 ---
 

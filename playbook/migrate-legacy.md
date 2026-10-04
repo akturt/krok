@@ -2,7 +2,7 @@
 schema: 1
 id: documentation-system-migration-legacy
 type: guide
-kind: legacy
+kind: onboarding
 status: active
 date: 2026-07-07
 updated: 2026-07-08
@@ -19,6 +19,8 @@ priority: P1
 
 # Migration Prompt: Brownfield Repository → Canonical Schema v1
 
+> **Scope:** this guide brings *foreign* documentation (Markdown that has no Schema v1 frontmatter) to Canonical Schema v1. It is not the way to install or update Underboss and not the v2 → v3 migration: for those, follow [`../INSTALL.md`](../INSTALL.md).
+>
 > Agent-ready protocol for migrating an existing repository (brownfield) to the target Documentation System v2 model (Canonical Schema v1).
 > The target model is described in [`playbook-v2.md`](playbook-v2.md) (Greenfield Playbook). This guide is not part of the model — it is a **way to get into it**.
 >
@@ -33,7 +35,7 @@ This document is a **ready-made prompt** for an AI agent (Claude Code, opencode)
 
 ## Prerequisites
 
-- The `underboss` submodule is already attached at `docs/.control/` (see `../../INSTALL.md`).
+- The `underboss` submodule is already attached at `docs/.control/` (see `../INSTALL.md`).
 - The repository has already run `bootstrap/bootstrap.sh` (`.context/`, `docs/` skeleton, `CLAUDE.md` snippet created).
 - Node.js 18+ is available for `engine/scripts/migrate-legacy.mjs`.
 

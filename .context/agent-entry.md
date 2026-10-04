@@ -14,7 +14,7 @@ Then open `docs/REALITY-REPORT.md` (or the generated artifact it points to) and 
 
 | Area | Purpose |
 |------|---------|
-| `bootstrap/DEPLOY-PROMPT.md` | Full autonomous install / upgrade prompt (send to your AI agent) |
+| `INSTALL.md` | Canonical install / update / migration runbook (agents start here) |
 | `docs/` | Project documentation (authoritative output) |
 | `docs/.control/` | Underboss git submodule — do not edit directly |
 | `.context/` | Agent entry metadata — project identity, boundaries |

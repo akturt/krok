@@ -430,8 +430,9 @@ export function main(argv, { cwd = process.cwd(), out = (s) => process.stdout.wr
     let project = o.project ? resolve(cwd, o.project) : null;
     if (!project) {
       const here = posix(dirname(fileURLToPath(import.meta.url)));
-      if (!here.endsWith(`${OLD_MOUNT}/core/migrate`)) throw new MigrationError(['pass --project <path>: the script is not running from docs/.runtime/underboss']);
-      project = resolve(here, '..', '..', '..', '..', '..');
+      // run from the mount (the old one before the migration, the new one after): the project is derived
+      if (!here.endsWith(`${OLD_MOUNT}/core/migrate`) && !here.endsWith(`${NEW_MOUNT}/core/migrate`)) throw new MigrationError(['pass --project <path>: the script is not running from a docs/ mount of Underboss']);
+      project = here.endsWith(`${OLD_MOUNT}/core/migrate`) ? resolve(here, '..', '..', '..', '..', '..') : resolve(here, '..', '..', '..', '..');
     }
     const p = plan(project, { implemented: o.implemented });
     if (o.dryRun) { out(`${describe(p).join('\n')}\n`); return 0; }

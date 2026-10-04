@@ -24,6 +24,7 @@ Before any change to docs/:
 2. Use docs/.control/documentation/templates/ - do not copy templates into the project
 3. Run docs/.control/documentation/validation/validate-frontmatter.sh before commit
 4. Execution state is managed with docs/.control/core/bin/underboss (status, attention, execution, escalation)
+5. To install, update or migrate Underboss follow docs/.control/INSTALL.md (the canonical runbook)
 
 SNIPPET
       cat "${target_dir}/CLAUDE.md"
@@ -76,6 +77,7 @@ docs/
 - \`.context/agent-entry.md\` — agent entry protocol
 - \`docs/.control/core/installation-state-machine.yaml\` — valid states and transitions
 - \`docs/.control/core/bin/underboss\` — Control Plane CLI: status, attention, execution, escalation
+- \`docs/.control/INSTALL.md\` — canonical runbook: install, update, migrate
 HEREDOC
   echo "  → CLAUDE.md snippet created."
 }

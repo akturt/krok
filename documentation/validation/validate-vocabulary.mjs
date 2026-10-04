@@ -96,7 +96,12 @@ export function scan(path, text, cls) {
   const findings = [];
   const fm = path.endsWith('.md') ? frontmatter(text) : {};
   const allowed = EXCEPTIONS[fm.id] || new Set();
+  let inMigration = false;
   text.replace(/\r\n/g, '\n').split('\n').forEach((line, i) => {
+    // migration documentation: a marked region of a Markdown file may name the source state it migrates
+    if (/^<!--\s*migration-source:start\s*-->$/.test(line)) { inMigration = path.endsWith('.md'); return; }
+    if (/^<!--\s*migration-source:end\s*-->$/.test(line)) { inMigration = false; return; }
+    if (inMigration) return;
     if (/^(supersedes|depends_on|implements|entity_refs):/.test(line)) return; // structural id references
     const hit = (what) => findings.push({ path, line: i + 1, what, text: line.trim().slice(0, 140) });
     for (const [what, re] of FORBIDDEN_IDENTIFIERS) if (re.test(line)) hit(what);

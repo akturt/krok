@@ -129,7 +129,8 @@ $snippet = @(
   '6. For typical processes, pick a SOP in `docs/.control/sops/` and run `node docs/.control/sops/planner.mjs <name>` - call roles by name',
   '7. If task involves architectural review - see `docs/.control/sops/architecture-review.yaml`; foundation is `reality-auditor` BEFORE `architecture-reviewer`.',
   '8. Execution state is managed with `docs/.control/core/bin/underboss` (status, attention, execution, escalation).',
-  '9. Common knowledge bases live in `docs/.control/knowledge/` (`architecture-principles`, `evidence-model`, `audit-principles`, `report-formats`, `capabilities`) - roles reference them by short-id, not inline.'
+  '9. To install, update or migrate Underboss follow `docs/.control/INSTALL.md` (the canonical runbook).',
+  '10. Common knowledge bases live in `docs/.control/knowledge/` (`architecture-principles`, `evidence-model`, `audit-principles`, `report-formats`, `capabilities`) - roles reference them by short-id, not inline.'
 )
 
 $claude = Join-Path $ProjectPath "CLAUDE.md"

@@ -104,7 +104,7 @@ Role files are ready-to-use agent descriptors. Copy them into your platform's co
 - **Claude Code**: `.claude/agents/<role>.md`
 - **opencode**: `.opencode/agents/<role>.md`
 
-Or use the `CLAUDE.md` snippet from `INSTALL.md`.
+Or use the Underboss section that bootstrap puts into `CLAUDE.md` (see `INSTALL.md`).
 
 ## Usage via SOP
 
