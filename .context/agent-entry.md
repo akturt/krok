@@ -1,6 +1,6 @@
 # Agent Entry Point
 
-This project uses **Underboss v2.0.0**.
+This project uses **Underboss v3.0.0**.
 
 ## Your first action
 

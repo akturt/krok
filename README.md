@@ -229,6 +229,7 @@ The longer the project lives, the more valuable Underboss becomes.
 
 ## Changelog
 
+- **2026-10-04** — **v3.0.0 — Control Plane**. Execution Units with state, immutable records and Escalations; the `underboss` CLI; one Spec lifecycle; `core/` and `docs/.control/`; one-time migration `core/migrate/v2-to-v3.mjs`.
 - **2026-07-10** — **v2.0.0 — Underboss rebrand + Registry SSOT**. Identity (name, version, codename) centralized in `core/registry.yaml`. All components read from registry API — zero hardcoded strings. Submodule path changed to `docs/.control`. Consumer upgrade prompt covers v1.0 → v2.0 migration.
 - **2026-07-10** — **v1.9 — Bash prefix + registry bugfix**. Fixed `reality-report.sh` calling collectors/analyzers without `bash` prefix (Permission denied on Linux/macOS). Fixed `registry_list_directories` returning non-path YAML keys, which caused empty dirs in `docs/`.
 - **2026-07-09** — **v1.8 — Architecture Invariants Support**.
@@ -244,7 +245,7 @@ The longer the project lives, the more valuable Underboss becomes.
 
 | Stage | State |
 |------|-------|
-| Underboss v2.0.0 | ✅ implemented |
+| Underboss v3.0.0 | ✅ implemented |
 | Playbook v2 (greenfield model) | ✅ implemented |
 | Migration Prompt (brownfield) | ✅ implemented |
 | Bootstrap (idempotent, POSIX + Windows) | ✅ implemented |
