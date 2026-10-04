@@ -267,6 +267,10 @@ export function plan(project, { implemented = [] } = {}) {
     if (rest.trim() === '') regen.push(f); else sectionEdits.push([f, rest.replace(/^\s+/, '')]);
   }
 
+  // generated agent entry metadata that names the old mount: the path is rewritten
+  const entry = '.context/agent-entry.md';
+  if (has(entry) && read(entry).includes(OLD_MOUNT)) writes.set(entry, read(entry).split(OLD_MOUNT).join(NEW_MOUNT));
+
   if (errors.length) throw new MigrationError(errors);
   return { project, moves, writes, removes, regen, sectionEdits, mount: [OLD_MOUNT, NEW_MOUNT] };
 }
@@ -317,6 +321,70 @@ export function apply(p) {
   if (boot.status !== 0) throw new Error(`bootstrap failed after the transformation: ${(boot.stderr || boot.stdout).trim()}`);
 }
 
+// ---------- all or nothing ----------
+// The plan is validated before anything is written. If applying it still fails, or the
+// result fails its own checks, everything is undone: the mount moves back, tracked files
+// are reset to HEAD (a clean tracked tree is a precondition), files created by the run are
+// removed and untracked files that were rewritten are restored.
+
+export class RolledBack extends Error {}
+
+function untrackedFiles(project) {
+  return git(project, ['ls-files', '--others', '--exclude-standard']).split('\n').filter(Boolean);
+}
+
+function directories(project) {
+  const out = new Set();
+  const visit = (d) => {
+    for (const e of readdirSync(d)) {
+      const p = join(d, e);
+      const rel = posix(relative(project, p));
+      if (rel === '.git' || rel === OLD_MOUNT || rel === NEW_MOUNT) continue;
+      if (statSync(p).isDirectory()) { out.add(rel); visit(p); }
+    }
+  };
+  visit(project);
+  return out;
+}
+
+function takeSnapshot(p) {
+  const { project } = p;
+  const tracked = new Set(git(project, ['ls-files']).split('\n').filter(Boolean));
+  const touched = new Set([...p.writes.keys(), ...p.removes, ...p.regen, ...p.sectionEdits.map(([f]) => f), ...p.moves.map(([a]) => a)]);
+  const backups = new Map();
+  for (const rel of touched) if (!tracked.has(rel) && existsSync(join(project, rel))) backups.set(rel, readFileSync(join(project, rel)));
+  return { untracked: new Set(untrackedFiles(project)), dirs: directories(project), backups };
+}
+
+function rollback(p, snap) {
+  const { project } = p;
+  const abs = (rel) => join(project, rel);
+  try {
+    if (!existsSync(abs(OLD_MOUNT)) && existsSync(abs(NEW_MOUNT)) && git(project, ['ls-files', '-s', '--', NEW_MOUNT]).trim()) {
+      mkdirSync(dirname(abs(OLD_MOUNT)), { recursive: true });
+      git(project, ['mv', NEW_MOUNT, OLD_MOUNT]);
+    }
+  } catch { /* the reset below restores the index either way */ }
+  try { git(project, ['reset', '-q', '--hard', 'HEAD']); } catch { /* reported by the caller */ }
+  for (const rel of untrackedFiles(project)) if (!snap.untracked.has(rel)) { try { unlinkSync(abs(rel)); } catch { /* already gone */ } }
+  const created = [...directories(project)].filter((d) => !snap.dirs.has(d)).sort((a, b) => b.length - a.length);
+  for (const d of created) { try { rmdirSync(abs(d)); } catch { /* not empty: not ours */ } }
+  for (const [rel, buf] of snap.backups) { mkdirSync(dirname(abs(rel)), { recursive: true }); writeFileSync(abs(rel), buf); }
+}
+
+export function execute(p) {
+  const snap = takeSnapshot(p);
+  try {
+    apply(p);
+    const r = verifyResult(p.project);
+    if (r.errors.length) throw new Error(`the result failed its own checks:\n${r.errors.join('\n')}`);
+    return r;
+  } catch (e) {
+    rollback(p, snap);
+    throw new RolledBack(e.message);
+  }
+}
+
 // ---------- checks after the transformation ----------
 
 export function verifyResult(project) {
@@ -328,14 +396,16 @@ export function verifyResult(project) {
   if (has('docs/specs/review')) errors.push('docs/specs/review still exists');
   if (!/path = docs\/\.control/.test(has('.gitmodules') ? readFileSync(join(project, '.gitmodules'), 'utf8') : '')) errors.push('.gitmodules does not register docs/.control');
   if (!has('.context/boundaries.yml') || statSync(join(project, '.context', 'boundaries.yml')).size === 0) errors.push('.context/boundaries.yml was not regenerated');
+  // generated files must be free of the old mount; the other files of the project are user-owned
+  const generated = ['.context/project.yml', '.context/boundaries.yml', '.context/agent-entry.md', 'CLAUDE.md', '.github/workflows/docs-validate.yml'];
+  for (const f of generated) if (has(f) && readFileSync(join(project, f), 'utf8').includes('docs/.runtime')) errors.push(`${f} is generated and still names docs/.runtime`);
+  if (has('CLAUDE.md') && !readFileSync(join(project, 'CLAUDE.md'), 'utf8').includes('docs/.control/')) errors.push('CLAUDE.md does not describe Underboss after bootstrap');
   for (const p of walk(project)) {
     const rel = posix(relative(project, p));
-    if (rel.startsWith('.git/') || rel.startsWith(`${NEW_MOUNT}/`) || rel === '.gitmodules' || !/\.(md|ya?ml|json|sh|mjs)$/.test(rel)) continue;
-    if (readFileSync(p, 'utf8').includes('docs/.runtime')) warnings.push(`${rel} still names docs/.runtime`);
+    if (rel.startsWith('.git/') || rel.startsWith(`${NEW_MOUNT}/`) || rel === '.gitmodules' || generated.includes(rel) || !/\.(md|ya?ml|json|sh|mjs)$/.test(rel)) continue;
+    if (readFileSync(p, 'utf8').includes('docs/.runtime')) warnings.push(`${rel} is user-owned and still names docs/.runtime`);
   }
-  for (const f of ['CLAUDE.md', 'AGENTS.md']) {
-    if (has(f) && !/^## Underboss\s*$/m.test(readFileSync(join(project, f), 'utf8')) && !readFileSync(join(project, f), 'utf8').includes('AI Agent Quickstart')) warnings.push(`${f} has no Underboss section; add the snippet of bootstrap/generators/claude-md.sh`);
-  }
+  if (has('AGENTS.md') && !readFileSync(join(project, 'AGENTS.md'), 'utf8').includes('docs/.control/')) warnings.push('AGENTS.md is user-owned and does not mention docs/.control/');
   return { errors, warnings };
 }
 
@@ -365,13 +435,12 @@ export function main(argv, { cwd = process.cwd(), out = (s) => process.stdout.wr
     }
     const p = plan(project, { implemented: o.implemented });
     if (o.dryRun) { out(`${describe(p).join('\n')}\n`); return 0; }
-    apply(p);
-    const r = verifyResult(project);
+    const r = execute(p);
     for (const w of r.warnings) err(`warning: ${w}\n`);
-    if (r.errors.length) { err(`migration finished with errors:\n${r.errors.join('\n')}\n`); return 1; }
     out(`migrated to v3: ${describe(p).length} steps\nreview the staged changes and commit them\n`);
     return 0;
   } catch (e) {
+    if (e instanceof RolledBack) { err(`v2-to-v3: failed and rolled back; the project is as it was before\n  ${e.message.split('\n').join('\n  ')}\n`); return 1; }
     if (e instanceof MigrationError) { err(`v2-to-v3: refused, nothing was changed\n${e.errors.map((m) => `  ${m}`).join('\n')}\n`); return 1; }
     err(`v2-to-v3: ${e.message}\n`);
     return 1;

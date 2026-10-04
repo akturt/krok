@@ -86,15 +86,10 @@ ok
 while IFS= read -r tmpl; do
   [ -z "$tmpl" ] && continue
   tpath=$(registry_get_template_path "$tmpl")
-  if [ -n "$tpath" ]; then
-    if [ ! -f "$CONTROL_ROOT/$tpath" ]; then
-      error "Registry template '$tmpl' path '$tpath' has no matching file"
-    fi
-  else
-    # Fallback: try name.md
-    if [ ! -f "$CONTROL_ROOT/documentation/templates/$tmpl.md" ]; then
-      error "Registry template '$tmpl' has no matching file"
-    fi
+  if [ -z "$tpath" ]; then
+    error "Registry template '$tmpl' has no path"
+  elif [ ! -f "$CONTROL_ROOT/$tpath" ]; then
+    error "Registry template '$tmpl' path '$tpath' has no matching file"
   fi
 done < <(registry_list_templates)
 ok

@@ -91,7 +91,7 @@ Documentation Runtime is connected as a Git Submodule: docs/.runtime/underboss
 keep this
 `;
 
-function v2Consumer({ variant = 'v3', tweak = () => {} } = {}) {
+function v2Consumer({ variant = 'v3', tweak = () => {}, after = () => {} } = {}) {
   const proj = mkdtempSync(join(tmpdir(), 'underboss-v2-'));
   git(proj, 'init', '-q', '-b', 'main', '.');
   git(proj, 'remote', 'add', 'origin', 'https://example.com/acme/shop.git');
@@ -119,6 +119,7 @@ function v2Consumer({ variant = 'v3', tweak = () => {} } = {}) {
   tweak(proj);
   git(proj, 'add', '-A');
   git(proj, 'commit', '-q', '-m', 'v2 consumer');
+  after(proj);
   return proj;
 }
 
@@ -138,7 +139,8 @@ function snapshot(proj) {
       const p = join(d, e);
       const rel = P(relative(proj, p));
       if (rel === '.git' || rel === '.gitmodules' || rel.startsWith('docs/.control') || rel.startsWith(OLD)) continue;
-      if (statSync(p).isDirectory()) walk(p); else out[rel] = readFileSync(p, 'utf8');
+      // line endings are normalized: git may check files out with CRLF (core.autocrlf)
+      if (statSync(p).isDirectory()) walk(p); else out[rel] = readFileSync(p, 'utf8').split('\r\n').join('\n');
     }
   };
   walk(proj);
@@ -288,7 +290,11 @@ test('migration: v2 becomes v3 exactly as the Migration Contract says; a second 
   assert.doesNotMatch(claude, /Documentation Runtime/);
   assert.match(claude, /# Mine\n\nMy own notes\./);
   assert.match(claude, /## Other\n\nkeep this/);
-  assert.match(r.err, /warning: \.context\/agent-entry\.md still names docs\/\.runtime/);
+  assert.equal(r.err, ''); // no warnings: every v2 remnant in a generated file is gone
+  assert.match(read(proj, '.context/agent-entry.md'), /docs\/\.control/);
+  assert.doesNotMatch(read(proj, '.context/agent-entry.md'), /docs\/\.runtime/);
+  assert.match(claude, /^## Underboss$/m);
+  assert.match(claude, /docs\/\.control\/core\/bin\/underboss/);
 
   // the validators of the new mount pass on the migrated project
   const ctl = join(proj, 'docs', '.control', 'documentation', 'validation');
@@ -305,11 +311,8 @@ test('migration: v2 becomes v3 exactly as the Migration Contract says; a second 
   assert.equal(status.status, 0, status.stderr);
   assert.equal(JSON.parse(status.stdout).backlog.active, 2);
 
-  // no operational file names the old mount except what the script warned about
-  for (const [rel, text] of Object.entries(snapshot(proj))) {
-    if (rel === '.context/agent-entry.md') continue;
-    assert.doesNotMatch(text, /docs\/\.runtime/, rel);
-  }
+  // no file of the project names the old mount
+  for (const [rel, text] of Object.entries(snapshot(proj))) assert.doesNotMatch(text, /docs\/\.runtime/, rel);
 
   // a project that is already v3 is refused, not "helped"
   git(proj, 'add', '-A');
@@ -328,4 +331,33 @@ test('migration: deterministic - two identical v2 projects give identical v3 pro
   assert.equal(migrate(a, '--implemented', 'spec-c').code, 0);
   assert.equal(migrate(b, '--implemented', 'spec-c').code, 0);
   assert.deepEqual(snapshot(a), snapshot(b));
+});
+
+test('all or nothing: a failure while applying rolls everything back, including untracked files', () => {
+  const proj = v2Consumer({
+    // an untracked Spec in review/ passes the plan but cannot be moved by git: the failure
+    // happens after other files were already moved
+    after: (p) => {
+      put(p, 'docs/specs/review/loose.md', doc({ id: 'spec-loose', type: 'spec', status: 'review', extra: 'entity_refs: [registry]\n' }));
+      put(p, 'scratch.txt', 'mine\n');
+    },
+  });
+  const head = git(proj, 'rev-parse', 'HEAD');
+  const status = git(proj, 'status', '--porcelain');
+  const submodules = git(proj, 'submodule', 'status');
+  const gitmodules = read(proj, '.gitmodules');
+  const before = snapshot(proj);
+  const r = migrate(proj);
+  assert.equal(r.code, 1, r.out + r.err);
+  assert.match(r.err, /failed and rolled back; the project is as it was before/);
+  assert.equal(git(proj, 'rev-parse', 'HEAD'), head);
+  assert.equal(git(proj, 'status', '--porcelain'), status);
+  assert.equal(git(proj, 'submodule', 'status'), submodules);
+  assert.equal(read(proj, '.gitmodules'), gitmodules);
+  assert.deepEqual(snapshot(proj), before);
+  assert.ok(existsSync(join(proj, OLD, 'core', 'registry.yaml')));
+  assert.ok(!existsSync(join(proj, 'docs', '.control')));
+  assert.equal(git(join(proj, OLD), 'rev-parse', 'HEAD').trim().length, 40); // the submodule is intact
+  assert.ok(existsSync(join(proj, 'docs', 'api', 'approved', 'pay.md')) && !existsSync(join(proj, 'docs', 'api', 'pay.md')));
+  assert.equal(read(proj, 'scratch.txt'), 'mine\n');
 });

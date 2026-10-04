@@ -173,3 +173,39 @@ test('frontmatter validator: every finding is an error, no warn-only switch', ()
   const missing = spawnSync('bash', [join(REPO, 'documentation/validation/validate-frontmatter.sh'), join(proj, 'nope')], { encoding: 'utf8' });
   assert.equal(missing.status, 1);
 });
+
+test('no fallback branches remain in the shell core, the validators and the generators', () => {
+  const dirs = [join(REPO, 'core', 'lib'), join(REPO, 'documentation', 'validation'), join(REPO, 'bootstrap', 'generators')];
+  for (const d of dirs) {
+    for (const f of readdirSync(d).filter((x) => x.endsWith('.sh'))) {
+      assert.doesNotMatch(readFileSync(join(d, f), 'utf8'), /fallback/i, `${d}/${f}`);
+    }
+  }
+});
+
+test('detect_all needs the Registry', () => {
+  const root = tmp('underboss-detect-');
+  cpSync(join(REPO, 'core', 'lib'), join(root, 'core', 'lib'), { recursive: true });
+  const r = bash(`export CONTROL_ROOT="${P(root)}"; source "${P(root)}/core/lib/api.sh"; detect_all "${P(root)}"; echo "status=$?"`, root);
+  assert.match(r.stdout, /status=1/);
+  assert.match(r.stderr, /registry not found/);
+});
+
+test('claude-md generator: an existing CLAUDE.md without Underboss rules gets the snippet, one with them is left alone', () => {
+  const run = (initial) => {
+    const proj = tmp('underboss-claude-');
+    if (initial !== null) put(proj, 'CLAUDE.md', initial);
+    const r = bash(`export CONTROL_ROOT="${P(REPO)}"; source "${P(REPO)}/core/lib/api.sh"; source "${P(REPO)}/bootstrap/generators/claude-md.sh"; generate "${P(proj)}" x; generate "${P(proj)}" x`, proj);
+    assert.equal(r.status, 0, r.stderr);
+    return readFileSync(join(proj, 'CLAUDE.md'), 'utf8');
+  };
+  const user = run('# Mine\n\nnotes\n');
+  assert.match(user, /^## Underboss$/m);
+  assert.match(user, /# Mine\n\nnotes\n$/);
+  assert.equal(user.match(/^## Underboss$/gm).length, 1); // the second run did not prepend again
+  const own = '# Mine\n\nsee docs/.control/ for the rules\n';
+  assert.equal(run(own), own);
+  const fresh = run(null);
+  assert.match(fresh, /^# CLAUDE\.md — AI Agent Quickstart/);
+  assert.match(fresh, /core\/bin\/underboss/);
+});

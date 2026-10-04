@@ -7,7 +7,29 @@ generate() {
   local target_dir="$1" registry="$2"
 
   if [ -f "${target_dir}/CLAUDE.md" ]; then
-    echo "  → CLAUDE.md already exists, skipping."
+    if grep -q 'docs/\.control/' "${target_dir}/CLAUDE.md"; then
+      echo "  → CLAUDE.md already describes Underboss, skipping."
+      return
+    fi
+    # An existing CLAUDE.md without Underboss rules gets the snippet prepended.
+    local tmp="${target_dir}/CLAUDE.md.tmp"
+    {
+      cat << 'SNIPPET'
+## Underboss
+
+Underboss is connected as a Git Submodule: docs/.control/
+
+Before any change to docs/:
+1. Read docs/.control/playbook/playbook-v2.md (the protocol)
+2. Use docs/.control/documentation/templates/ - do not copy templates into the project
+3. Run docs/.control/documentation/validation/validate-frontmatter.sh before commit
+4. Execution state is managed with docs/.control/core/bin/underboss (status, attention, execution, escalation)
+
+SNIPPET
+      cat "${target_dir}/CLAUDE.md"
+    } > "$tmp"
+    mv "$tmp" "${target_dir}/CLAUDE.md"
+    echo "  → Underboss snippet prepended to CLAUDE.md."
     return
   fi
 
