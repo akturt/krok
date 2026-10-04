@@ -5,10 +5,10 @@ export { escalationKinds, resolveSop, sopVersion, loadRegistry, CONTROL_ROOT } f
 export { validateUnit, validateRecord, RECORD_TYPES, EVIDENCE_CLASSES } from './schema.mjs';
 export { createUnit, readUnit, listRecords, appendRecord, transitionUnit, executionRoot, unitDir, utc } from './store.mjs';
 export {
-  ready, start, resume, isStale, verifyStart, recordVerification, complete, cancel, redesign,
+  ready, start, resume, isStale, verifyStart, verify, acceptanceStatus, recordVerification, complete, cancel, redesign,
   updateDefinition, validateReady, computeFingerprint, discoverEnvironment, realityDrift, matchingDrift,
 } from './ready.mjs';
 export { openEscalation, resolveEscalation, escalations, openEscalations, defaultAutonomy, mustEscalate } from './escalation.mjs';
 export { checkExecution, checkUnit, checkImmutability } from './consistency.mjs';
-export { listUnitIds, unitView, projectStatus, projectExecutions, projectAttention, findEscalation, allEscalations } from './projection.mjs';
+export { listUnitIds, backlogActive, unitView, projectStatus, projectExecutions, projectAttention, findEscalation, allEscalations } from './projection.mjs';
 export { createExecution, nextExecutionId } from './execution.mjs';

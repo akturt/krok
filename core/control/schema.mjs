@@ -92,7 +92,7 @@ export function validateRecord(r) {
     case 'validation':
       if (closed(p, ['result', 'purpose', 'fingerprint', 'base_commit', 'findings', 'environment'], w, errs)) {
         if (!['pass', 'fail'].includes(p.result)) errs.push(`${w}.result: pass or fail`);
-        if (!['ready', 'start', 'resume', 'complete'].includes(p.purpose)) errs.push(`${w}.purpose: ready, start, resume or complete`);
+        if (!['ready', 'start', 'resume', 'verify', 'complete'].includes(p.purpose)) errs.push(`${w}.purpose: ready, start, resume, verify or complete`);
         if (p.fingerprint !== null && !(isStr(p.fingerprint) && FINGERPRINT.test(p.fingerprint))) errs.push(`${w}.fingerprint: sha256:<hex> or empty`);
         if (p.base_commit !== null && !isStr(p.base_commit)) errs.push(`${w}.base_commit: string or empty`);
         if (!Array.isArray(p.findings)) errs.push(`${w}.findings: must be a list`);

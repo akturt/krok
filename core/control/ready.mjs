@@ -250,6 +250,47 @@ export function verifyStart(root, id, { actor, now = utc }) {
   return transitionUnit(root, id, 'VERIFYING', { actor, reason: 'completion claimed', now });
 }
 
+// Status of each criterion in scope, from the verification records written after the
+// unit last entered VERIFYING: pass | fail | insufficient (only CLAIMED/INFERRED) | pending.
+export function acceptanceStatus(unit, spec, recs) {
+  const scope = unit.scope === 'all' ? (spec ? acceptanceCriteria(spec.body) || [] : []) : unit.scope;
+  const entered = [...recs].reverse().find((r) => r.type === 'transition' && r.payload.to === 'VERIFYING');
+  const latest = new Map();
+  for (const r of recs) if (r.type === 'verification' && r.seq > (entered?.seq ?? 0)) latest.set(r.payload.criterion, r);
+  return scope.map((criterion) => {
+    const r = latest.get(criterion);
+    if (!r) return { criterion, status: 'pending', message: `${criterion} has no verification record` };
+    if (r.payload.result !== 'pass') return { criterion, status: 'fail', message: `${criterion} verification failed` };
+    if (!['OBSERVED', 'EVIDENCED'].includes(r.evidence.class)) return { criterion, status: 'insufficient', message: `${criterion} is supported only by ${r.evidence.class} evidence` };
+    return { criterion, status: 'pass', message: `${criterion} verified` };
+  });
+}
+
+function realityFindings(root, spec, reality) {
+  const out = [];
+  try { for (const i of matchingDrift(reality(root), spec.fm)) out.push({ check: 8, message: `Reality drift: ${i}`, kind: 'context-gap' }); }
+  catch (e) { out.push({ check: 8, message: `Reality Engine unavailable: ${e.message}`, kind: 'context-gap' }); }
+  return out;
+}
+
+// EXECUTING -> VERIFYING, then the acceptance and Reality checks run. On a unit that is
+// already VERIFYING the checks run again (no transition). Pending or insufficient
+// criteria are reported, not failures; a failed criterion or matching Reality drift is.
+export function verify(root, id, { actor, now = utc, reality = realityDrift }) {
+  let unit = readUnit(root, id);
+  if (unit.state === 'EXECUTING') unit = verifyStart(root, id, { actor, now });
+  else if (unit.state !== 'VERIFYING') throw new Error(`illegal transition ${unit.state} -> VERIFYING`);
+  const spec = findDocById(root, 'specs', unit.spec);
+  const acceptance = acceptanceStatus(unit, spec, listRecords(root, id).map((x) => x.record));
+  const findings = [];
+  for (const a of acceptance) if (a.status === 'fail') findings.push({ check: 9, message: a.message, kind: null });
+  if (spec) findings.push(...realityFindings(root, spec, reality));
+  else findings.push({ check: 1, message: `Spec '${unit.spec}' not found`, kind: null });
+  const result = { ok: findings.length === 0, findings, fingerprint: null, base_commit: run('git', ['rev-parse', 'HEAD'], root), environment: discoverEnvironment(root) };
+  validationRecord(root, id, 'verify', result, actor, now);
+  return { ok: result.ok, findings, acceptance, unit };
+}
+
 export function recordVerification(root, id, { actor, criterion, result, detail, commit = null, evidence, now = utc }) {
   const unit = readUnit(root, id);
   if (unit.state !== 'VERIFYING') throw new Error(`verification records are written in VERIFYING, unit is ${unit.state}`);
@@ -266,22 +307,10 @@ export function complete(root, id, { actor, now = utc, reality = realityDrift })
   const unit = readUnit(root, id);
   if (unit.state !== 'VERIFYING') throw new Error(`illegal transition ${unit.state} -> DONE`);
   const spec = findDocById(root, 'specs', unit.spec);
-  const findings = [];
-  const scope = unit.scope === 'all' ? (spec ? acceptanceCriteria(spec.body) || [] : []) : unit.scope;
-  const recs = listRecords(root, id).map((x) => x.record);
-  const entered = [...recs].reverse().find((r) => r.type === 'transition' && r.payload.to === 'VERIFYING');
-  const latest = new Map();
-  for (const r of recs) if (r.type === 'verification' && r.seq > (entered?.seq ?? 0)) latest.set(r.payload.criterion, r);
-  for (const c of scope) {
-    const r = latest.get(c);
-    if (!r) findings.push({ check: 9, message: `${c} has no verification record`, kind: null });
-    else if (r.payload.result !== 'pass') findings.push({ check: 9, message: `${c} verification failed`, kind: null });
-    else if (!['OBSERVED', 'EVIDENCED'].includes(r.evidence.class)) findings.push({ check: 9, message: `${c} is supported only by ${r.evidence.class} evidence`, kind: null });
-  }
-  if (spec) {
-    try { for (const i of matchingDrift(reality(root), spec.fm)) findings.push({ check: 8, message: `Reality drift: ${i}`, kind: 'context-gap' }); }
-    catch (e) { findings.push({ check: 8, message: `Reality Engine unavailable: ${e.message}`, kind: 'context-gap' }); }
-  } else findings.push({ check: 1, message: `Spec '${unit.spec}' not found`, kind: null });
+  const findings = acceptanceStatus(unit, spec, listRecords(root, id).map((x) => x.record))
+    .filter((a) => a.status !== 'pass').map((a) => ({ check: 9, message: a.message, kind: null }));
+  if (spec) findings.push(...realityFindings(root, spec, reality));
+  else findings.push({ check: 1, message: `Spec '${unit.spec}' not found`, kind: null });
   const result = { ok: findings.length === 0, findings, fingerprint: null, base_commit: run('git', ['rev-parse', 'HEAD'], root), environment: discoverEnvironment(root) };
   validationRecord(root, id, 'complete', result, actor, now);
   if (!result.ok) return { ok: false, findings, unit };

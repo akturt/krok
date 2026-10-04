@@ -85,7 +85,7 @@ test('project: explicit --project works from any working directory', () => {
   const other = mkdtempSync(join(tmpdir(), 'underboss-cwd-'));
   const r = cli(['status', '--project', root, '--json'], { cwd: other });
   assert.equal(r.code, 0, r.err);
-  assert.deepEqual(r.json(), { units: [], counts: { DESIGN: 0, READY: 0, EXECUTING: 0, VERIFYING: 0, BLOCKED: 0, DONE: 0, CANCELLED: 0 }, open_escalations: 0 });
+  assert.deepEqual(r.json(), { units: [], counts: { DESIGN: 0, READY: 0, EXECUTING: 0, VERIFYING: 0, BLOCKED: 0, DONE: 0, CANCELLED: 0 }, open_escalations: 0, backlog: { active: 0 } });
 });
 
 test('project: without --project the git top-level of the current directory is used', () => {

@@ -1,11 +1,18 @@
 // core/control/projection.mjs — read-only projections of Execution state (v3 Spec §8).
 // Nothing is stored: every view is computed from unit.yml, the records and Reality output.
-import { readdirSync, existsSync, statSync } from 'node:fs';
+import { readdirSync, existsSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { STATES } from './states.mjs';
 import { executionRoot, readUnit, listRecords } from './store.mjs';
 import { escalations } from './escalation.mjs';
 import { computeFingerprint, realityDrift } from './ready.mjs';
+
+// Open items of docs/backlog/active.md; a project without that file has none.
+export function backlogActive(root) {
+  const file = join(root, 'docs', 'backlog', 'active.md');
+  if (!existsSync(file)) return 0;
+  return (readFileSync(file, 'utf8').match(/^\s*-\s+\[ \]/gm) || []).length;
+}
 
 export function listUnitIds(root) {
   const dir = executionRoot(root);
@@ -51,7 +58,7 @@ export function projectStatus(root, { reality = realityDrift } = {}) {
     return { id, spec: unit.spec, state: unit.state, stale: staleOf(root, unit, drift), open_escalations: open };
   });
   const counts = Object.fromEntries(STATES.map((s) => [s, units.filter((u) => u.state === s).length]));
-  return { units, counts, open_escalations: units.reduce((n, u) => n + u.open_escalations, 0) };
+  return { units, counts, open_escalations: units.reduce((n, u) => n + u.open_escalations, 0), backlog: { active: backlogActive(root) } };
 }
 
 // attention: open Escalations only. It is never a task list.

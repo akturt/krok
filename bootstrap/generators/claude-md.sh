@@ -53,6 +53,7 @@ docs/
 - \`.context/boundaries.yml\` — boundary rules
 - \`.context/agent-entry.md\` — agent entry protocol
 - \`docs/.control/core/installation-state-machine.yaml\` — valid states and transitions
+- \`docs/.control/core/bin/underboss\` — Control Plane CLI: status, attention, execution, escalation
 HEREDOC
   echo "  → CLAUDE.md snippet created."
 }

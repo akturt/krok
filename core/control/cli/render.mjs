@@ -20,7 +20,7 @@ export function age(openedAt, now = Date.now()) {
 }
 
 export function status(v) {
-  const head = `executions: ${v.units.length}   open escalations: ${v.open_escalations}`;
+  const head = `executions: ${v.units.length}   open escalations: ${v.open_escalations}   backlog: ${v.backlog.active} open`;
   const counts = Object.entries(v.counts).filter(([, n]) => n > 0).map(([s, n]) => `${s} ${n}`).join('   ');
   const rows = v.units.map((u) => [u.id, u.stale ? 'READY (stale)' : u.state, u.spec, u.open_escalations]);
   return [head, counts, table(['EXECUTION', 'STATE', 'SPEC', 'ESCALATIONS'], rows)].filter(Boolean).join('\n');
@@ -68,6 +68,13 @@ export function executionShow(v) {
 export function findings(result, verb) {
   if (result.ok) return `${verb}: ok   ${result.unit.id} is ${result.unit.state}`;
   return [`${verb}: refused   ${result.unit.id} is ${result.unit.state}`, ...result.findings.map((f) => `  [check ${f.check}${f.kind ? `, ${f.kind}` : ''}] ${f.message}`)].join('\n');
+}
+
+export function verification(r) {
+  const head = `verify: ${r.ok ? 'ok' : 'failed'}   ${r.unit.id} is ${r.unit.state}`;
+  const rows = r.acceptance.map((a) => `  ${a.criterion}  ${a.status}`);
+  const found = r.findings.map((f) => `  [check ${f.check}${f.kind ? `, ${f.kind}` : ''}] ${f.message}`);
+  return [head, 'acceptance:', ...(rows.length ? rows : ['  -']), ...(found.length ? ['findings:', ...found] : [])].join('\n');
 }
 
 export function escalationList(items) {

@@ -78,12 +78,12 @@ export const COMMANDS = {
   },
 
   'execution verify': {
-    summary: 'begin verification',
+    summary: 'begin verification and run the acceptance and Reality checks',
     args: ['execution-id'],
     flags: { actor },
     run: ({ root, args, flags }) => {
-      const unit = core.verifyStart(root, args[0], { actor: flags.actor });
-      return { ok: true, data: { unit }, text: `verify: ok   ${unit.id} is ${unit.state}` };
+      const r = core.verify(root, args[0], { actor: flags.actor });
+      return { ok: r.ok, data: r, text: render.verification(r) };
     },
   },
 
