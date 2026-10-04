@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, unlinkSync, renam
 import { join } from 'node:path';
 import {
   createUnit, readUnit, listRecords, transitionUnit, unitDir, ready, start, resume, isStale, verifyStart, recordVerification,
-  complete, cancel, redesign, updateDefinition, computeFingerprint, openEscalation, resolveEscalation, escalations, openEscalations,
+  complete, cancel, redesign, rework, updateDefinition, computeFingerprint, openEscalation, resolveEscalation, escalations, openEscalations,
   defaultAutonomy, mustEscalate, checkExecution, validateReady,
 } from '../index.mjs';
 import { makeProject, put, git, clock, noDrift, definition, nineKinds, A, SPEC, ADR, INVARIANTS } from './fixture.mjs';
@@ -547,4 +547,35 @@ test('validate-execution: exit codes follow the consistency checks', async () =>
   const bad = spawnSync('node', [script, ctx.root], { encoding: 'utf8' });
   assert.equal(bad.status, 1);
   assert.match(bad.stdout, /sequence gap/);
+});
+
+// ---------- rework ----------
+
+test('rework: only in VERIFYING and only after a failed verification; one transition record', () => {
+  const none = toExecuting();
+  assert.throws(() => rework(none.root, ID, { ...A, now: none.now }), /illegal transition EXECUTING -> EXECUTING/);
+
+  const ctx = toVerifying();
+  const count = listRecords(ctx.root, ID).length;
+  assert.throws(() => rework(ctx.root, ID, { ...A, now: ctx.now }), /rework requires a failed verification/);
+  recordVerification(ctx.root, ID, { ...A, criterion: 'AC-001', result: 'pass', detail: 'ok', evidence: evid, now: ctx.now });
+  assert.throws(() => rework(ctx.root, ID, { ...A, now: ctx.now }), /rework requires a failed verification/);
+  assert.equal(listRecords(ctx.root, ID).length, count + 1);
+
+  recordVerification(ctx.root, ID, { ...A, criterion: 'AC-002', result: 'fail', detail: 'red', evidence: evid, now: ctx.now });
+  const u = rework(ctx.root, ID, { ...A, now: ctx.now });
+  assert.equal(u.state, 'EXECUTING');
+  const last = listRecords(ctx.root, ID).pop().record;
+  assert.deepEqual([last.type, last.payload.from, last.payload.to], ['transition', 'VERIFYING', 'EXECUTING']);
+  assert.deepEqual(checkExecution(ctx.root), []);
+  // a failed criterion of an earlier VERIFYING round does not count for the next round
+  verifyStart(ctx.root, ID, { ...A, now: ctx.now });
+  assert.throws(() => rework(ctx.root, ID, { ...A, now: ctx.now }), /rework requires a failed verification/);
+});
+
+test('rework: a failed verify or complete check is a failed verification', () => {
+  const ctx = toVerifying();
+  const r = complete(ctx.root, ID, { ...A, now: ctx.now, reality: noDrift });
+  assert.equal(r.ok, false);
+  assert.equal(rework(ctx.root, ID, { ...A, now: ctx.now }).state, 'EXECUTING');
 });

@@ -77,6 +77,26 @@ export const COMMANDS = {
     },
   },
 
+  'execution resume': {
+    summary: 'resume a blocked unit once every Escalation is resolved',
+    args: ['execution-id'],
+    flags: { actor, 'agent-platform': {} },
+    run: ({ root, args, flags }) => {
+      const r = core.resume(root, args[0], { actor: flags.actor, agentPlatform: flags['agent-platform'] ?? null });
+      return { ok: r.ok, data: r, text: render.findings(r, 'resume') };
+    },
+  },
+
+  'execution rework': {
+    summary: 'return to work after a failed verification',
+    args: ['execution-id'],
+    flags: { actor },
+    run: ({ root, args, flags }) => {
+      const unit = core.rework(root, args[0], { actor: flags.actor });
+      return { ok: true, data: { unit }, text: `rework: ok   ${unit.id} is ${unit.state}` };
+    },
+  },
+
   'execution verify': {
     summary: 'begin verification and run the acceptance and Reality checks',
     args: ['execution-id'],

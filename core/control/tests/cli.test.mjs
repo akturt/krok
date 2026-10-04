@@ -38,19 +38,19 @@ test('usage: no arguments is a usage error; --help lists the approved surface', 
   assert.match(none.err, /usage: underboss/);
   const help = cli(['--help']);
   assert.equal(help.code, 0);
-  for (const c of ['status', 'attention', 'execution list', 'execution show', 'execution create', 'execution ready', 'execution start', 'execution verify',
+  for (const c of ['status', 'attention', 'execution list', 'execution show', 'execution create', 'execution ready', 'execution start', 'execution verify', 'execution resume', 'execution rework',
     'execution complete', 'execution cancel', 'execution record', 'escalation list', 'escalation show', 'escalation open', 'escalation resolve']) {
     assert.match(help.out, new RegExp(`underboss ${c}`), c);
   }
 });
 
-test('usage: there is no decision command, no resume, no redesign, no backlog (Phase 3)', () => {
-  for (const c of [['decision'], ['decision', 'resolve'], ['execution', 'resume', 'x'], ['execution', 'redesign', 'x'], ['backlog', 'status'], ['nope']]) {
+test('usage: there is no decision, redesign, continue or backlog command', () => {
+  for (const c of [['decision'], ['decision', 'resolve'], ['execution', 'redesign', 'x'], ['backlog', 'status'], ['nope']]) {
     const r = cli(c);
     assert.equal(r.code, 2, c.join(' '));
     assert.match(r.err, /unknown command/);
   }
-  assert.doesNotMatch(cli(['--help']).out, /decision|resume|redesign|backlog/);
+  assert.doesNotMatch(cli(['--help']).out, /decision|redesign|backlog|continue|--force/);
 });
 
 test('usage: argument errors exit 2 and name the problem', () => {

@@ -149,23 +149,31 @@ test('e2e escalation path: start -> escalation -> BLOCKED -> resolution -> resum
   assert.equal(c.state(), 'BLOCKED');
   assert.match(c.run('attention').out, new RegExp(`${escId}  architecture`));
   assert.equal(c.run('status', '--json').json().open_escalations, 1);
-  // BLOCKED cannot move through the CLI commands that exist
-  assert.equal(c.run('execution', 'start', ID, ...A).code, 1);
-  assert.equal(c.run('execution', 'verify', ID, ...A).code, 1);
+  // start, verify and rework do not apply to BLOCKED
+  for (const cmd of ['start', 'verify', 'rework']) assert.equal(c.run('execution', cmd, ID, ...A).code, 1, cmd);
 
-  // an unresolved Escalation keeps the unit BLOCKED
-  const refused = core.resume(c.proj, ID, { actor: 'human:e2e' });
-  assert.equal(refused.ok, false);
-  assert.match(refused.findings[0].message, /is open/);
+  // an unresolved Escalation refuses resume and writes nothing
+  const before = core.listRecords(c.proj, ID).length;
+  const refused = c.run('execution', 'resume', ID, ...A, '--json');
+  assert.equal(refused.code, 1);
+  assert.equal(refused.json().ok, false);
+  assert.match(refused.json().findings[0].message, /is open/);
+  assert.equal(core.listRecords(c.proj, ID).length, before);
+  assert.equal(c.state(), 'BLOCKED');
 
   const resolved = c.run('escalation', 'resolve', escId, '--resolution', 'ADR accepted', '--adr', 'adr-007-queue', ...A);
   assert.equal(resolved.code, 0, resolved.err);
   assert.equal(c.state(), 'BLOCKED'); // resolution never changes the state by itself
   assert.equal(c.run('attention').out.trim(), 'nothing needs attention');
 
-  const resumed = core.resume(c.proj, ID, { actor: 'human:e2e' });
-  assert.equal(resumed.ok, true, JSON.stringify(resumed.findings));
+  const resumed = c.run('execution', 'resume', ID, ...A, '--json');
+  assert.equal(resumed.code, 0, resumed.out + resumed.err);
+  assert.equal(resumed.json().unit.state, 'EXECUTING');
   assert.equal(c.state(), 'EXECUTING');
+  const tail = core.listRecords(c.proj, ID).slice(before).map((x) => `${x.record.type}:${x.record.payload.purpose || x.record.payload.to}`);
+  assert.deepEqual(tail, ['escalation-resolved:undefined', 'validation:resume', 'transition:EXECUTING']);
+  // resume is not accepted outside BLOCKED, and start did not change meaning
+  assert.equal(c.run('execution', 'resume', ID, ...A).code, 1);
 
   assert.equal(c.run('execution', 'verify', ID, ...A).code, 0);
   assert.equal(record(c, 'AC-001').code, 0);
@@ -268,4 +276,59 @@ test('verify is only for EXECUTING or VERIFYING units', () => {
   const r = c.run('execution', 'verify', ID, ...A);
   assert.equal(r.code, 1);
   assert.match(r.err, /illegal transition DESIGN -> VERIFYING/);
+});
+
+test('resume: a failed revalidation records it, keeps the unit BLOCKED and returns the findings', () => {
+  const c = consumer();
+  toExecuting(c);
+  const escId = c.run('escalation', 'open', ID, '--kind', 'scope', '--question', 'q', '--impact', 'i', ...A, '--json').json().id;
+  assert.equal(c.run('escalation', 'resolve', escId, '--resolution', 'amended', ...A).code, 0);
+  put(c.proj, 'docs/adr/001-x.md', ADR.replace('accepted', 'deprecated'));
+  const r = c.run('execution', 'resume', ID, ...A, '--json');
+  assert.equal(r.code, 1);
+  assert.equal(r.json().ok, false);
+  assert.ok(r.json().findings.some((f) => f.check === 2));
+  assert.equal(c.state(), 'BLOCKED');
+  const last = core.listRecords(c.proj, ID).pop().record;
+  assert.equal(last.type, 'validation');
+  assert.equal(last.payload.purpose, 'resume');
+  assert.equal(last.payload.result, 'fail');
+  assert.deepEqual(core.checkExecution(c.proj), []);
+});
+
+test('rework: VERIFYING -> EXECUTING only after a failed verification; then the unit completes', () => {
+  const c = consumer();
+  toExecuting(c);
+  assert.equal(c.run('execution', 'rework', ID, ...A).code, 1); // not VERIFYING
+  assert.equal(c.run('execution', 'verify', ID, ...A).code, 0);
+  const count = core.listRecords(c.proj, ID).length;
+  const early = c.run('execution', 'rework', ID, ...A, '--json');
+  assert.equal(early.code, 1);
+  assert.match(early.json().error, /rework requires a failed verification/);
+  assert.equal(core.listRecords(c.proj, ID).length, count);
+
+  assert.equal(record(c, 'AC-001', 'fail', ['--evidence-class', 'OBSERVED', '--evidence-source', 'CI run 9']).code, 0);
+  const reworked = c.run('execution', 'rework', ID, ...A, '--json');
+  assert.equal(reworked.code, 0, reworked.out + reworked.err);
+  assert.equal(reworked.json().unit.state, 'EXECUTING');
+  assert.equal(core.listRecords(c.proj, ID).pop().record.payload.to, 'EXECUTING');
+  assert.equal(c.run('execution', 'rework', ID, ...A).code, 1); // already EXECUTING
+
+  assert.equal(c.run('execution', 'verify', ID, ...A).code, 0);
+  assert.equal(record(c, 'AC-001').code, 0);
+  assert.equal(record(c, 'AC-002').code, 0);
+  assert.equal(c.run('execution', 'complete', ID, ...A).code, 0);
+  assert.equal(c.state(), 'DONE');
+  assert.deepEqual(core.checkExecution(c.proj), []);
+});
+
+test('rework: a failed verify check (Reality drift) also allows it; start never accepts VERIFYING or BLOCKED', () => {
+  const c = consumer();
+  toExecuting(c);
+  put(c.proj, 'docs/specs/approved/x.md', SPEC.replace('status: approved', 'status: draft'));
+  assert.equal(c.run('execution', 'verify', ID, ...A).code, 1);
+  assert.equal(c.state(), 'VERIFYING');
+  assert.equal(c.run('execution', 'start', ID, ...A).code, 1);
+  assert.equal(c.run('execution', 'rework', ID, ...A).code, 0);
+  assert.equal(c.state(), 'EXECUTING');
 });

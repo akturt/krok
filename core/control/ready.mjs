@@ -317,6 +317,21 @@ export function complete(root, id, { actor, now = utc, reality = realityDrift })
   return { ok: true, findings: [], unit: transitionUnit(root, id, 'DONE', { actor, reason: 'required verification passed', now }) };
 }
 
+// VERIFYING -> EXECUTING: the ordinary rework loop, allowed after a failed verification:
+// since the unit last entered VERIFYING a verification record failed, or the latest
+// verify/complete validation failed.
+export function rework(root, id, { actor, now = utc }) {
+  const unit = readUnit(root, id);
+  if (unit.state !== 'VERIFYING') throw new Error(`illegal transition ${unit.state} -> EXECUTING`);
+  const recs = listRecords(root, id).map((x) => x.record);
+  const entered = [...recs].reverse().find((r) => r.type === 'transition' && r.payload.to === 'VERIFYING');
+  const since = recs.filter((r) => r.seq > (entered?.seq ?? 0));
+  const failedCriterion = since.some((r) => r.type === 'verification' && r.payload.result === 'fail');
+  const lastCheck = [...since].reverse().find((r) => r.type === 'validation' && ['verify', 'complete'].includes(r.payload.purpose));
+  if (!failedCriterion && !(lastCheck && lastCheck.payload.result === 'fail')) throw new Error('rework requires a failed verification');
+  return transitionUnit(root, id, 'EXECUTING', { actor, reason: 'verification failed, rework', now });
+}
+
 export function cancel(root, id, { actor, reason, now = utc }) {
   return transitionUnit(root, id, 'CANCELLED', { actor, reason, now });
 }
