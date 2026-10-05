@@ -29,6 +29,8 @@ This is the **one canonical runbook** for a consumer repository. It covers two c
 
 Everything is run **from the repository root** of the consumer project. Krok lives in the consumer as a git submodule at `docs/.control/` (v3). Requirements: `git` ≥ 2.20, `node` ≥ 18, `bash` (Git Bash on Windows).
 
+A consumer that still has the old name of this product: [`playbook/move-from-underboss.md`](playbook/move-from-underboss.md).
+
 ## For an AI coding agent
 
 You can choose the flow without asking the user, if the repository state allows it.

@@ -44,7 +44,10 @@ const DOMAIN_TERMS = [
   /runtime path/gi,
   /(?:at|to) runtime/gi,
 ];
-const EXCEPTIONS = { 'adr-004-spec-lifecycle': new Set(['review']) };
+const EXCEPTIONS = {
+  'adr-004-spec-lifecycle': new Set(['review']),
+  'guide-move-from-underboss': new Set(['legacy']), // the guide for consumers of the old name must name the old layout
+};
 
 function listFiles(root) {
   try {
@@ -97,11 +100,11 @@ export function scan(path, text, cls) {
   text.replace(/\r\n/g, '\n').split('\n').forEach((line, i) => {
     if (/^(supersedes|depends_on|implements|entity_refs):/.test(line)) return; // structural id references
     const hit = (what) => findings.push({ path, line: i + 1, what, text: line.trim().slice(0, 140) });
-    for (const [what, re] of FORBIDDEN_IDENTIFIERS) if (re.test(line)) hit(what);
+    if (!allowed.has('legacy')) for (const [what, re] of FORBIDDEN_IDENTIFIERS) if (re.test(line)) hit(what);
     if (!allowed.has('review')) for (const [what, re] of REVIEW_LIFECYCLE) if (re.test(line)) hit(what);
     let masked = line;
     for (const re of DOMAIN_TERMS) masked = masked.replace(re, ' ');
-    if (/\bruntime\b/i.test(masked)) hit('former product term "runtime"');
+    if (!allowed.has('legacy') && /\bruntime\b/i.test(masked)) hit('former product term "runtime"');
   });
   void cls;
   return findings;

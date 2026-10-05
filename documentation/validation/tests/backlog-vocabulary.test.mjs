@@ -83,3 +83,11 @@ test('vocabulary: run reports violations per class', () => {
   assert.ok(violations.every((v) => v.cls === 'code'));
   assert.ok(violations.length >= 1);
 });
+
+test('vocabulary: only the move-from-the-old-name guide may name the old layout', () => {
+  const body = 'mount at docs/.runtime/x and .context/runtime, the Runtime API';
+  const guide = scan('g.md', doc({ id: 'guide-move-from-underboss', type: 'guide', status: 'active' }) + body, 'docs');
+  assert.deepEqual(guide, []);
+  const other = scan('g.md', doc({ id: 'guide-other', type: 'guide', status: 'active' }) + body, 'docs');
+  assert.ok(other.length >= 3);
+});
