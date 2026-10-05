@@ -29,7 +29,7 @@ input:
       note: "shallow executes Layers 1-2 only, emits a stub for Layer 3 and the Coverage Matrix; normal executes all layers; deep permits cross-pipeline hidden-dependency tracing"
     - type: string
       name: output_path
-      note: "default: docs/audits/YYYY-MM-DD-<pipeline>-<layer>-archaeology-audit.md if Underboss is installed, else ./pipeline-archaeology-<pipeline>-<layer>_YYYY-MM-DD.md"
+      note: "default: docs/audits/YYYY-MM-DD-<pipeline>-<layer>-archaeology-audit.md if Krok is installed, else ./pipeline-archaeology-<pipeline>-<layer>_YYYY-MM-DD.md"
 output:
   - artifact: execution-topology-report
     final_path: docs/audits/YYYY-MM-DD-<pipeline>-execution-topology-archaeology-audit.md

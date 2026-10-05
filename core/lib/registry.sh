@@ -1,7 +1,7 @@
 #!/bin/bash
 # core/lib/registry.sh — Registry API (SSOT reader)
 #
-# All Underboss components read from registry through this API.
+# All Krok components read from registry through this API.
 # No awk/grep/sed — uses yaml.sh for all parsing.
 #
 # Requires: core/lib/yaml.sh

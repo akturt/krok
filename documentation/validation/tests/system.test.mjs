@@ -49,7 +49,7 @@ test('the schema has no review status and no legacy kind', () => {
 });
 
 test('no product code names the old layout or a fallback', () => {
-  const files = [...walk(join(REPO, 'core')), ...walk(join(REPO, 'bootstrap'))].filter((f) => /\.(sh|ps1|yaml)$/.test(f) && !f.endsWith('migration.yaml'));
+  const files = [...walk(join(REPO, 'core')), ...walk(join(REPO, 'bootstrap'))].filter((f) => /\.(sh|ps1|yaml)$/.test(f));
   for (const f of files) {
     const t = readFileSync(f, 'utf8');
     assert.doesNotMatch(t, /\.context[\\/]runtime/, f);
@@ -59,7 +59,7 @@ test('no product code names the old layout or a fallback', () => {
 });
 
 test('bootstrap on a missing Registry fails with an explicit error', () => {
-  const root = tmp('underboss-nobreg-');
+  const root = tmp('krok-nobreg-');
   cpSync(join(REPO, 'core', 'lib'), join(root, 'core', 'lib'), { recursive: true });
   cpSync(join(REPO, 'bootstrap'), join(root, 'bootstrap'), { recursive: true });
   const r = bash(`bash bootstrap/bootstrap.sh --target "${P(root)}/target"`, root);
@@ -70,7 +70,7 @@ test('bootstrap on a missing Registry fails with an explicit error', () => {
 
 test('detect_state knows exactly fresh, installed, partial', () => {
   const states = (setup) => {
-    const root = tmp('underboss-state-');
+    const root = tmp('krok-state-');
     const target = join(root, 't');
     mkdirSync(target, { recursive: true });
     cpSync(join(REPO, 'core', 'lib'), join(root, 'core', 'lib'), { recursive: true });
@@ -99,7 +99,7 @@ test('directory scopes of the Registry do not leak into each other', () => {
 });
 
 test('bootstrap against a fresh project creates the registry layout without review', () => {
-  const proj = tmp('underboss-proj-');
+  const proj = tmp('krok-proj-');
   const control = join(proj, 'docs', '.control');
   for (const d of ['core', 'bootstrap', 'documentation', 'engine', 'agents', 'knowledge', 'sops', 'playbook']) {
     cpSync(join(REPO, d), join(control, d), { recursive: true });
@@ -119,7 +119,7 @@ test('bootstrap against a fresh project creates the registry layout without revi
 });
 
 test('planner: gate: manual is a human step and role: human is not an alias', () => {
-  const dir = tmp('underboss-planner-');
+  const dir = tmp('krok-planner-');
   mkdirSync(join(dir, 'sops'), { recursive: true });
   mkdirSync(join(dir, 'core', 'control'), { recursive: true });
   copyFileSync(join(REPO, 'sops', 'planner.mjs'), join(dir, 'sops', 'planner.mjs'));
@@ -143,7 +143,7 @@ test('the real SOPs have no role: human and no review step', () => {
 });
 
 test('spec-drift: a draft in drafts/ is not drift; a mismatch is', () => {
-  const proj = tmp('underboss-drift-');
+  const proj = tmp('krok-drift-');
   put(proj, 'docs/specs/drafts/a.md', '---\nid: a\ntype: spec\nstatus: draft\n---\n');
   put(proj, 'docs/specs/approved/b.md', '---\nid: b\ntype: spec\nstatus: draft\n---\n');
   const out = execFileSync('bash', [join(REPO, 'engine/reality-engine/analyzers/spec-drift.sh'), proj], { encoding: 'utf8' });
@@ -152,7 +152,7 @@ test('spec-drift: a draft in drafts/ is not drift; a mismatch is', () => {
 });
 
 test('documentation-drift: statuses come from the schema, review is unknown', () => {
-  const proj = tmp('underboss-docdrift-');
+  const proj = tmp('krok-docdrift-');
   put(proj, 'docs/a.md', '---\nschema: 1\nid: a\ntype: spec\nstatus: review\n---\n');
   put(proj, 'docs/b.md', '---\nschema: 1\nid: b\ntype: spec\nstatus: approved\n---\n');
   put(proj, 'docs/c.md', '---\nschema: 1\nid: c\ntype: api\nstatus: approved\n---\n');
@@ -163,7 +163,7 @@ test('documentation-drift: statuses come from the schema, review is unknown', ()
 });
 
 test('frontmatter validator: every finding is an error, no warn-only switch', () => {
-  const proj = tmp('underboss-fm-');
+  const proj = tmp('krok-fm-');
   put(proj, 'docs/a.md', '---\nschema: 1\nid: a\ntype: spec\nstatus: draft\ndate: 2026-10-04\nowners: [t]\nentity_refs: []\n---\n');
   const run = (env = {}) => spawnSync('bash', [join(REPO, 'documentation/validation/validate-frontmatter.sh'), join(proj, 'docs')], { encoding: 'utf8', cwd: proj, env: { ...process.env, ...env } });
   const r = run();
@@ -184,28 +184,28 @@ test('no fallback branches remain in the shell core, the validators and the gene
 });
 
 test('detect_all needs the Registry', () => {
-  const root = tmp('underboss-detect-');
+  const root = tmp('krok-detect-');
   cpSync(join(REPO, 'core', 'lib'), join(root, 'core', 'lib'), { recursive: true });
   const r = bash(`export CONTROL_ROOT="${P(root)}"; source "${P(root)}/core/lib/api.sh"; detect_all "${P(root)}"; echo "status=$?"`, root);
   assert.match(r.stdout, /status=1/);
   assert.match(r.stderr, /registry not found/);
 });
 
-test('claude-md generator: an existing CLAUDE.md without Underboss rules gets the snippet, one with them is left alone', () => {
+test('claude-md generator: an existing CLAUDE.md without Krok rules gets the snippet, one with them is left alone', () => {
   const run = (initial) => {
-    const proj = tmp('underboss-claude-');
+    const proj = tmp('krok-claude-');
     if (initial !== null) put(proj, 'CLAUDE.md', initial);
     const r = bash(`export CONTROL_ROOT="${P(REPO)}"; source "${P(REPO)}/core/lib/api.sh"; source "${P(REPO)}/bootstrap/generators/claude-md.sh"; generate "${P(proj)}" x; generate "${P(proj)}" x`, proj);
     assert.equal(r.status, 0, r.stderr);
     return readFileSync(join(proj, 'CLAUDE.md'), 'utf8');
   };
   const user = run('# Mine\n\nnotes\n');
-  assert.match(user, /^## Underboss$/m);
+  assert.match(user, /^## Krok$/m);
   assert.match(user, /# Mine\n\nnotes\n$/);
-  assert.equal(user.match(/^## Underboss$/gm).length, 1); // the second run did not prepend again
+  assert.equal(user.match(/^## Krok$/gm).length, 1); // the second run did not prepend again
   const own = '# Mine\n\nsee docs/.control/ for the rules\n';
   assert.equal(run(own), own);
   const fresh = run(null);
   assert.match(fresh, /^# CLAUDE\.md — AI Agent Quickstart/);
-  assert.match(fresh, /core\/bin\/underboss/);
+  assert.match(fresh, /core\/bin\/krok/);
 });

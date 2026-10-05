@@ -31,7 +31,7 @@ if declare -f detect_all >/dev/null 2>&1; then
   detect_all "$PROJECT_ROOT"
 fi
 
-# --- directory inventory (top 2 levels, exclude VCS, deps and the Underboss mount) ---
+# --- directory inventory (top 2 levels, exclude VCS, deps and the Krok mount) ---
 EXCLUDE_GLOB=("${PROJECT_ROOT}/.git" "${PROJECT_ROOT}/node_modules" "${PROJECT_ROOT}/.control")
 dirs_json=""
 first=1

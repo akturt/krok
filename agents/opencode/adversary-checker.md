@@ -4,7 +4,7 @@ id: agent-opencode-adversary-checker
 type: prompt
 status: active
 date: 2026-07-08
-owners: [underboss-team]
+owners: [krok-team]
 
 description: Claim Validation Agent — validates other reviewers' architectural claims against the actual data
 mode: subagent

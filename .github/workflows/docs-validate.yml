@@ -53,4 +53,4 @@ jobs:
           node documentation/validation/validate-vocabulary.mjs .
       - name: Tests
         run: |
-          node --test documentation/validation/tests/*.test.mjs core/control/tests/*.test.mjs core/migrate/tests/*.test.mjs
+          node --test documentation/validation/tests/*.test.mjs core/control/tests/*.test.mjs bootstrap/tests/*.test.mjs

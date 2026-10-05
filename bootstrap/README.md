@@ -4,15 +4,15 @@ id: bootstrap-readme
 type: guide
 status: active
 date: 2026-07-09
-owners: [underboss-team]
+owners: [krok-team]
 entity_refs: [core, registry]
 ---
 
-# Bootstrap — Underboss
+# Bootstrap — Krok
 
 ## Overview
 
-Bootstrap installs and configures the Underboss into a consumer project. As of v1.6, the bootstrap is a thin orchestrator that drives the **Core SDK** (`core/lib/`) — it contains no business logic and no hardcoded paths. All structure and behaviour is read from `core/registry.yaml`.
+Bootstrap installs and configures the Krok into a consumer project. As of v1.6, the bootstrap is a thin orchestrator that drives the **Core SDK** (`core/lib/`) — it contains no business logic and no hardcoded paths. All structure and behaviour is read from `core/registry.yaml`.
 
 ## Architecture (v1.6)
 
@@ -42,7 +42,7 @@ core/
     components.sh        ← component verification
 ```
 
-Any tool inside Underboss (`bootstrap`, `install`, `validate-integrity`, future `migrate`) sources `core/lib/api.sh` and therefore works identically:
+Any tool inside Krok (`bootstrap`, `install`, `validate-integrity`) sources `core/lib/api.sh` and therefore works identically:
 
 ```
 bootstrap      → api.sh → registry → components
@@ -52,7 +52,7 @@ validators     → api.sh → registry
 
 ## How It Works
 
-1. **Parse arguments** — `--target <path>` (defaults to the Underboss root)
+1. **Parse arguments** — `--target <path>` (defaults to the Krok root)
 2. **Source Core SDK** — `source core/lib/api.sh`
 3. **Detect state** — `detect_state` reads filesystem → fresh/installed/partial/broken
 4. **Require the Registry** — a missing `core/registry.yaml` is an error; there is no degraded mode
@@ -67,11 +67,11 @@ All paths are read from `core/registry.yaml` — the orchestrator knows nothing 
 
 Versions are decoupled (per Core SDK design):
 
-- **Underboss** — `control.version` in registry.yaml
+- **Krok** — `control.version` in registry.yaml
 - **Bootstrap Engine** — `bootstrap.engine_version` in registry.yaml
 - **Registry Schema** / **Contract Schema** — `schema.version` / `contracts.version`
 
-`bootstrap.sh` prints both Underboss and Bootstrap Engine versions in its header.
+`bootstrap.sh` prints both Krok and Bootstrap Engine versions in its header.
 
 ## Adding a New Stack Detector
 

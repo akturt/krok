@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 export const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
-export function tmp(prefix = 'underboss-test-') {
+export function tmp(prefix = 'krok-test-') {
   return mkdtempSync(join(tmpdir(), prefix));
 }
 

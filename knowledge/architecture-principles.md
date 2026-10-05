@@ -5,7 +5,7 @@ type: guide
 kind: index
 status: active
 date: 2026-07-08
-owners: [underboss-team]
+owners: [krok-team]
 
 entity_refs: [agentic-layer]
 tags: [knowledge, architecture, principles, review]

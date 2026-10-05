@@ -4,14 +4,14 @@ id: architecture-readme
 type: architecture
 status: active
 date: 2026-07-09
-owners: [underboss-team]
+owners: [krok-team]
 ---
 
 # Architecture Overview
 
 ## Project Identity
 
-- Name: underboss
+- Name: krok
 - Domain: unknown
 - Stack: unknown
 
@@ -26,7 +26,7 @@ owners: [underboss-team]
 ## Project Layout
 
 ```
-underboss/
+krok/
   docs/
     architecture/     # topology, domain model, invariants
     adr/              # Architecture Decision Records

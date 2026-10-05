@@ -22,7 +22,7 @@ validation:
 
     - name: validate-integrity
       path: documentation/validation/validate-integrity.sh
-      description: "Validates the dependency graph of Underboss itself"
+      description: "Validates the dependency graph of Krok itself"
       checks:
         - "Role → Capability: every capabilities: entry exists in knowledge/capabilities.md"
         - "Capability → Knowledge: every capability references existing knowledge file"

@@ -9,7 +9,7 @@ import { REPO, makeProject, put, git, SPEC, ADR, INVARIANTS } from './fixture.mj
 import * as core from '../index.mjs';
 
 const MAIN = join(REPO, 'core', 'control', 'cli', 'main.mjs');
-const WRAPPER = join(REPO, 'core', 'bin', 'underboss');
+const WRAPPER = join(REPO, 'core', 'bin', 'krok');
 const P = (p) => p.split('\\').join('/');
 
 function cli(args, { cwd = REPO, env = {}, main = MAIN } = {}) {
@@ -35,12 +35,12 @@ function exec(root, ...args) {
 test('usage: no arguments is a usage error; --help lists the approved surface', () => {
   const none = cli([]);
   assert.equal(none.code, 2);
-  assert.match(none.err, /usage: underboss/);
+  assert.match(none.err, /usage: krok/);
   const help = cli(['--help']);
   assert.equal(help.code, 0);
   for (const c of ['status', 'attention', 'execution list', 'execution show', 'execution create', 'execution ready', 'execution start', 'execution verify', 'execution resume', 'execution rework',
     'execution complete', 'execution cancel', 'execution record', 'escalation list', 'escalation show', 'escalation open', 'escalation resolve']) {
-    assert.match(help.out, new RegExp(`underboss ${c}`), c);
+    assert.match(help.out, new RegExp(`krok ${c}`), c);
   }
 });
 
@@ -82,7 +82,7 @@ test('usage: with --json an error is a JSON object', () => {
 
 test('project: explicit --project works from any working directory', () => {
   const root = makeProject();
-  const other = mkdtempSync(join(tmpdir(), 'underboss-cwd-'));
+  const other = mkdtempSync(join(tmpdir(), 'krok-cwd-'));
   const r = cli(['status', '--project', root, '--json'], { cwd: other });
   assert.equal(r.code, 0, r.err);
   assert.deepEqual(r.json(), { units: [], counts: { DESIGN: 0, READY: 0, EXECUTING: 0, VERIFYING: 0, BLOCKED: 0, DONE: 0, CANCELLED: 0 }, open_escalations: 0, backlog: { active: 0 } });
@@ -98,7 +98,7 @@ test('project: without --project the git top-level of the current directory is u
 });
 
 test('project: not a git repository, not a directory, no project.yml are explicit errors (exit 3)', () => {
-  const plain = mkdtempSync(join(tmpdir(), 'underboss-plain-'));
+  const plain = mkdtempSync(join(tmpdir(), 'krok-plain-'));
   const a = cli(['status'], { cwd: plain });
   assert.equal(a.code, 3);
   assert.match(a.err, /not inside a git repository/);
@@ -117,7 +117,7 @@ test('project: not a git repository, not a directory, no project.yml are explici
   assert.equal(d.code, 3);
 
   // a non-git directory holding .context is still not a project without --project: no fallback
-  const ctxOnly = mkdtempSync(join(tmpdir(), 'underboss-ctxonly-'));
+  const ctxOnly = mkdtempSync(join(tmpdir(), 'krok-ctxonly-'));
   put(ctxOnly, '.context/project.yml', 'name: x\n');
   assert.equal(cli(['status'], { cwd: ctxOnly }).code, 3);
   assert.equal(cli(['status', '--project', ctxOnly]).code, 0);
@@ -335,13 +335,13 @@ test('the CLI is an adapter: it imports only the Core SDK index and its own modu
 });
 
 test('the Registry registers the CLI entrypoint', () => {
-  assert.equal(core.loadRegistry().entrypoints.cli, 'core/bin/underboss');
+  assert.equal(core.loadRegistry().entrypoints.cli, 'core/bin/krok');
 });
 
 // ---------- installed control layer against a consumer project ----------
 
 function consumer() {
-  const proj = mkdtempSync(join(tmpdir(), 'underboss-consumer-'));
+  const proj = mkdtempSync(join(tmpdir(), 'krok-consumer-'));
   const control = join(proj, 'docs', '.control');
   for (const d of ['core', 'bootstrap', 'documentation', 'engine', 'agents', 'knowledge', 'sops', 'playbook']) cpSync(join(REPO, d), join(control, d), { recursive: true });
   git(proj, 'init', '-q', '-b', 'main', '.');
@@ -360,8 +360,8 @@ function consumer() {
 
 test('consumer: the installed control layer drives a consumer project from any directory', () => {
   const { proj, control } = consumer();
-  const bin = join(control, 'core', 'bin', 'underboss');
-  const other = mkdtempSync(join(tmpdir(), 'underboss-elsewhere-'));
+  const bin = join(control, 'core', 'bin', 'krok');
+  const other = mkdtempSync(join(tmpdir(), 'krok-elsewhere-'));
   const run = (...args) => spawnSync('bash', [P(bin), ...args, '--project', P(proj)], { cwd: other, encoding: 'utf8' });
 
   const create = run('execution', 'create', 'spec-x', ...SOP, ...A, '--json');

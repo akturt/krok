@@ -70,7 +70,7 @@ Description: two.
 `;
 
 export function makeProject() {
-  const root = mkdtempSync(join(tmpdir(), 'underboss-ctl-'));
+  const root = mkdtempSync(join(tmpdir(), 'krok-ctl-'));
   put(root, 'docs/specs/approved/x.md', SPEC);
   put(root, 'docs/adr/001-x.md', ADR);
   put(root, 'docs/architecture/invariants.md', INVARIANTS);

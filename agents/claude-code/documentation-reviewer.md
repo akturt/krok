@@ -4,7 +4,7 @@ id: agent-claude-code-documentation-reviewer
 type: prompt
 status: active
 date: 2026-07-08
-owners: [underboss-team]
+owners: [krok-team]
 
 entity_refs: [schema-v1, canonical-frontmatter, lifecycle-spec]
 touches: [docs]
@@ -94,7 +94,7 @@ This agent runs on every PR that contains changes to `docs/**/*.md`. Invoked by 
    - Max 10 refs per doc.
 
 4. **For new documents check that author started from template:**
-   - Compare structure to corresponding `docs/.control/documentation/templates/<type>.md` in Underboss.
+   - Compare structure to corresponding `docs/.control/documentation/templates/<type>.md` in Krok.
    - Missing canonical sections (`# H1`, `## Goal`, body sections per-type) → flag.
 
 5. **For spec lifecycle transitions** (`git mv` between path-status dirs):
@@ -163,5 +163,5 @@ You do NOT rewrite body content unless explicitly instructed by author. Your pri
 - Don't review code quality, tests, or commit message conventions.
 - Don't enforce prose style or grammar.
 - Don't reformat unrelated files.
-- Don't run on files outside `docs/**/*.md` (documentation/templates/, documentation/schemas/, etc. live in the Underboss submodule at `docs/.control/` and are out of scope for consumer PR review).
+- Don't run on files outside `docs/**/*.md` (documentation/templates/, documentation/schemas/, etc. live in the Krok submodule at `docs/.control/` and are out of scope for consumer PR review).
 - Don't over-block: low-severity findings do not warrant REQUEST_CHANGES.

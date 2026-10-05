@@ -37,7 +37,7 @@ test('an approved spec requires Acceptance criteria with unique ids', () => {
 });
 
 function repoWith(files) {
-  const r = tmp('underboss-git-');
+  const r = tmp('krok-git-');
   const g = (...a) => execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: r, stdio: 'ignore' });
   g('init', '-q', '.');
   for (const [p, c] of Object.entries(files)) put(r, p, c);

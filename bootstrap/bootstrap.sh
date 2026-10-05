@@ -2,7 +2,7 @@
 set -euo pipefail
 trap 'echo "Error on line $LINENO" >&2' ERR
 
-# bootstrap.sh — Underboss bootstrap orchestrator
+# bootstrap.sh — Krok bootstrap orchestrator
 # Uses Core SDK (core/lib/) for all identity fields — no hardcoded names.
 # v3.0.0
 

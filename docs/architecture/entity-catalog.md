@@ -4,7 +4,7 @@ id: entity-catalog
 type: architecture
 status: active
 date: 2026-10-04
-owners: [underboss-team]
+owners: [krok-team]
 
 entity_refs: []
 tags: [entity-catalog, concepts, architecture]
@@ -13,7 +13,7 @@ priority: P1
 
 # Entity Catalog
 
-Concept entities of Underboss itself. `entity_refs` resolve against this catalog, the `id:` fields of documents and the Registry components. An entity is listed as `- **<id>**: description`.
+Concept entities of Krok itself. `entity_refs` resolve against this catalog, the `id:` fields of documents and the Registry components. An entity is listed as `- **<id>**: description`.
 
 ## Concept Entities
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# core/lib/yaml.sh — Minimal YAML parser for underboss registry
+# core/lib/yaml.sh — Minimal YAML parser for krok registry
 #
 # NOT a general YAML parser. Handles only the registry format.
 # All functions take a file path as first argument.

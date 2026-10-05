@@ -12,9 +12,9 @@ import { COMMANDS } from './commands.mjs';
 export function usage() {
   const rows = Object.entries(COMMANDS).map(([key, c]) => {
     const args = (c.args || []).map((a) => `<${a}>`).join(' ');
-    return `  underboss ${key}${args ? ` ${args}` : ''}${Object.keys(c.flags || {}).length ? ' [flags]' : ''}`.padEnd(52) + c.summary;
+    return `  krok ${key}${args ? ` ${args}` : ''}${Object.keys(c.flags || {}).length ? ' [flags]' : ''}`.padEnd(52) + c.summary;
   });
-  return ['usage: underboss <command> [--project <path>] [--json]', '', ...rows, '', 'Every command that changes state requires --actor <identity>.'].join('\n');
+  return ['usage: krok <command> [--project <path>] [--json]', '', ...rows, '', 'Every command that changes state requires --actor <identity>.'].join('\n');
 }
 
 function commandKey(argv) {
@@ -27,7 +27,7 @@ export function main(argv, { cwd = process.cwd(), out = (s) => process.stdout.wr
   const wantsJson = argv.includes('--json');
   const fail = (code, message) => {
     if (wantsJson) out(`${JSON.stringify({ ok: false, code, error: message }, null, 2)}\n`);
-    else err(`underboss: ${message}\n`);
+    else err(`krok: ${message}\n`);
     return code;
   };
 

@@ -1,4 +1,4 @@
-name: underboss
+name: krok
 domain: unknown
 stack: unknown
 backend: unknown
@@ -8,6 +8,6 @@ maintainer: akturt
 
 repository:
   owner: akturt
-  name: underboss
+  name: krok
   branch: main
 

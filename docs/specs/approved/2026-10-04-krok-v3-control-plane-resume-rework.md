@@ -1,10 +1,10 @@
 ---
 schema: 1
-id: spec-underboss-v3-control-plane-resume-rework
+id: spec-krok-v3-control-plane-resume-rework
 type: spec
 status: approved
 date: 2026-10-04
-owners: [underboss-team]
+owners: [krok-team]
 
 entity_refs: [lifecycle-spec, sop-dag, reality-engine]
 touches: [core]
@@ -13,11 +13,11 @@ docs: []
 depends_on: [adr-005-v3-baseline-architecture, adr-006-execution-state-persistence]
 implements: []
 supersedes: [spec-underboss-v3-control-plane]
-tags: [underboss, control-plane, cli, execution-unit, v3]
+tags: [krok, control-plane, cli, execution-unit, v3]
 priority: P0
 ---
 
-# Spec: Underboss v3 — Control Plane CLI: resume and rework
+# Spec: Krok v3 — Control Plane CLI: resume and rework
 
 ## Goal
 
@@ -51,8 +51,8 @@ This Spec supersedes `spec-underboss-v3-control-plane` as the contract of the Co
 The command table of §8 of the superseded Spec gains two lines:
 
 ```
-underboss execution resume <id>           BLOCKED → EXECUTING; all Escalations resolved, fresh revalidation
-underboss execution rework <id>           VERIFYING → EXECUTING; verification failed
+krok execution resume <id>           BLOCKED → EXECUTING; all Escalations resolved, fresh revalidation
+krok execution rework <id>           VERIFYING → EXECUTING; verification failed
 ```
 
 `execution start <id>` remains `READY → EXECUTING`. `resume` and `rework` are not aliases of `start` and of each other.
@@ -87,9 +87,9 @@ None.
 
 ## Acceptance criteria
 
-- **AC-001** `underboss execution resume <id>` moves a `BLOCKED` unit to `EXECUTING` only when every Escalation is resolved and a fresh validation passes; it writes a `validation` record with purpose `resume` and a `transition` record.
+- **AC-001** `krok execution resume <id>` moves a `BLOCKED` unit to `EXECUTING` only when every Escalation is resolved and a fresh validation passes; it writes a `validation` record with purpose `resume` and a `transition` record.
 - **AC-002** With an open Escalation `resume` is refused (exit 1) without writing a record; with a failed revalidation it writes the validation record, returns the findings (exit 1) and the unit stays `BLOCKED`.
-- **AC-003** `underboss execution rework <id>` moves a `VERIFYING` unit to `EXECUTING` only after a failed verification, writing one `transition` record; in any other state, or without a failed verification, it is refused (exit 1) and writes nothing.
+- **AC-003** `krok execution rework <id>` moves a `VERIFYING` unit to `EXECUTING` only after a failed verification, writing one `transition` record; in any other state, or without a failed verification, it is refused (exit 1) and writes nothing.
 - **AC-004** `execution start` is unchanged: it accepts only `READY`. `resume` and `rework` are not accepted on other states and are not aliases.
 - **AC-005** The CLI has no `redesign`, `decision` or `continue` command and no `--force`; `BLOCKED → DESIGN` is not a CLI operation.
 - **AC-006** The two commands contain no state-machine or validation logic: they call the Core SDK, and the Core unit and consistency checks pass after every path.

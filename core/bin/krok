@@ -1,12 +1,12 @@
 #!/bin/bash
-# core/bin/underboss — thin entrypoint of the Control Plane CLI.
+# core/bin/krok — thin entrypoint of the Control Plane CLI.
 # All behaviour lives in core/control/cli/ and the Core SDK.
 set -euo pipefail
 
 BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if ! command -v node >/dev/null 2>&1; then
-  echo "underboss: node is required" >&2
+  echo "krok: node is required" >&2
   exit 3
 fi
 

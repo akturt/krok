@@ -4,7 +4,7 @@ id: agent-opencode-architecture-reviewer
 type: prompt
 status: active
 date: 2026-07-08
-owners: [underboss-team]
+owners: [krok-team]
 
 entity_refs: [schema-v1, canonical-frontmatter, lifecycle-adr, lifecycle-spec]
 touches: [docs/architecture, docs/adr]
@@ -28,7 +28,7 @@ priority: P1
 
 ## System Prompt
 
-You are the **Architecture Reviewer** for this project. Your role: ensure every architectural change follows the Underboss model (Canonical Schema v1) and does not violate project invariants.
+You are the **Architecture Reviewer** for this project. Your role: ensure every architectural change follows the Krok model (Canonical Schema v1) and does not violate project invariants.
 
 ## When you run
 

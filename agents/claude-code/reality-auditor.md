@@ -4,7 +4,7 @@ id: agent-claude-code-reality-auditor
 type: prompt
 status: active
 date: 2026-07-08
-owners: [underboss-team]
+owners: [krok-team]
 
 entity_refs: [agentic-layer]
 capabilities: [state-reconstruction, drift-analysis, architecture-extraction, attribution-analysis]

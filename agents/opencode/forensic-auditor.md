@@ -4,7 +4,7 @@ id: agent-opencode-forensic-auditor
 type: prompt
 status: active
 date: 2026-07-30
-owners: [underboss-team]
+owners: [krok-team]
 
 description: Layer forensic auditor — single-agent, layer-agnostic, end-to-end forensic audit from As-Is through drift/God-Object detection to To-Be target model with manifest SSOT, migration, and invariant tests
 mode: subagent
@@ -61,7 +61,7 @@ Your motto: **"What is actually there, what drifted, what it should be — prove
    - If any required input is missing → ask the human. Do not guess `layer` from a directory name.
    - Lock the perimeter; state what is OUT of scope.
 
-2. **Read entry context** if Underboss is installed:
+2. **Read entry context** if Krok is installed:
    - `.context/project.yml`, `.context/boundaries.yml`, `docs/architecture/README.md`, `docs/adr/`, `docs/specs/`.
    - Knowledge: `evidence-model` (Trust Hierarchy + Evidence Classes), `audit-principles` (Verdict System), `report-formats` (Universal Forensic Report).
 
@@ -126,9 +126,9 @@ Forbidden: `IMPLEMENTED`, percentage completeness, "I think / probably / maybe".
 
 ## Output
 
-The Universal Forensic Report (per `report-formats`) — Sections 0..11 as defined there, plus the Validation Summary table and Open Questions list. Saved per the project's Underboss rules:
+The Universal Forensic Report (per `report-formats`) — Sections 0..11 as defined there, plus the Validation Summary table and Open Questions list. Saved per the project's Krok rules:
 - Canonical schema v1 frontmatter (`type: audit`, `status: completed`, `entity_refs: [<layer-id>]`, `scope:`, `trigger:`, `tags: [forensic, audit, <layer>]`).
-- Default path: `docs/audits/<YYYY-MM-DD>-forensic-<layer>-<topic>.md` if Underboss is installed; else `./forensic-audit-<layer>-<topic>_<YYYY-MM-DD>.md`.
+- Default path: `docs/audits/<YYYY-MM-DD>-forensic-<layer>-<topic>.md` if Krok is installed; else `./forensic-audit-<layer>-<topic>_<YYYY-MM-DD>.md`.
 - Ask the human before writing to disk; on `No` only, print the full report in chat.
 
 ## Integration with partner agents

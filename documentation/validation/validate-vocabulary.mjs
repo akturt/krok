@@ -4,8 +4,7 @@
 // Rejects removed vocabulary in the Operational Model, checked per class
 // (v3 Spec section 13.3). A file's class follows from what it is:
 //   historical   type audit; implemented/superseded Spec; superseded/deprecated ADR
-//   spec         Spec in drafts/ or approved/ (describes migration; not scanned)
-//   migration    the migration contract and its fixtures
+//   spec         Spec in drafts/ or approved/ (not scanned)
 //   validator    this validator and its tests (they define the patterns)
 //   code         .sh .ps1 .mjs .json .yaml .yml   -> forbidden vocabulary is an error
 //   docs         .md                              -> forbidden vocabulary is an error
@@ -80,7 +79,6 @@ function frontmatter(text) {
 export function classify(path, text) {
   const ext = extname(path);
   if (path === 'documentation/validation/validate-vocabulary.mjs' || path.startsWith('documentation/validation/tests/')) return 'validator';
-  if (path === 'core/contracts/product/migration.yaml' || path.startsWith('core/migrate/') || path.includes('/fixtures/')) return 'migration';
   if (DOC_EXT.has(ext)) {
     const fm = frontmatter(text);
     if (fm.type === 'audit') return 'historical';
@@ -96,12 +94,7 @@ export function scan(path, text, cls) {
   const findings = [];
   const fm = path.endsWith('.md') ? frontmatter(text) : {};
   const allowed = EXCEPTIONS[fm.id] || new Set();
-  let inMigration = false;
   text.replace(/\r\n/g, '\n').split('\n').forEach((line, i) => {
-    // migration documentation: a marked region of a Markdown file may name the source state it migrates
-    if (/^<!--\s*migration-source:start\s*-->$/.test(line)) { inMigration = path.endsWith('.md'); return; }
-    if (/^<!--\s*migration-source:end\s*-->$/.test(line)) { inMigration = false; return; }
-    if (inMigration) return;
     if (/^(supersedes|depends_on|implements|entity_refs):/.test(line)) return; // structural id references
     const hit = (what) => findings.push({ path, line: i + 1, what, text: line.trim().slice(0, 140) });
     for (const [what, re] of FORBIDDEN_IDENTIFIERS) if (re.test(line)) hit(what);
@@ -134,7 +127,7 @@ export function run(root) {
 if (process.argv[1] && basename(process.argv[1]) === 'validate-vocabulary.mjs') {
   const root = process.argv[2] || '.';
   const { byClass, violations } = run(root);
-  for (const c of ['code', 'docs', 'spec', 'migration', 'historical', 'validator']) {
+  for (const c of ['code', 'docs', 'spec', 'historical', 'validator']) {
     const v = violations.filter((x) => x.cls === c).length;
     const scanned = c === 'code' || c === 'docs';
     console.log(`validate-vocabulary: ${c.padEnd(10)} files=${String(byClass[c] || 0).padStart(3)} ${scanned ? `violations=${v}` : 'not scanned (allowed by lexical policy)'}`);

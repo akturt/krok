@@ -8,29 +8,29 @@ generate() {
 
   if [ -f "${target_dir}/CLAUDE.md" ]; then
     if grep -q 'docs/\.control/' "${target_dir}/CLAUDE.md"; then
-      echo "  → CLAUDE.md already describes Underboss, skipping."
+      echo "  → CLAUDE.md already describes Krok, skipping."
       return
     fi
-    # An existing CLAUDE.md without Underboss rules gets the snippet prepended.
+    # An existing CLAUDE.md without Krok rules gets the snippet prepended.
     local tmp="${target_dir}/CLAUDE.md.tmp"
     {
       cat << 'SNIPPET'
-## Underboss
+## Krok
 
-Underboss is connected as a Git Submodule: docs/.control/
+Krok is connected as a Git Submodule: docs/.control/
 
 Before any change to docs/:
 1. Read docs/.control/playbook/playbook-v2.md (the protocol)
 2. Use docs/.control/documentation/templates/ - do not copy templates into the project
 3. Run docs/.control/documentation/validation/validate-frontmatter.sh before commit
-4. Execution state is managed with docs/.control/core/bin/underboss (status, attention, execution, escalation)
-5. To install, update or migrate Underboss follow docs/.control/INSTALL.md (the canonical runbook)
+4. Execution state is managed with docs/.control/core/bin/krok (status, attention, execution, escalation)
+5. To install or update Krok follow docs/.control/INSTALL.md (the canonical runbook)
 
 SNIPPET
       cat "${target_dir}/CLAUDE.md"
     } > "$tmp"
     mv "$tmp" "${target_dir}/CLAUDE.md"
-    echo "  → Underboss snippet prepended to CLAUDE.md."
+    echo "  → Krok snippet prepended to CLAUDE.md."
     return
   fi
 
@@ -42,7 +42,7 @@ SNIPPET
 - Name: $(basename "$target_dir")
 - Domain: unknown
 - Stack: unknown
-- Underboss: v$(registry_version)
+- Krok: v$(registry_version)
 
 ## Documentation Layout
 
@@ -54,7 +54,7 @@ docs/
   audits/           # audit reports, reality checks
   backlog/          # backlog: active.md (open work), archive.md (everything else)
   api/              # API documentation
-  .control/         # Underboss git submodule (do not edit directly)
+  .control/         # Krok git submodule (do not edit directly)
     core/           # registry, installation state machine, contracts, Core SDK
     documentation/  # templates, validation, schemas
     agents/         # agent roles
@@ -76,8 +76,8 @@ docs/
 - \`.context/boundaries.yml\` — boundary rules
 - \`.context/agent-entry.md\` — agent entry protocol
 - \`docs/.control/core/installation-state-machine.yaml\` — valid states and transitions
-- \`docs/.control/core/bin/underboss\` — Control Plane CLI: status, attention, execution, escalation
-- \`docs/.control/INSTALL.md\` — canonical runbook: install, update, migrate
+- \`docs/.control/core/bin/krok\` — Control Plane CLI: status, attention, execution, escalation
+- \`docs/.control/INSTALL.md\` — canonical runbook: install, update
 HEREDOC
   echo "  → CLAUDE.md snippet created."
 }

@@ -6,7 +6,7 @@ kind: index
 status: active
 date: 2026-07-08
 updated: 2026-07-09
-owners: [underboss-team]
+owners: [krok-team]
 
 entity_refs: [agentic-layer]
 touches: []
@@ -19,7 +19,7 @@ priority: P1
 
 # agents/ — Repository of AI agent roles
 
-Underboss contains 6 roles, each a ready-to-use prompt configuration for a specific platform (Claude Code, opencode).
+Krok contains 6 roles, each a ready-to-use prompt configuration for a specific platform (Claude Code, opencode).
 
 ## Roles
 
@@ -65,7 +65,7 @@ Each role declares `knowledge:` in frontmatter as **short-id list** (D-KR):
 knowledge: [architecture-principles, report-formats]
 ```
 
-Underboss resolves `knowledge/<short-id>.md`. Roles never hardcode knowledge paths — they reference by short-id.
+Krok resolves `knowledge/<short-id>.md`. Roles never hardcode knowledge paths — they reference by short-id.
 
 | Role | Knowledge refs |
 |------|---------------|
@@ -104,7 +104,7 @@ Role files are ready-to-use agent descriptors. Copy them into your platform's co
 - **Claude Code**: `.claude/agents/<role>.md`
 - **opencode**: `.opencode/agents/<role>.md`
 
-Or use the Underboss section that bootstrap puts into `CLAUDE.md` (see `INSTALL.md`).
+Or use the Krok section that bootstrap puts into `CLAUDE.md` (see `INSTALL.md`).
 
 ## Usage via SOP
 
@@ -114,4 +114,4 @@ Human steps are marked with `gate: manual` (D-HG). A human is not an agent role.
 
 ## Extending
 
-For custom roles (e.g., `tf-reviewer.md`), create them in your consumer repo under `.claude/agents/` or `.opencode/agents/`. Once a role becomes generally useful, propose it to `underboss` via a PR.
+For custom roles (e.g., `tf-reviewer.md`), create them in your consumer repo under `.claude/agents/` or `.opencode/agents/`. Once a role becomes generally useful, propose it to `krok` via a PR.

@@ -68,7 +68,7 @@ emit_edge() {
   emit_node "$to" "doc"
 }
 
-# Iterate all markdown docs (exclude VCS, deps and the Underboss mount)
+# Iterate all markdown docs (exclude VCS, deps and the Krok mount)
 while IFS= read -r f; do
   rel="${f#$PROJECT_ROOT/}"
   emit_node "$rel" "doc"

@@ -1,5 +1,5 @@
 control:
-  name: Underboss
+  name: Krok
   version: "3.0.0"
   codename: Consigliere
 
@@ -36,7 +36,7 @@ entrypoints:
   bootstrap: bootstrap/bootstrap.sh
   installer: bootstrap/install.sh
   validator: documentation/validation/validate-integrity.sh
-  cli: core/bin/underboss
+  cli: core/bin/krok
 
 vocabularies:
   escalation_kinds:
@@ -158,9 +158,6 @@ scripts:
   - name: migrate-legacy
     path: engine/scripts/migrate-legacy.mjs
     description: "Brownfield migration script (Node.js, zero deps)"
-  - name: migrate-v2-to-v3
-    path: core/migrate/v2-to-v3.mjs
-    description: "One-time migration of a consumer project from v2 to v3 (Migration Contract)"
 
 detectors:
   - name: node
@@ -211,7 +208,6 @@ components:
   contracts:
     product:
       - installation
-      - migration
       - validation
     consumer:
       - boundaries

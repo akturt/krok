@@ -5,7 +5,7 @@ type: guide
 kind: index
 status: active
 date: 2026-07-08
-owners: [underboss-team]
+owners: [krok-team]
 
 entity_refs: [agentic-layer]
 tags: [knowledge, index, reference]
@@ -20,7 +20,7 @@ Knowledge used by Roles. Loaded into context by **short-id** from the Role FM:
 knowledge: [architecture-principles, report-formats]
 ```
 
-Underboss resolves the path: `knowledge/<short-id>.md`. This allows restructuring `knowledge/` without rewriting Roles.
+Krok resolves the path: `knowledge/<short-id>.md`. This allows restructuring `knowledge/` without rewriting Roles.
 
 ## Contained
 

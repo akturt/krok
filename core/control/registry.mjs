@@ -5,7 +5,7 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from './yaml.mjs';
 
-// CONTROL_ROOT is where Underboss itself lives (the Registry, SOPs, the Reality Engine):
+// CONTROL_ROOT is where Krok itself lives (the Registry, SOPs, the Reality Engine):
 // the product repository, or docs/.control/ in a consumer. It is derived from this file,
 // like core/lib/api.sh does. The project root is a separate argument of the SDK functions.
 export const CONTROL_ROOT = process.env.CONTROL_ROOT

@@ -18,7 +18,7 @@ const ID = 'execution-001';
 let productRepo = null;
 function product() {
   if (productRepo) return productRepo;
-  const dir = mkdtempSync(join(tmpdir(), 'underboss-product-'));
+  const dir = mkdtempSync(join(tmpdir(), 'krok-product-'));
   const files = spawnSync('git', ['ls-files', '-c'], { cwd: REPO, encoding: 'utf8' }).stdout.split(/\r?\n/).filter(Boolean);
   for (const f of files) {
     if (!existsSync(join(REPO, f))) continue;
@@ -27,14 +27,14 @@ function product() {
   }
   git(dir, 'init', '-q', '-b', 'master', '.');
   git(dir, 'add', '-A');
-  git(dir, 'update-index', '--chmod=+x', 'core/bin/underboss');
+  git(dir, 'update-index', '--chmod=+x', 'core/bin/krok');
   git(dir, 'commit', '-q', '-m', 'product');
   productRepo = dir;
   return dir;
 }
 
 function consumer() {
-  const proj = mkdtempSync(join(tmpdir(), 'underboss-shop-'));
+  const proj = mkdtempSync(join(tmpdir(), 'krok-shop-'));
   git(proj, 'init', '-q', '-b', 'main', '.');
   git(proj, 'remote', 'add', 'origin', 'https://example.com/acme/shop.git');
   put(proj, 'README.md', '# shop\n');
@@ -51,8 +51,8 @@ function consumer() {
   put(proj, 'docs/backlog/active.md', '---\nschema: 1\nid: backlog-active\ntype: backlog\nstatus: active\ndate: 2026-10-04\nowners: [t]\n---\n\n- [ ] first\n- [ ] second\n');
   git(proj, 'add', '-A');
   git(proj, 'commit', '-q', '-m', 'consumer');
-  const bin = join(proj, 'docs', '.control', 'core', 'bin', 'underboss');
-  const other = mkdtempSync(join(tmpdir(), 'underboss-away-'));
+  const bin = join(proj, 'docs', '.control', 'core', 'bin', 'krok');
+  const other = mkdtempSync(join(tmpdir(), 'krok-away-'));
   const run = (...args) => {
     const r = spawnSync('bash', [P(bin), ...args, '--project', P(proj)], { cwd: other, encoding: 'utf8' });
     return { code: r.status, out: r.stdout, err: r.stderr, json: () => JSON.parse(r.stdout) };
@@ -75,16 +75,16 @@ function toExecuting(c) {
 test('installation: the CLI is available from the installed control layer, registered and executable', () => {
   const c = consumer();
   const control = join(c.proj, 'docs', '.control');
-  assert.equal(core.loadRegistry().entrypoints.cli, 'core/bin/underboss');
+  assert.equal(core.loadRegistry().entrypoints.cli, 'core/bin/krok');
   const registry = readFileSync(join(control, 'core', 'registry.yaml'), 'utf8');
-  assert.match(registry, /^  cli: core\/bin\/underboss$/m);
-  assert.ok(existsSync(join(control, 'core', 'bin', 'underboss')));
-  assert.match(spawnSync('git', ['ls-files', '-s', 'core/bin/underboss'], { cwd: control, encoding: 'utf8' }).stdout, /^100755/);
+  assert.match(registry, /^  cli: core\/bin\/krok$/m);
+  assert.ok(existsSync(join(control, 'core', 'bin', 'krok')));
+  assert.match(spawnSync('git', ['ls-files', '-s', 'core/bin/krok'], { cwd: control, encoding: 'utf8' }).stdout, /^100755/);
   assert.ok(existsSync(join(control, 'core', 'registry.yaml')));
   assert.deepEqual(readdirSync(c.proj).filter((d) => !d.startsWith('.') && !['docs', 'README.md', 'CLAUDE.md'].includes(d)), []);
   // the consumer repository tracks the control layer as a submodule, not as files
   assert.match(spawnSync('git', ['ls-files', '-s', 'docs/.control'], { cwd: c.proj, encoding: 'utf8' }).stdout, /^160000/);
-  const direct = spawnSync(P(join(control, 'core', 'bin', 'underboss')), ['status', '--project', P(c.proj)], { encoding: 'utf8', shell: false });
+  const direct = spawnSync(P(join(control, 'core', 'bin', 'krok')), ['status', '--project', P(c.proj)], { encoding: 'utf8', shell: false });
   if (direct.error === undefined) assert.equal(direct.status, 0, direct.stderr);
   assert.match(c.run('status').out, /executions: 0/);
 });
@@ -218,8 +218,8 @@ test('failure: invalid transition, invalid SOP, invalid Spec, missing project, i
   assert.equal(ready.code, 1);
   assert.ok(ready.json().findings.some((f) => f.check === 1 && /not found/.test(f.message)));
 
-  const away = mkdtempSync(join(tmpdir(), 'underboss-noproj-'));
-  const bin = join(c.proj, 'docs', '.control', 'core', 'bin', 'underboss');
+  const away = mkdtempSync(join(tmpdir(), 'krok-noproj-'));
+  const bin = join(c.proj, 'docs', '.control', 'core', 'bin', 'krok');
   const none = spawnSync('bash', [P(bin), 'status', '--json'], { cwd: away, encoding: 'utf8' });
   assert.equal(none.status, 3);
   assert.equal(JSON.parse(none.stdout).code, 3);

@@ -1,15 +1,15 @@
 #!/bin/bash
 # bootstrap/install.sh
 #
-# One-liner installer for Underboss.
+# One-liner installer for Krok.
 # Uses the Core SDK (core/lib/api.sh) to read all paths and versions
 # from registry.yaml — no grep/sed/awk parsing of the registry.
 #
-# Usage: bash <(curl -s https://raw.githubusercontent.com/akturt/underboss/master/bootstrap/install.sh)
+# Usage: bash <(curl -s https://raw.githubusercontent.com/akturt/krok/master/bootstrap/install.sh)
 
 set -eu
 
-REPO_URL="https://github.com/akturt/underboss.git"
+REPO_URL="https://github.com/akturt/krok.git"
 
 # Detect project root
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
@@ -20,10 +20,10 @@ fi
 
 echo "→ Project: $PROJECT_ROOT"
 
-# Underboss submodule location
+# Krok submodule location
 SUBMODULE_PATH="docs/.control"
 
-# Load the unified Core SDK for a given Underboss root.
+# Load the unified Core SDK for a given Krok root.
 load_api() {
   CONTROL_ROOT="$1"
   # shellcheck disable=SC1090
@@ -46,7 +46,7 @@ if [ -n "$CONTROL_DIR" ]; then
 fi
 
 # Fresh install
-echo "→ Installing Underboss..."
+echo "→ Installing Krok..."
 
 # Ensure docs/.control exists
 mkdir -p "$PROJECT_ROOT/docs/.control"
@@ -83,4 +83,4 @@ echo " 2. Complete docs/architecture/README.md"
 echo " 3. Create your first ADR"
 echo ""
 echo "Commit with:"
-echo " git add -A && git commit -m 'docs: install Underboss'"
+echo " git add -A && git commit -m 'docs: install Krok'"

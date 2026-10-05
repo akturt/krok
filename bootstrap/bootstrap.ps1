@@ -1,6 +1,6 @@
 ﻿# bootstrap/bootstrap.ps1
 #
-# Minimal Underboss bootstrap (Windows / PowerShell).
+# Minimal Krok bootstrap (Windows / PowerShell).
 # Creates docs/ skeleton + .context/ stubs + drops CLAUDE.md snippet into the
 # consumer repository. Idempotent. Mirrors bootstrap.sh.
 #
@@ -28,7 +28,7 @@ if (-not $ProjectPath) {
 $ControlRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
 Write-Host "-> Target project:  $ProjectPath"
-Write-Host "-> Underboss root:  $ControlRoot"
+Write-Host "-> Krok root:  $ControlRoot"
 Write-Host ""
 
 function Get-RegistryDirectories($scope) {
@@ -86,7 +86,7 @@ $boundariesYml = @(
   'boundaries:',
   '  pristine:',
   '    - path: docs/.control/',
-  '      reason: "Underboss submodule (managed by git submodule update --remote)"',
+  '      reason: "Krok submodule (managed by git submodule update --remote)"',
   '  editable:',
   '    - path: docs/',
   '      reason: "all user-authored documentation"',
@@ -106,7 +106,7 @@ $agentEntry = @(
   '',
   'Before creating any .md in docs/:',
   '1. Identify `type` (spec|adr|audit|runbook|guide|api|architecture|backlog|prompt)',
-  '2. Copy template from Underboss: `docs/.control/documentation/templates/<type>.md`',
+  '2. Copy template from Krok: `docs/.control/documentation/templates/<type>.md`',
   '3. Fill the 6 mandatory fields: schema, id, type, status, date, owners',
   '4. Never add `lifecycle:` to frontmatter (a spec position is its directory)',
   '5. Never add legacy fields: author, title, created, referenced_by, supersedes_adr, excludes-from-scope'
@@ -114,9 +114,9 @@ $agentEntry = @(
 Write-StubIfMissing (Join-Path $ctx "agent-entry.md") $agentEntry
 
 $snippet = @(
-  '## Underboss',
+  '## Krok',
   '',
-  'Underboss is connected as a Git Submodule:',
+  'Krok is connected as a Git Submodule:',
   '',
   '    docs/.control/',
   '',
@@ -128,36 +128,36 @@ $snippet = @(
   '5. For brownfield migration, follow `docs/.control/playbook/migrate-legacy.md`',
   '6. For typical processes, pick a SOP in `docs/.control/sops/` and run `node docs/.control/sops/planner.mjs <name>` - call roles by name',
   '7. If task involves architectural review - see `docs/.control/sops/architecture-review.yaml`; foundation is `reality-auditor` BEFORE `architecture-reviewer`.',
-  '8. Execution state is managed with `docs/.control/core/bin/underboss` (status, attention, execution, escalation).',
-  '9. To install, update or migrate Underboss follow `docs/.control/INSTALL.md` (the canonical runbook).',
+  '8. Execution state is managed with `docs/.control/core/bin/krok` (status, attention, execution, escalation).',
+  '9. To install or update Krok follow `docs/.control/INSTALL.md` (the canonical runbook).',
   '10. Common knowledge bases live in `docs/.control/knowledge/` (`architecture-principles`, `evidence-model`, `audit-principles`, `report-formats`, `capabilities`) - roles reference them by short-id, not inline.'
 )
 
 $claude = Join-Path $ProjectPath "CLAUDE.md"
 if (Test-Path $claude) {
   $existing = Get-Content -Path $claude -Raw -ErrorAction SilentlyContinue
-  if ($existing -notmatch "## Underboss") {
+  if ($existing -notmatch "## Krok") {
     $newContent = ($snippet -join "`n") + "`n`n" + $existing
     $newContent | Set-Content -Path $claude -Encoding utf8
-    Write-Host "-> Prepended 'Underboss' section to existing CLAUDE.md"
+    Write-Host "-> Prepended 'Krok' section to existing CLAUDE.md"
   } else {
-    Write-Host "-> CLAUDE.md already has 'Underboss' section, skipped"
+    Write-Host "-> CLAUDE.md already has 'Krok' section, skipped"
   }
 } else {
   $snippet | Set-Content -Path $claude -Encoding utf8
-  Write-Host "-> Created CLAUDE.md with Underboss snippet"
+  Write-Host "-> Created CLAUDE.md with Krok snippet"
 }
 
 # AGENTS.md — same content, only if the file already exists (Cursor, Windsurf, etc.)
 $agents = Join-Path $ProjectPath "AGENTS.md"
 if (Test-Path $agents) {
   $existing = Get-Content -Path $agents -Raw -ErrorAction SilentlyContinue
-  if ($existing -notmatch "## Underboss") {
+  if ($existing -notmatch "## Krok") {
     $newContent = ($snippet -join "`n") + "`n`n" + $existing
     $newContent | Set-Content -Path $agents -Encoding utf8
-    Write-Host "-> Prepended 'Underboss' section to existing AGENTS.md"
+    Write-Host "-> Prepended 'Krok' section to existing AGENTS.md"
   } else {
-    Write-Host "-> AGENTS.md already has 'Underboss' section, skipped"
+    Write-Host "-> AGENTS.md already has 'Krok' section, skipped"
   }
 }
 

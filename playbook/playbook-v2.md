@@ -5,7 +5,7 @@ type: spec
 status: implemented
 date: 2026-07-07
 updated: 2026-07-08
-owners: [underboss-team]
+owners: [krok-team]
 
 entity_refs: [schema-v1, canonical-frontmatter, agent-entry-protocol, lifecycle-spec, lifecycle-adr]
 touches: [docs, .context, .claude/rules, .github/workflows]
@@ -43,7 +43,7 @@ The goal of the system: **documentation = infrastructure**, not arbitrary text f
 
 ## Bootstrap (creating the structure)
 
-Bootstrap is the single source of truth for creating the directory structure. The script lives in Underboss repository, not in the playbook itself:
+Bootstrap is the single source of truth for creating the directory structure. The script lives in Krok repository, not in the playbook itself:
 
 ```bash
 # Linux / macOS / WSL
@@ -454,7 +454,7 @@ id: architecture-readme
 type: architecture
 status: active
 date: YYYY-MM-DD
-owners: [underboss-team]
+owners: [krok-team]
 ---
 
 # Architecture Reference Index
@@ -481,7 +481,7 @@ id: architecture-system-overview
 type: architecture
 status: active
 date: YYYY-MM-DD
-owners: [underboss-team]
+owners: [krok-team]
 ---
 
 # System Overview
@@ -610,7 +610,7 @@ id: runbook-<slug>
 type: runbook
 status: active
 date: YYYY-MM-DD
-owners: [underboss-team]
+owners: [krok-team]
 kind: deploy | cicd | ops | troubleshoot | secrets | integration
 ---
 

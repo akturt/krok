@@ -4,7 +4,7 @@ id: agent-opencode-reality-auditor
 type: prompt
 status: active
 date: 2026-07-08
-owners: [underboss-team]
+owners: [krok-team]
 
 description: Project State Reconstruction Agent — reconstructs the project's actual state from code, configs, and documents
 mode: subagent

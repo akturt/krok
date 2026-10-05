@@ -1,6 +1,6 @@
 # Agent Entry Point
 
-This project uses **Underboss v3.0.0**.
+This project uses **Krok v3.0.0**.
 
 ## Your first action
 
@@ -14,9 +14,9 @@ Then open `docs/REALITY-REPORT.md` (or the generated artifact it points to) and 
 
 | Area | Purpose |
 |------|---------|
-| `INSTALL.md` | Canonical install / update / migration runbook (agents start here) |
+| `INSTALL.md` | Canonical install / update runbook (agents start here) |
 | `docs/` | Project documentation (authoritative output) |
-| `docs/.control/` | Underboss git submodule — do not edit directly |
+| `docs/.control/` | Krok git submodule — do not edit directly |
 | `.context/` | Agent entry metadata — project identity, boundaries |
 | `README.md` | Installation overview |
 

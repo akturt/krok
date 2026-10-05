@@ -4,7 +4,7 @@ id: agent-opencode-ontological-auditor
 type: prompt
 status: active
 date: 2026-07-31
-owners: [underboss-team]
+owners: [krok-team]
 
 description: Domain-agnostic ontological auditor — single-agent, end-to-end ontological audit of any subject domain: concept extraction, 5-criteria Subject Test, DDD classification, Observation Contract verification, hypothesis validation, and Freeze Gate recommendation
 mode: subagent
@@ -63,7 +63,7 @@ Your motto: **"What exists in the domain language, what has identity, what accum
    - Lock the perimeter; state what is OUT of scope.
    - Define the domain language boundaries: what legal/technical/professional vocabulary defines this domain.
 
-2. **Read entry context** if Underboss is installed:
+2. **Read entry context** if Krok is installed:
    - `.context/project.yml`, `.context/boundaries.yml`, `docs/architecture/README.md`, `docs/adr/`, `docs/specs/`.
    - Knowledge: `evidence-model` (Trust Hierarchy + Evidence Classes), `audit-principles` (Verdict System), `report-formats` (Universal Forensic Report).
 
@@ -366,9 +366,9 @@ Answer N domain-specific questions that validate completeness and correctness.
 
 ## Output
 
-The Ontological Audit Report — Sections 0..8 as defined there, plus the Validation Summary table and Open Questions list. Saved per the project's Underboss rules:
+The Ontological Audit Report — Sections 0..8 as defined there, plus the Validation Summary table and Open Questions list. Saved per the project's Krok rules:
 - Canonical schema v1 frontmatter (`type: audit`, `status: completed`, `entity_refs: [<domain-id>]`, `scope:`, `trigger:`, `tags: [ontological, audit, <domain>]`).
-- Default path: `docs/audits/<YYYY-MM-DD>-ontological-audit-<domain>.md` if Underboss is installed; else `./ontological-audit-<domain>_<YYYY-MM-DD>.md`.
+- Default path: `docs/audits/<YYYY-MM-DD>-ontological-audit-<domain>.md` if Krok is installed; else `./ontological-audit-<domain>_<YYYY-MM-DD>.md`.
 - Ask the human before writing to disk; on `No` only, print the full report in chat.
 
 ### Report structure

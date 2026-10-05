@@ -41,7 +41,6 @@ test('vocabulary: classes follow what a file is', () => {
   assert.equal(classify('x.md', doc({ id: 'a', type: 'adr', status: 'superseded' })), 'historical');
   assert.equal(classify('x.md', doc({ id: 'a', type: 'adr', status: 'accepted' })), 'docs');
   assert.equal(classify('core/lib/a.sh', ''), 'code');
-  assert.equal(classify('core/contracts/product/migration.yaml', ''), 'migration');
 });
 
 test('vocabulary: forbidden identifiers and the former product term are found', () => {

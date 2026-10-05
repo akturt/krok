@@ -1,7 +1,7 @@
 #!/bin/bash
 # documentation/validation/validate-integrity.sh
 #
-# Validates the integrity of Underboss itself as a complete dependency graph.
+# Validates the integrity of Krok itself as a complete dependency graph.
 # Uses Core SDK (core/lib/) for all registry parsing.
 #
 # Exit codes:

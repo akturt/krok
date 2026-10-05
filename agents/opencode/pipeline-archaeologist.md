@@ -4,7 +4,7 @@ id: agent-opencode-pipeline-archaeologist
 type: prompt
 status: active
 date: 2026-08-04
-owners: [underboss-team]
+owners: [krok-team]
 
 description: Pipeline forensic archaeologist — reconstructs the runtime reality of a multi-hop data pipeline (ingestion/ETL/event pipeline/integration adapter) through 3 progressive layers (Execution Topology, Structural Topology, Content Topology) before any coverage matrix or replacement-layer design is allowed to proceed
 mode: subagent
@@ -97,7 +97,7 @@ collection.
      it is context, not an independent starting point.
    - Lock the perimeter; state what is out of scope.
 
-2. **Read entry context** if Underboss is installed:
+2. **Read entry context** if Krok is installed:
    - `.context/project.yml`, `.context/boundaries.yml`,
      `docs/architecture/README.md`, `docs/adr/`.
    - Knowledge: `evidence-model` (Trust Hierarchy + Evidence Classes),
@@ -222,7 +222,7 @@ One Pipeline Archaeology Report per layer (per `report-formats`), canonical
 schema v1 frontmatter (`type: audit`, `status: completed`,
 `depends_on: [<previous-layer-audit-id>]`, `tags: [pipeline, archaeology,
 <layer>]`), saved at
-`docs/audits/<YYYY-MM-DD>-<pipeline>-<layer>-archaeology-audit.md` if Underboss is
+`docs/audits/<YYYY-MM-DD>-<pipeline>-<layer>-archaeology-audit.md` if Krok is
 installed, else printed in chat. Findings tables use
 `| # | Severity | Finding | Evidence | Recommendation |` with a
 layer-distinct id prefix (e.g. one prefix per layer) so cross-layer

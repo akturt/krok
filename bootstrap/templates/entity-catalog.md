@@ -13,7 +13,7 @@ priority: P1
 
 # Entity Catalog
 
-> **Consumer must complete this catalog.** Underboss cannot know your domain entities.
+> **Consumer must complete this catalog.** Krok cannot know your domain entities.
 > Bootstrap auto-generates sections from project structure. Fill in the details.
 
 ## Core Entities

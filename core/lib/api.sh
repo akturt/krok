@@ -2,7 +2,7 @@
 # core/lib/api.sh — Unified Core SDK (internal SDK)
 #
 # Single entrypoint that loads the entire Core SDK. Every tool inside
-# Underboss (bootstrap, install, validators, future migrate) sources THIS file
+# Krok (bootstrap, install, validators) sources THIS file
 # instead of the individual lib modules, so they all behave identically:
 #
 #   source "${CONTROL_ROOT}/core/lib/api.sh"

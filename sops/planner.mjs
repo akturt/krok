@@ -4,7 +4,7 @@
 // Reads YAML SOPs from sops/*.yaml, prints execution plan for a given SOP.
 // Computes parallel groups automatically based on `depends_on` field.
 //
-// Usage (from the Underboss root, i.e. docs/.control/):
+// Usage (from the Krok root, i.e. docs/.control/):
 //   node sops/planner.mjs                       # list available SOPs
 //   node sops/planner.mjs new-feature           # print plan for new-feature SOP
 //   node sops/planner.mjs new-feature --platform claude-code
