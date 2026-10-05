@@ -29,7 +29,7 @@ This is the **one canonical runbook** for a consumer repository. It covers two c
 
 Everything is run **from the repository root** of the consumer project. Krok lives in the consumer as a git submodule at `docs/.control/` (v3). Requirements: `git` ≥ 2.20, `node` ≥ 18, `bash` (Git Bash on Windows).
 
-A consumer that still has the old name of this product: [`playbook/move-from-underboss.md`](playbook/move-from-underboss.md).
+A project that still has the old name of this product (Underboss): the detection below prints `MOVE`; follow [`playbook/move-from-underboss.md`](playbook/move-from-underboss.md). A request like "update Underboss to Krok" with the address of this repository is the whole order: you need nothing else from the user.
 
 ## For an AI coding agent
 
@@ -39,7 +39,7 @@ You can choose the flow without asking the user, if the repository state allows 
 2. Look at the tree: `git status --porcelain --untracked-files=no`. It must be empty before any flow that changes the submodule. If it is not, stop and tell the user.
 3. Run the detection below. It prints exactly one line.
 4. Follow the flow that line names, step by step, in order. Do not skip checks.
-5. There is no migration. A project that carries an installation of another layout is not updated: tell the user to remove it and install again (flow A). Anything else unexpected (a half-installed state) is a `STOP`.
+5. There is no migration and no compatibility. A project with the old name or the old layout is not converted by a script: the verdict `MOVE` sends you to the guide, which lists every decision; do not ask the user about them. Anything else unexpected (a half-installed state) is a `STOP`.
 6. Never edit files inside `docs/.control/`. The submodule is replaced as a whole, never patched.
 7. Run the verification of the flow. A failed check is an error: stop and report it, do not work around it.
 8. Commit the consumer changes as described in the flow. Do not push unless asked.
@@ -50,8 +50,11 @@ bash <<'DETECT'
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "STOP not a git repository"; exit 0; }
 cd "$ROOT" || exit 0
 NEW=docs/.control
+OLD=docs/.runtime/underboss
 ver() { awk -v k="$2" '$0 ~ "^"k":" {f=1; next} f && /^[^ ]/ {exit} f && /^  version:/ {gsub(/"/, "", $2); print $2; exit}' "$1"; }
-if [ -f "$NEW/core/registry.yaml" ]; then
+if [ -f "$NEW/core/registry.yaml" ] && grep -qi underboss "$NEW/core/registry.yaml" .gitmodules 2>/dev/null; then
+  echo "MOVE"
+elif [ -f "$NEW/core/registry.yaml" ]; then
   V=$(ver "$NEW/core/registry.yaml" control)
   case "$V" in
     3.*) echo "UPDATE $V" ;;
@@ -59,6 +62,8 @@ if [ -f "$NEW/core/registry.yaml" ]; then
   esac
 elif [ -e "$NEW" ]; then
   echo "STOP docs/.control exists without core/registry.yaml"
+elif [ -e "$OLD" ] || [ -e .context/runtime ]; then
+  echo "MOVE"
 else
   echo "INSTALL"
 fi
@@ -69,6 +74,7 @@ DETECT
 |---|---|---|
 | `INSTALL` | no Krok | flow A |
 | `UPDATE 3.x.y` | v3 installed | flow B |
+| `MOVE` | the old name (Underboss) is installed | [`playbook/move-from-underboss.md`](playbook/move-from-underboss.md), complete and without questions |
 | `STOP …` | broken or ambiguous | inspect, report to the user, change nothing |
 
 Other stop conditions:

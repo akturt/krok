@@ -34,6 +34,7 @@ project grows.
 > **"Install Krok."**
 > The agent reads [`INSTALL.md`](INSTALL.md), the canonical runbook, and does everything automatically.
 > To update an existing installation say **"Update Krok. Follow the canonical runbook."**
+> A project that still runs Underboss: **"Update Underboss to Krok"** and the link to this repo. The runbook detects the old name and the agent follows [`playbook/move-from-underboss.md`](playbook/move-from-underboss.md) on its own.
 > For a fresh install you can also run the one-liner:
 > `bash <(curl -s https://raw.githubusercontent.com/akturt/krok/master/bootstrap/install.sh)`
 

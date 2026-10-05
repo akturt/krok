@@ -54,6 +54,7 @@ const DOMAIN_TERMS = [
 ];
 const EXCEPTIONS = {
   'adr-004-spec-lifecycle': new Set(['review']),
+  'install-krok': new Set(['legacy']), // the detection snippet names the old layout to route it to the guide
   'guide-move-from-underboss': new Set(['legacy', 'review']), // the guide for consumers of the old name must name the old layout
 };
 
@@ -89,7 +90,7 @@ function frontmatter(text) {
 
 export function classify(path, text) {
   const ext = extname(path);
-  if (path === 'documentation/validation/validate-vocabulary.mjs' || path.startsWith('documentation/validation/tests/')) return 'validator';
+  if (path === 'documentation/validation/validate-vocabulary.mjs' || path.startsWith('documentation/validation/tests/') || path === 'bootstrap/tests/runbook.test.mjs') return 'validator';
   if (DOC_EXT.has(ext)) {
     const fm = frontmatter(text);
     if (fm.type === 'audit') return 'historical';

@@ -95,6 +95,10 @@ test('detection: every repository state maps to exactly one verdict', () => {
   assert.match(detect(v3('4.0.0')), /^STOP docs\/\.control has an unexpected version '4\.0\.0'/);
   assert.match(detect(v3('2.0.0')), /^STOP docs\/\.control has an unexpected version/);
 
+  // the old name routes to the guide, it is never converted
+  assert.equal(detect(repo({ 'docs/.runtime/underboss/x': 'x' })), 'MOVE');
+  assert.equal(detect(repo({ '.context/runtime/x': 'x' })), 'MOVE');
+  assert.equal(detect(repo({ 'docs/.control/core/registry.yaml': 'control:\n  name: Underboss\n  version: "3.0.0"\n' })), 'MOVE');
   assert.match(detect(repo({ 'docs/.control/x': 'x' })), /^STOP docs\/\.control exists without core\/registry\.yaml/);
 
 });
