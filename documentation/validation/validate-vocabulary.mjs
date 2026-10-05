@@ -22,6 +22,14 @@ import { execFileSync } from 'node:child_process';
 
 const CODE_EXT = new Set(['.sh', '.ps1', '.mjs', '.json', '.yaml', '.yml']);
 const DOC_EXT = new Set(['.md']);
+// Not scanned: dependency lockfiles (third-party package names) and the consumer's append-only log.
+// In a consumer repository (docs/.control is mounted) only the operational files are scanned.
+const LOCKFILES = new Set(['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'composer.lock']);
+const OPERATIONAL = [/^docs\//, /^\.context\//, /^\.claude\//, /^\.github\//, /^(CLAUDE|AGENTS)\.md$/];
+export function skipped(path, consumer) {
+  if (LOCKFILES.has(basename(path)) || path === 'docs/LOG.md') return true;
+  return consumer && !OPERATIONAL.some((re) => re.test(path));
+}
 
 // term -> regex. `runtime` is checked after consumer-domain terms are masked.
 const FORBIDDEN_IDENTIFIERS = [
@@ -113,7 +121,9 @@ export function scan(path, text, cls) {
 export function run(root) {
   const byClass = {};
   const violations = [];
+  const consumer = existsSync(join(root, 'docs', '.control', 'core', 'registry.yaml'));
   for (const path of listFiles(root)) {
+    if (skipped(path, consumer)) continue;
     const abs = join(root, path);
     if (!existsSync(abs) || !statSync(abs).isFile()) continue;
     const ext = extname(path);

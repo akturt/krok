@@ -41,7 +41,7 @@ The decisions below are made. Do not ask the user about any of them, do not offe
    | any other `docs/.runtime` (for example the `boundaries:` block of `.context/project.yml`) | `docs/.control` |
 
    Find them with `git grep -il underboss` and `git grep -l 'docs/\.runtime'`.
-5. **Files the old bootstrap created outside the three generated ones** (`.claude/agents/`, `.claude/rules/`, hand-filled `.context/project.yml`) belong to the consumer now. Keep them and update the references in them; do not delete them.
+5. **Files the old bootstrap created outside the three generated ones** (`.claude/agents/`, `.claude/rules/`, hand-filled `.context/project.yml`) belong to the consumer now. Keep them and update the references in them; do not delete them. Find them with the greps of rule 4, not from a fixed list. `.context/agent-entry.md` is recreated by bootstrap with the Krok entry protocol; if it exists empty from an older install, delete it and run bootstrap again.
 6. **History is not rewritten.** Leave as they are: the project log (`docs/LOG.md` or similar append-only logs), everything under `docs/audits/` and `docs/adr/`, and every document whose frontmatter `status` is `implemented` or `superseded`. The old name in them is a historical fact. Check each excluded file for a live reference (a path or command someone would run) before leaving it; fix only a live one.
 7. **Document model (section 2, step 4).** Check each item and fix what is there. Never change the lifecycle status of a Spec: approval is a human act.
 8. **Verification** is the Verification section of `INSTALL.md`, and every command must pass. A failure is fixed at its root, never skipped. After the replace, `git grep -i underboss` must show only files covered by rule 6 or the necessary mentions in this guide.
@@ -63,7 +63,9 @@ Decisions are made:
 - Replace in every working file: docs/.runtime/underboss and any docs/.runtime -> docs/.control; core/bin/underboss -> core/bin/krok; validate-runtime.sh -> validate-integrity.sh; Underboss/underboss -> Krok/krok; owners: [underboss-team] -> [krok-team]. Then git grep -i underboss and git grep 'docs/.runtime' must show only history.
 - History stays as is: the project log, docs/audits/, docs/adr/, every document with status implemented or superseded. Fix a live path or command there only.
 - Bring documents to the v3 model (guide section 2, step 4: api statuses, specs/review, entity ids, backlog split). Check each item. Never change a Spec's lifecycle status.
-- Verify with the Verification section of INSTALL.md; every command must pass; fix failures at the root.
+- Remove the word "runtime" and the removed Spec status "review" from operational files as validate-vocabulary reports (replace by Krok / control layer / host as the meaning requires).
+- Spec fixes the validators demand are allowed (status ready -> draft, missing Acceptance criteria in an approved Spec restated from the Spec itself, an empty specs/review/ directory removed); report each.
+- Verify with the Verification section of INSTALL.md (it includes validate-vocabulary with the repository root as argument); every command must pass; fix failures at the root.
 - Commit in logical commits and push as this repo's CLAUDE.md says (deploy check included); if it says nothing, do not push.
 - Finish with a report: deleted, replaced, remaining old-name mentions and why, verification results, commit hashes, HEAD vs origin, tree status.
 
@@ -121,10 +123,13 @@ Install Krok again and bring the documents to the v3 model by hand. The content 
    rm -rf .git/modules/docs/.runtime/underboss
    ```
 
-2. **Remove the generated files and the old section** of `CLAUDE.md` and `AGENTS.md`: `.context/agent-entry.md`, `.context/boundaries.yml`, `.github/workflows/docs-validate.yml`, and the `## Underboss` section. If `.context/project.yml` was never filled in, remove it too.
+2. **Remove the generated files and the old section** of `CLAUDE.md` and `AGENTS.md`. The three files below are the generated ones; other files that mention the old path (`.claude/rules/`, `.claude/agents/`) are yours: keep them and update the references (agent section, rules 4 and 5): `.context/agent-entry.md`, `.context/boundaries.yml`, `.github/workflows/docs-validate.yml`, and the `## Underboss` section. If `.context/project.yml` was never filled in, remove it too.
 3. **Install Krok** with flow A of `INSTALL.md`: submodule at `docs/.control`, bootstrap, and `repository.name` in `.context/project.yml` equal to the name of the `origin` repository.
 4. **Bring the documents to the v3 model.** The validators of the verification list what is left. The known differences:
-   - Specs in `docs/specs/review/` move to `docs/specs/drafts/` with `status: draft`. Approval stays a human act.
+   - Specs in `docs/specs/review/` move to `docs/specs/drafts/` with `status: draft`. Approval stays a human act. An empty `docs/specs/review/` directory (git does not show it) also fails `validate-lifecycle`: remove it with `rmdir`.
+   - The Spec lifecycle is `draft`, `approved`, `implemented`, `superseded` only. A Spec with another status (for example `ready`) fails `validate-lifecycle` even if `validate-frontmatter` accepts it: set `draft` when it lives in `drafts/`.
+   - An approved Spec needs a `## Acceptance criteria` section with `AC-001`, `AC-002`, … ids. If it is missing, add it by restating what the Spec already says in Scope and Technical approach; add no new scope and do not change the status. Tell the owner to check the wording against the code.
+   - The words "runtime" and "review" (as a Spec status or stage) are removed from operational files; `validate-vocabulary` lists them. The human act of reviewing a document is not the removed stage and may stay.
    - `api` documents take the statuses `active` or `deprecated`; the old lifecycle subdirectories of `docs/api/` are removed.
    - Renamed ids in `entity_refs`, `implements`, `depends_on`: `runtime-agentic-layer` → `agentic-layer`, `runtime` → `core`, `state-machine` → `installation-state-machine`.
    - The backlog is split into `docs/backlog/active.md` (open items) and `docs/backlog/archive.md` (everything else).

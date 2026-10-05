@@ -149,6 +149,7 @@ test('flow A then B: install from scratch, then update, exactly as the runbook s
   const bootstrap = commands(block('Run bootstrap'))[0];
   has(bootstrap);
   ok(proj, bootstrap);
+  assert.match(readFileSync(join(proj, '.context', 'agent-entry.md'), 'utf8'), /Agent Entry Point/);
   writeFileSync(join(proj, '.context', 'project.yml'), 'name: shop\nrepository:\n  name: shop\n');
   assert.equal(detect(proj), 'UPDATE 3.0.0');
   verify(proj);

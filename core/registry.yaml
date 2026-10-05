@@ -153,6 +153,10 @@ generators:
     path: bootstrap/generators/invariants.sh
     entry: generate
     description: "Auto-generate docs/architecture/invariants.md from template"
+  - name: agent-entry
+    path: bootstrap/generators/agent-entry.sh
+    entry: generate
+    description: "Generate .context/agent-entry.md (the agent entry protocol)"
 
 scripts:
   - name: migrate-legacy

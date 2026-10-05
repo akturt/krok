@@ -91,3 +91,14 @@ test('vocabulary: only the move-from-the-old-name guide may name the old layout'
   const other = scan('g.md', doc({ id: 'guide-other', type: 'guide', status: 'active' }) + body, 'docs');
   assert.ok(other.length >= 3);
 });
+
+test('vocabulary: lockfiles and the project log are not scanned; a consumer is scanned only in its operational files', () => {
+  const r = tmp();
+  put(r, 'package-lock.json', '{"@edge-runtime/vm": "1"}\n');
+  put(r, 'docs/LOG.md', doc({ id: 'log', type: 'guide', status: 'active', body: 'docs/.runtime/underboss' }));
+  assert.equal(run(r).violations.length, 0);
+  put(r, 'docs/.control/core/registry.yaml', 'control:\n  version: "3.0.0"\n');
+  put(r, 'vercel.json', '{"runtime": "nodejs"}\n');
+  put(r, 'docs/a.md', doc({ id: 'a', type: 'guide', status: 'active', body: 'the runtime layer' }));
+  assert.deepEqual(run(r).violations.map((x) => x.path), ['docs/a.md']);
+});

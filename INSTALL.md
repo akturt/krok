@@ -165,6 +165,7 @@ bash docs/.control/documentation/validation/validate-frontmatter.sh
 node docs/.control/documentation/validation/validate-lifecycle.mjs docs
 node docs/.control/documentation/validation/validate-backlog.mjs docs
 node docs/.control/documentation/validation/validate-execution.mjs .
+node docs/.control/documentation/validation/validate-vocabulary.mjs .   # the argument is the repository root, not docs/
 bash docs/.control/core/bin/krok status
 ```
 
