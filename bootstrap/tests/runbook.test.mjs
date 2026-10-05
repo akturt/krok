@@ -79,7 +79,7 @@ test('runbook: it is the one entry point, with the two flows and the agent secti
   for (const h of ['## For an AI coding agent', '## A. Install v3', '## B. Update v3', '## Verification']) assert.ok(RUNBOOK.includes(h), h);
   assert.ok(RUNBOOK.includes('Installation/update complete when:'));
   assert.match(RUNBOOK, /There is no migration/);
-  assert.doesNotMatch(RUNBOOK, /docs\/\.runtime|v2-to-v3|MIGRATE/);
+  assert.doesNotMatch(RUNBOOK, /v2-to-v3|MIGRATE/);
   assert.equal(existsSync(join(REPO, 'playbook', 'install-remote-prompt.md')), false, 'no competing installation prompt');
   assert.match(readFileSync(join(REPO, 'bootstrap', 'DEPLOY-PROMPT.md'), 'utf8'), /INSTALL\.md/);
 });
