@@ -20,7 +20,9 @@ priority: P1
 
 Krok is the new name of Underboss. There is **no migration and no compatibility layer**: Krok does not read, detect or convert an Underboss installation. A consumer either stays on its old pinned version or moves by following this guide. The canonical install and update procedure is [`INSTALL.md`](../INSTALL.md); this guide only lists what is different for a consumer that already has the old name.
 
-Everything is run from the repository root. Work on a branch and start from a clean tracked tree: `git status --porcelain --untracked-files=no` must print nothing.
+Everything is run from the repository root. Unrelated uncommitted changes in the tree do not stop this guide: see rule 3 of the agent section.
+
+The old installation may carry another name than Underboss: any submodule mounted under `docs/.runtime/<name>` (for example `docs/.runtime/naprolom-docs`) is the same case as `docs/.runtime/underboss`. Krok is always mounted at `docs/.control`, never under `docs/.runtime`.
 
 ## For an AI coding agent
 
@@ -34,7 +36,8 @@ The user's request is one line ("update Underboss to Krok" and the address of th
 
    | Old | New |
    |---|---|
-   | `docs/.runtime/underboss` | `docs/.control` |
+   | `docs/.runtime/underboss`, `docs/.runtime/naprolom-docs` | `docs/.control` |
+   | `naprolom-docs` as the name of the product | `Krok` |
    | `core/bin/underboss` | `core/bin/krok` |
    | `validate-runtime.sh` | `validate-integrity.sh` |
    | `Underboss` / `underboss` | `Krok` / `krok` |
@@ -42,23 +45,24 @@ The user's request is one line ("update Underboss to Krok" and the address of th
    | any other `docs/.runtime` (for example the `boundaries:` block of `.context/project.yml`) | `docs/.control` |
 
    Find them with `git grep -il underboss` and `git grep -l 'docs/\.runtime'`.
-5. **Files the old bootstrap created outside the three generated ones** (`.claude/agents/`, `.claude/rules/`, hand-filled `.context/project.yml`) belong to the consumer now. Keep them and update the references in them; do not delete them. Find them with the greps of rule 4, not from a fixed list. `.context/agent-entry.md` is recreated by bootstrap with the Krok entry protocol; if it exists empty from an older install, delete it and run bootstrap again.
+5. **Files the old bootstrap created outside the three generated ones** (`.claude/agents/`, `.claude/rules/`, hand-filled `.context/project.yml`) belong to the consumer now. Keep them and update the references in them; do not delete them. Find them with the greps of rule 4, not from a fixed list. Bootstrap generates only the Krok section of `CLAUDE.md`. `AGENTS.md`, if the project has one, is the consumer's: update the names in it by rule 4; if there is none, do not create one. `.context/agent-entry.md` is recreated by bootstrap with the Krok entry protocol; if it exists empty from an older install, delete it and run bootstrap again.
 6. **History is not rewritten.** Leave as they are: the project log (`docs/LOG.md` or similar append-only logs), everything under `docs/audits/` and `docs/adr/`, and every document whose frontmatter `status` is `implemented` or `superseded`. The old name in them is a historical fact. Check each excluded file for a live reference (a path or command someone would run) before leaving it; fix only a live one.
 7. **Document model (section 2, step 4).** Check each item and fix what is there. Never change the lifecycle status of a Spec: approval is a human act.
-8. **Verification** is the Verification section of `INSTALL.md`, and every command must pass. A failure is fixed at its root, never skipped. After the replace, `git grep -i underboss` must show only files covered by rule 6 or the necessary mentions in this guide.
+8. **Verification** is the Verification section of `INSTALL.md`, and every command must pass, `validate-vocabulary` and `validate-frontmatter` included. You do not decide that a validator is irrelevant for this project: legacy documents that fail it are fixed here (the words and statuses of rule 0 and section 2, step 4; foreign documents without Schema v1 frontmatter by [`migrate-legacy.md`](migrate-legacy.md)). A tool timeout is not a result: run the command again with a longer timeout. A failure is fixed at its root, never skipped. After the replace, `git grep -i underboss` must show only files covered by rule 6 or the necessary mentions in this guide.
 9. **Commit and push.** Commit in logical commits (submodule swap; reference replace; document fixes). Follow the consumer's own `CLAUDE.md`/`AGENTS.md` for pushing and for checking a deployment; if they say nothing, commit and do not push. Never add attribution lines the consumer's rules forbid.
 10. **Report** in the end: what was deleted, what was replaced and where, which old-name mentions remain and why, the verification results, the commit hashes, whether `HEAD == origin/<branch>`, whether the tree is clean.
 
 ## 0. Which case are you in?
 
 ```bash
-ls -d docs/.control docs/.runtime/underboss .context/runtime 2>/dev/null
+ls -d docs/.control docs/.runtime/* .context/runtime 2>/dev/null
+git config -f .gitmodules --get-regexp 'path|url' 2>/dev/null
 ```
 
 | You have | Case |
 |---|---|
 | `docs/.control` | [1. v3 (control layer at `docs/.control`)](#1-v3-control-layer-at-docscontrol) |
-| `docs/.runtime/underboss` | [2. v2](#2-v2-docsruntimeunderboss) |
+| `docs/.runtime/<name>` (`underboss`, `naprolom-docs`, any other) | [2. v2](#2-v2-docsruntimeunderboss) |
 | `.context/runtime` | v1: treat it as case 2 |
 
 If you do not want to move now, do nothing: the submodule is pinned to a commit, and the old repository address redirects to the new one. You get no updates and no support from Krok.
@@ -92,16 +96,17 @@ Follow flow B of `INSTALL.md`, plus the following.
 
 Install Krok again and bring the documents to the v3 model by hand. The content of `docs/` stays.
 
-1. **Remove the old installation:**
+1. **Remove the old installation.** `OLD` is the path of the old submodule from `.gitmodules` (`docs/.runtime/underboss`, `docs/.runtime/naprolom-docs`, …):
 
    ```bash
-   git submodule deinit -f docs/.runtime/underboss
-   git rm -f docs/.runtime/underboss
-   rm -rf .git/modules/docs/.runtime/underboss
+   OLD=docs/.runtime/underboss   # set the real path
+   git submodule deinit -f "$OLD"
+   git rm -f "$OLD"
+   rm -rf ".git/modules/$OLD"
    ```
 
 2. **Remove the generated files and the old section** of `CLAUDE.md` and `AGENTS.md`. The three files below are the generated ones; other files that mention the old path (`.claude/rules/`, `.claude/agents/`) are yours: keep them and update the references (agent section, rules 4 and 5): `.context/agent-entry.md`, `.context/boundaries.yml`, `.github/workflows/docs-validate.yml`, and the `## Underboss` section. If `.context/project.yml` was never filled in, remove it too.
-3. **Install Krok** with flow A of `INSTALL.md`: submodule at `docs/.control`, bootstrap, and `repository.name` in `.context/project.yml` equal to the name of the `origin` repository.
+3. **Install Krok** with flow A of `INSTALL.md`: submodule at `docs/.control` (exactly this path; the first command is `git submodule add https://github.com/akturt/krok.git docs/.control`), bootstrap, and `repository.name` in `.context/project.yml` equal to the name of the `origin` repository.
 4. **Bring the documents to the v3 model.** The validators of the verification list what is left. The known differences:
    - Specs in `docs/specs/review/` move to `docs/specs/drafts/` with `status: draft`. Approval stays a human act. An empty `docs/specs/review/` directory (git does not show it) also fails `validate-lifecycle`: remove it with `rmdir`.
    - The Spec lifecycle is `draft`, `approved`, `implemented`, `superseded` only. A Spec with another status (for example `ready`) fails `validate-lifecycle` even if `validate-frontmatter` accepts it: set `draft` when it lives in `drafts/`.

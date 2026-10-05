@@ -98,6 +98,8 @@ test('detection: every repository state maps to exactly one verdict', () => {
   // the old name routes to the guide, it is never converted
   assert.equal(detect(repo({ 'docs/.runtime/underboss/x': 'x' })), 'MOVE');
   assert.equal(detect(repo({ '.context/runtime/x': 'x' })), 'MOVE');
+  assert.equal(detect(repo({ 'docs/.runtime/naprolom-docs/x': 'x' })), 'MOVE');
+  assert.equal(detect(repo({ '.gitmodules': '[submodule "docs/.control"]\n\tpath = docs/.control\n\turl = https://github.com/akturt/naprolom-docs.git\n', 'docs/.control/core/registry.yaml': 'control:\n  name: Krok\n  version: "3.0.0"\n' })), 'MOVE');
   assert.equal(detect(repo({ 'docs/.control/core/registry.yaml': 'control:\n  name: Underboss\n  version: "3.0.0"\n' })), 'MOVE');
   assert.match(detect(repo({ 'docs/.control/x': 'x' })), /^STOP docs\/\.control exists without core\/registry\.yaml/);
 
