@@ -46,7 +46,7 @@ const DOMAIN_TERMS = [
 ];
 const EXCEPTIONS = {
   'adr-004-spec-lifecycle': new Set(['review']),
-  'guide-move-from-underboss': new Set(['legacy']), // the guide for consumers of the old name must name the old layout
+  'guide-move-from-underboss': new Set(['legacy', 'review']), // the guide for consumers of the old name must name the old layout
 };
 
 function listFiles(root) {
