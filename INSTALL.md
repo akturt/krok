@@ -37,6 +37,7 @@ You can choose the flow without asking the user, if the repository state allows 
 
 1. Go to the repository root: `cd "$(git rev-parse --show-toplevel)"`.
 2. Look at the tree: `git status --porcelain --untracked-files=no`. It must be empty before flow A or B; if it is not, stop and tell the user. The verdict `MOVE` is the exception: the guide it names says how to work next to unrelated changes.
+   On Windows `bash` on PATH may be the WSL launcher (`C:\Windows\System32\bash.exe`), which hangs or times out. Use Git Bash (`C:\Program Files\Git\bin\bash.exe`) for every command of the runbook.
    Commands can take minutes on Windows (bootstrap, validators). Give each one a timeout of at least 10 minutes, or run it in the background. A tool timeout is not a failure of Krok: run the command again, never skip a verification step.
 3. Run the detection below. It prints exactly one line.
 4. Follow the flow that line names, step by step, in order. Do not skip checks.
