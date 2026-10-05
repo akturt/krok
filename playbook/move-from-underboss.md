@@ -38,13 +38,37 @@ The decisions below are made. Do not ask the user about any of them, do not offe
    | `validate-runtime.sh` | `validate-integrity.sh` |
    | `Underboss` / `underboss` | `Krok` / `krok` |
    | `owners: [underboss-team]` | `owners: [krok-team]` |
+   | any other `docs/.runtime` (for example the `boundaries:` block of `.context/project.yml`) | `docs/.control` |
 
    Find them with `git grep -il underboss` and `git grep -l 'docs/\.runtime'`.
-5. **History is not rewritten.** Leave as they are: the project log (`docs/LOG.md` or similar append-only logs), everything under `docs/audits/` and `docs/adr/`, and every document whose frontmatter `status` is `implemented` or `superseded`. The old name in them is a historical fact. Check each excluded file for a live reference (a path or command someone would run) before leaving it; fix only a live one.
-6. **Document model (section 2, step 4).** Check each item and fix what is there. Never change the lifecycle status of a Spec: approval is a human act.
-7. **Verification** is the Verification section of `INSTALL.md`, and every command must pass. A failure is fixed at its root, never skipped. After the replace, `git grep -i underboss` must show only files covered by rule 5 or the necessary mentions in this guide.
-8. **Commit and push.** Commit in logical commits (submodule swap; reference replace; document fixes). Follow the consumer's own `CLAUDE.md`/`AGENTS.md` for pushing and for checking a deployment; if they say nothing, commit and do not push. Never add attribution lines the consumer's rules forbid.
-9. **Report** in the end: what was deleted, what was replaced and where, which old-name mentions remain and why, the verification results, the commit hashes, whether `HEAD == origin/<branch>`, whether the tree is clean.
+5. **Files the old bootstrap created outside the three generated ones** (`.claude/agents/`, `.claude/rules/`, hand-filled `.context/project.yml`) belong to the consumer now. Keep them and update the references in them; do not delete them.
+6. **History is not rewritten.** Leave as they are: the project log (`docs/LOG.md` or similar append-only logs), everything under `docs/audits/` and `docs/adr/`, and every document whose frontmatter `status` is `implemented` or `superseded`. The old name in them is a historical fact. Check each excluded file for a live reference (a path or command someone would run) before leaving it; fix only a live one.
+7. **Document model (section 2, step 4).** Check each item and fix what is there. Never change the lifecycle status of a Spec: approval is a human act.
+8. **Verification** is the Verification section of `INSTALL.md`, and every command must pass. A failure is fixed at its root, never skipped. After the replace, `git grep -i underboss` must show only files covered by rule 6 or the necessary mentions in this guide.
+9. **Commit and push.** Commit in logical commits (submodule swap; reference replace; document fixes). Follow the consumer's own `CLAUDE.md`/`AGENTS.md` for pushing and for checking a deployment; if they say nothing, commit and do not push. Never add attribution lines the consumer's rules forbid.
+10. **Report** in the end: what was deleted, what was replaced and where, which old-name mentions remain and why, the verification results, the commit hashes, whether `HEAD == origin/<branch>`, whether the tree is clean.
+
+### Ready prompt
+
+The user pastes this into the agent. It is the user's own order and needs nothing fetched: the decisions are inline. If the agent works in plan mode, the user approves its plan once; after that the agent does not ask again.
+
+```text
+Move this repository from Underboss to Krok, fully and now. No questions, no confirmations, no plan re-approval.
+
+Decisions are made:
+- No compatibility layer, no aliases, no copies of the old installation. Delete it outright.
+- Case 0: if docs/.control exists, this is a v3 update (INSTALL.md flow B); if docs/.runtime/underboss exists, it is v2: remove it, install Krok fresh (INSTALL.md flow A: submodule https://github.com/akturt/krok.git at docs/.control, branch master, bootstrap.sh --target "$(pwd)").
+- Unrelated changes in the tree: do not stash, revert or mix them in. If I named them, commit them first as a separate commit. Stage the migration by explicit path, never git add -A.
+- Delete the generated v2 files (.context/agent-entry.md, .context/boundaries.yml, .github/workflows/docs-validate.yml) so bootstrap recreates them. Keep .context/project.yml, .claude/agents/ and .claude/rules/ and fix the references in them.
+- Replace in every working file: docs/.runtime/underboss and any docs/.runtime -> docs/.control; core/bin/underboss -> core/bin/krok; validate-runtime.sh -> validate-integrity.sh; Underboss/underboss -> Krok/krok; owners: [underboss-team] -> [krok-team]. Then git grep -i underboss and git grep 'docs/.runtime' must show only history.
+- History stays as is: the project log, docs/audits/, docs/adr/, every document with status implemented or superseded. Fix a live path or command there only.
+- Bring documents to the v3 model (guide section 2, step 4: api statuses, specs/review, entity ids, backlog split). Check each item. Never change a Spec's lifecycle status.
+- Verify with the Verification section of INSTALL.md; every command must pass; fix failures at the root.
+- Commit in logical commits and push as this repo's CLAUDE.md says (deploy check included); if it says nothing, do not push.
+- Finish with a report: deleted, replaced, remaining old-name mentions and why, verification results, commit hashes, HEAD vs origin, tree status.
+
+Reference, if you need detail: playbook/move-from-underboss.md and INSTALL.md in https://github.com/akturt/krok (master).
+```
 
 ## 0. Which case are you in?
 
