@@ -1,5 +1,18 @@
 name: docs-validate
 on:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/docs-validate.yml"
+      - "docs/**"
+      - "knowledge/**"
+      - "documentation/**"
+      - "engine/reality-engine/**"
+      - "core/**"
+      - "sops/**"
+      - "agents/**"
+      - "bootstrap/**"
+      - "playbook/**"
   pull_request:
     paths:
       - "docs/**"
@@ -28,7 +41,9 @@ jobs:
           ROOT=knowledge bash documentation/validation/validate-frontmatter.sh knowledge
       - name: Validate Spec and ADR lifecycle
         run: |
-          BASE_REF="origin/${{ github.base_ref }}" node documentation/validation/validate-lifecycle.mjs docs
+          # status transitions are checked against the base branch of a pull request; a push has none
+          if [ -n "${{ github.base_ref }}" ]; then export BASE_REF="origin/${{ github.base_ref }}"; fi
+          node documentation/validation/validate-lifecycle.mjs docs
       - name: Validate backlog
         run: |
           node documentation/validation/validate-backlog.mjs docs
@@ -53,4 +68,4 @@ jobs:
           node documentation/validation/validate-vocabulary.mjs .
       - name: Tests
         run: |
-          node --test documentation/validation/tests/*.test.mjs core/control/tests/*.test.mjs bootstrap/tests/*.test.mjs
+          node --test documentation/validation/tests/*.test.mjs core/control/tests/*.test.mjs bootstrap/tests/*.test.mjs engine/reality-engine/tests/*.test.mjs
