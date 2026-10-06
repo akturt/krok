@@ -40,7 +40,8 @@ for e in $(printf '%s\n' "${!ref_count[@]}" | sort); do
   hit=$(find "$PROJECT_ROOT" -type f \( -name "${e}.md" -o -name "${e}.yaml" -o -name "${e}.yml" \) 2>/dev/null | head -1)
   # 2) match by frontmatter id (e.g. ADRs, specs)
   if [ -z "$hit" ]; then
-    hit=$(grep -rl "^id:[[:space:]]*${e}\\([[:space:]]\\|\\$\\)" "$PROJECT_ROOT/docs" 2>/dev/null | head -1)
+    e_re=$(printf '%s' "$e" | sed 's/[][\.*^$+?(){}|\\/]/\\&/g')
+    hit=$(grep -rlE "^id:[[:space:]]*${e_re}([[:space:]]|\$)" "$PROJECT_ROOT/docs" 2>/dev/null | head -1)
   fi
   kind="unknown"
   if [ -n "$hit" ]; then
