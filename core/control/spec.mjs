@@ -58,7 +58,13 @@ export function allDocIds(root) {
   }
   const catalog = join(root, 'docs', 'architecture', 'entity-catalog.md');
   if (existsSync(catalog)) {
-    for (const m of readFileSync(catalog, 'utf8').matchAll(/^- \*\*([a-z0-9][a-z0-9-]*)\*\*/gm)) ids.add(m[1]);
+    const text = readFileSync(catalog, 'utf8');
+    // Bullet-list format (bootstrap/templates/entity-catalog.md): "- **name**: description"
+    for (const m of text.matchAll(/^- \*\*([a-z0-9][a-z0-9-]*)\*\*/gm)) ids.add(m[1]);
+    // Heading + "id:" format (adopted by projects whose entity sections carry their own
+    // frontmatter-style anchor, e.g. "## name" followed by "id: name" at column 0) — the same
+    // line shape engine/reality-engine/collectors/entity-inventory.sh already resolves against.
+    for (const m of text.matchAll(/^id:[ \t]*([a-z0-9][a-z0-9-]*)[ \t]*$/gm)) ids.add(m[1]);
   }
   return ids;
 }
