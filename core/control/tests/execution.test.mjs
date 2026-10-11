@@ -176,6 +176,17 @@ test('ready: every check fails on its own', () => {
   fail((r) => put(r, 'docs/specs/approved/x.md', SPEC.replace('entity_refs: [core]', 'entity_refs: [ghost]')), 9, 'context-gap');
 });
 
+test('ready: an entity declared as "## name" + "id: name" (not the bullet-list form) resolves', () => {
+  const ctx = unitInDesign();
+  put(ctx.root, 'docs/architecture/entity-catalog.md', [
+    '---', 'schema: 1', 'id: entity-catalog', 'type: architecture', 'status: active',
+    'date: 2026-10-04', 'owners: [t]', '---', '', '## widget', 'id: widget', '', 'The widget entity.', '',
+  ].join('\n'));
+  put(ctx.root, 'docs/specs/approved/x.md', SPEC.replace('entity_refs: [core]', 'entity_refs: [widget]'));
+  const r = ready(ctx.root, ID, { ...A, now: ctx.now, reality: noDrift });
+  assert.ok(r.ok, JSON.stringify(r.findings));
+});
+
 test('ready: Reality drift matching the Spec fails validation; unrelated drift does not', () => {
   const a = unitInDesign();
   const r1 = ready(a.root, ID, { ...A, now: a.now, reality: () => [{ type: 'status_dir_mismatch', spec: 'spec-x' }] });
