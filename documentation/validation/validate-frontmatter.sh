@@ -75,6 +75,16 @@ check_file() {
     echo "$fm" | grep -qE "^kind:" || err "$f: type runbook requires 'kind:'"
   fi
 
+  # 4a. spec track: code | docs | mixed (optional, default code)
+  if [ "$type" = "spec" ] && echo "$fm" | grep -qE "^track:"; then
+    local track
+    track=$(echo "$fm" | grep -m1 -E "^track:" | sed -E 's/^track:[[:space:]]*//')
+    case "$track" in
+      code|docs|mixed) ;;
+      *) err "$f: spec track '$track' must be code, docs or mixed" ;;
+    esac
+  fi
+
   # 5. api has exactly two statuses
   if [ "$type" = "api" ]; then
     case "$status" in

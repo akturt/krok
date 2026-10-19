@@ -80,3 +80,43 @@ test('an unresolvable base ref is an error', () => {
   const { docs } = repoWith({ 'docs/specs/drafts/a.md': doc({ id: 'a', type: 'spec', status: 'draft', body: '# S' }) });
   assert.match(validate(docs, 'no-such-ref').join('\n'), /cannot be resolved/);
 });
+
+test('track: an unknown value is an error; the default is code and needs nothing', () => {
+  const r = tmp();
+  put(r, 'specs/approved/a.md', doc({ id: 'a', type: 'spec', status: 'approved', extra: 'track: prose\n', body: AC }));
+  assert.match(validate(r, '').join('\n'), /track 'prose' is not code\|docs\|mixed/);
+  const r2 = tmp();
+  put(r2, 'specs/implemented/a.md', doc({ id: 'a', type: 'spec', status: 'implemented', body: AC }));
+  assert.deepEqual(validate(r2, ''), []);
+});
+
+test('track docs: approved/implemented must name docs and carry no code', () => {
+  const r = tmp();
+  put(r, 'specs/approved/a.md', doc({ id: 'a', type: 'spec', status: 'approved', extra: 'track: docs\n', body: AC }));
+  assert.match(validate(r, '').join('\n'), /must name its documents in 'docs:'/);
+  const r2 = tmp();
+  put(r2, 'specs/approved/a.md', doc({ id: 'a', type: 'spec', status: 'approved', extra: 'track: docs\ndocs: [x.md]\ncode: [src/a.js]\n', body: AC }));
+  assert.match(validate(r2, '').join('\n'), /a docs Spec has no 'code:'/);
+});
+
+test('track docs|mixed: implemented requires every named document to exist and reference the Spec id', () => {
+  for (const track of ['docs', 'mixed']) {
+    const r = tmp();
+    const docs = join(r, 'docs');
+    put(docs, 'specs/implemented/a.md', doc({ id: 'spec-a', type: 'spec', status: 'implemented', extra: `track: ${track}\ndocs: [docs/one.md, docs/two.md, docs/gone.md]\n`, body: AC }));
+    put(docs, 'one.md', doc({ id: 'one', type: 'architecture', status: 'active', extra: 'refs: [spec-a]\n', body: '# one' }));
+    put(docs, 'two.md', doc({ id: 'two', type: 'architecture', status: 'active', body: 'mentions spec-ab only' }));
+    const out = validate(docs, '').join('\n');
+    assert.doesNotMatch(out, /docs\/one\.md/);
+    assert.match(out, /'docs\/two\.md' does not reference Spec id 'spec-a'/);
+    assert.match(out, /'docs\/gone\.md' is not an existing file/);
+  }
+});
+
+test('track docs: a fully propagated Spec passes in implemented/', () => {
+  const r = tmp();
+  const docs = join(r, 'docs');
+  put(docs, 'specs/implemented/a.md', doc({ id: 'spec-a', type: 'spec', status: 'implemented', extra: 'track: docs\ndocs: [docs/one.md]\n', body: AC }));
+  put(docs, 'one.md', doc({ id: 'one', type: 'architecture', status: 'active', extra: 'refs: [spec-a]\n', body: '# one' }));
+  assert.deepEqual(validate(docs, ''), []);
+});
