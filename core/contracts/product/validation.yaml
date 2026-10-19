@@ -44,6 +44,8 @@ validation:
         - "spec status is one of draft, approved, implemented, superseded"
         - "spec status equals its directory under docs/specs/"
         - "specs in approved/ have Acceptance criteria with unique AC-NNN ids"
+        - "spec track is code, docs or mixed (default code); a docs or mixed spec in approved/ or implemented/ names its documents in docs:, a docs spec has no code:"
+        - "a docs or mixed spec in implemented/ is propagated: every document in docs: exists and references the spec id"
         - "no directory under docs/specs/ other than drafts, approved, implemented, superseded"
       scope: docs/specs/
 

@@ -586,6 +586,7 @@ git mv docs/specs/approved/2026-07-06-feature.md docs/specs/superseded/
 - **Creation:** `cp docs/.control/documentation/templates/spec.md docs/specs/drafts/YYYY-MM-DD-<slug>.md`
 - **You cannot implement** a spec that is not in `approved/` (CI FAILS on a PR that changes code without the corresponding spec in `approved/`)
 - **After implementation:** fill in `## Result`, move it to `implemented/`, `status: implemented`
+- **Track:** the optional `track:` field says what a Spec delivers: `code` (default), `docs` or `mixed` (ADR-007). A `docs`/`mixed` Spec names the documents it drives in `docs:`; a `docs` Spec has no `code:`. `implemented` for such a Spec means *propagated*: every document in `docs:` exists and references the Spec id (validate-lifecycle checks this). A `docs` Spec is a work order for documentation and goes through the same `drafts/ → approved/ → implemented/` cycle as code
 - **Supersede:** if a new spec replaces an old one — move the old one to `superseded/` with `status: superseded`, and in the new one specify `supersedes: [<old-id>]`
 - **Never delete** completed specs — they are the decision history
 

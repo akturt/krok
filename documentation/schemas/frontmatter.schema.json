@@ -87,6 +87,11 @@
       "type": "string",
       "description": "Per-type discriminator. Required for runbook. Optional for guide. Allowed values: runbook (deploy|cicd|ops|troubleshoot|edge-hub|secrets|integration), guide (index|onboarding)."
     },
+    "track": {
+      "type": "string",
+      "enum": ["code", "docs", "mixed"],
+      "description": "Spec per-type extension: what the Spec delivers. Optional, default code. A docs|mixed Spec is implemented when every document in docs: exists and references the Spec id."
+    },
     "scope": {
       "type": "string",
       "description": "Audit per-type extension: what was checked."

@@ -22,7 +22,7 @@ Concept entities of Krok itself. `entity_refs` resolve against this catalog, the
 - **sop-dag**: a SOP is a DAG of steps connected through artifacts and `gate: manual`
 - **schema-v1**: Canonical Schema v1 frontmatter for every document under `docs/`
 - **canonical-frontmatter**: the mandatory frontmatter fields and per-type extensions
-- **lifecycle-spec**: Spec lifecycle `draft → approved → implemented | superseded` (ADR-004)
+- **lifecycle-spec**: Spec lifecycle `draft → approved → implemented | superseded` (ADR-004); a Spec delivers code, documents or both (`track`, ADR-007)
 - **lifecycle-adr**: ADR lifecycle `proposed → accepted → deprecated | superseded`; accepted bodies are immutable
 - **capabilities**: the catalog of skills a Role may declare (`knowledge/capabilities.md`)
 - **core**: the product's own machinery: Registry, Installation State Machine, contracts, Core SDK, bootstrap, Reality Engine

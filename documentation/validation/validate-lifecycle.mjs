@@ -5,6 +5,10 @@
 //   - docs/specs/<dir>/ is one of drafts, approved, implemented, superseded
 //   - a Spec status equals its directory (drafts -> draft)
 //   - a Spec in approved/ has Acceptance criteria with unique AC-NNN ids
+//   - `track` (code|docs|mixed, default code) names what a Spec delivers; a docs|mixed
+//     Spec in approved/ or implemented/ names its documents in `docs:`, a docs Spec has
+//     no `code:`, and a docs|mixed Spec in implemented/ is propagated: every document in
+//     `docs:` exists and references the Spec id
 //   - with BASE_REF set: status transitions are legal, and the body of an
 //     approved/implemented/superseded Spec and of an accepted/superseded ADR
 //     is unchanged against BASE_REF (a `## Result` section of a Spec is excluded)
@@ -13,9 +17,9 @@
 // Exit: 0 OK, 1 at least one error. Zero dependencies.
 
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
-import { join, basename } from 'node:path';
+import { join, basename, dirname, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { acceptanceCriteria } from '../../core/control/spec.mjs';
+import { acceptanceCriteria, parseDoc as parseDocYaml } from '../../core/control/spec.mjs';
 
 export const SPEC_DIRS = { drafts: 'draft', approved: 'approved', implemented: 'implemented', superseded: 'superseded' };
 export const SPEC_TRANSITIONS = {
@@ -24,6 +28,7 @@ export const SPEC_TRANSITIONS = {
   implemented: ['implemented', 'superseded'],
   superseded: ['superseded'],
 };
+export const SPEC_TRACKS = ['code', 'docs', 'mixed'];
 export const ADR_TRANSITIONS = {
   proposed: ['proposed', 'accepted'],
   accepted: ['accepted', 'deprecated', 'superseded'],
@@ -88,6 +93,7 @@ export function validate(docsRoot, baseRef) {
       if (fm.type !== 'spec') { err(`${f}: a file under docs/specs/ must have type spec`); continue; }
       if (!Object.values(SPEC_DIRS).includes(fm.status)) err(`${f}: status '${fm.status}' is not draft|approved|implemented|superseded`);
       else if (fm.status !== SPEC_DIRS[dir]) err(`${f}: status '${fm.status}' != path '${dir}' (expected '${SPEC_DIRS[dir]}')`);
+      checkTrack(f, dir, docsRoot, parseDocYaml(readFileSync(f, 'utf8')).fm, err);
       if (dir === 'approved') {
         const ids = acceptanceCriteria(body);
         if (!ids || ids.length === 0) err(`${f}: an approved Spec requires '## Acceptance criteria' with AC-NNN ids`);
@@ -98,6 +104,27 @@ export function validate(docsRoot, baseRef) {
 
   if (baseRef) checkAgainstBase(docsRoot, baseRef, err);
   return errors;
+}
+
+// A Spec's deliverable is code, documents, or both. "implemented" for a docs|mixed Spec
+// means its documents are propagated: each one named in `docs:` exists and references
+// the Spec id. A code Spec (the default) is not checked here.
+function checkTrack(f, dir, docsRoot, fm, err) {
+  const track = fm.track === undefined ? 'code' : fm.track;
+  if (!SPEC_TRACKS.includes(track)) { err(`${f}: track '${track}' is not code|docs|mixed`); return; }
+  if (track === 'code' || (dir !== 'approved' && dir !== 'implemented')) return;
+  const list = (v) => (Array.isArray(v) ? v : []);
+  const docs = list(fm.docs);
+  if (docs.length === 0) err(`${f}: a ${track} Spec in ${dir}/ must name its documents in 'docs:'`);
+  if (track === 'docs' && list(fm.code).length > 0) err(`${f}: a docs Spec has no 'code:' (use track: mixed)`);
+  if (dir !== 'implemented') return;
+  const repoRoot = resolve(docsRoot, '..');
+  const idRe = new RegExp(`(?<![a-z0-9-])${fm.id}(?![a-z0-9-])`); // ids are kebab-case (Schema v1): no escaping needed
+  for (const d of docs) {
+    const target = [resolve(repoRoot, d), resolve(dirname(f), d)].find((c) => existsSync(c) && statSync(c).isFile());
+    if (!target) err(`${f}: docs entry '${d}' is not an existing file`);
+    else if (!idRe.test(readFileSync(target, 'utf8'))) err(`${f}: docs entry '${d}' does not reference Spec id '${fm.id}'`);
+  }
 }
 
 function checkAgainstBase(docsRoot, baseRef, err) {

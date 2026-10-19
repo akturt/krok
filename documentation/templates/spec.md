@@ -3,6 +3,7 @@ schema: 1
 id: template-spec
 type: spec
 status: draft
+track: code
 date: YYYY-MM-DD
 owners: [<team-name>]
 
