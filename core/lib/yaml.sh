@@ -24,20 +24,17 @@ yaml_get_list() {
   local file="$1" section="$2"
   [ -f "$file" ] || return 1
 
-  if echo "$section" | grep -qF "."; then
-    # Nested: "components.agents"
-    local parent child
-    parent=$(echo "$section" | sed 's/\..*//')
-    child=$(echo "$section" | sed 's/^[^.]*\.//')
-    # Find parent line number, then child within it
-    local parent_line child_start child_end
-    parent_line=$(grep -n "^${parent}:" "$file" | head -1 | cut -d: -f1)
-    [ -z "$parent_line" ] && return 1
-    child_start=$(awk -v pl="$parent_line" 'NR > pl && /^  '"${child}"':/ { print NR; exit }' "$file")
-    [ -z "$child_start" ] && return 1
-    child_end=$(awk -v cs="$child_start" 'NR > cs && /^[a-z]/ || NR > cs && /^  [a-z]/ { print NR; exit } END { print NR+100 }' "$file")
-    # Extract items between child_start and child_end
-    awk -v s="$child_start" -v e="$child_end" 'NR > s && NR < e && /^    - name: / { sub(/^    - name: /, ""); print } NR > s && NR < e && /^    - / && !/^    - name:/ { sub(/^    - /, ""); print }' "$file"
+  if [[ "$section" == *.* ]]; then
+    # Nested: "components.agents" — one pass: the parent line, then the child line, then its items
+    local parent="${section%%.*}" child="${section#*.}"
+    awk -v par="^${parent}:" -v chd="^  ${child}:" '
+      st == 0 && $0 ~ par { st = 1; next }
+      st == 1 && $0 ~ chd { st = 2; found = 1; next }
+      st == 2 && (/^[a-z]/ || /^  [a-z]/) { exit }
+      st == 2 && /^    - name: / { sub(/^    - name: /, ""); print; next }
+      st == 2 && /^    - / { sub(/^    - /, ""); print }
+      END { exit found ? 0 : 1 }
+    ' "$file"
   else
     # Top-level section
     awk -v sec="^${section}:" '
@@ -133,31 +130,26 @@ yaml_get_deep_list() {
   done
   headers+=("${indent}${target_key}:")
 
-  # Find each header in sequence
-  local start_line=1
-  local end_line=999999
-  for hdr in "${headers[@]}"; do
-    local found_line
-    found_line=$(awk -v s="$start_line" -v h="$hdr" 'NR >= s && $0 == h { print NR; exit }' "$file")
-    [ -z "$found_line" ] && return 1
-    start_line=$((found_line + 1))
-  done
-
-  # Find end of last section (next line at same indent or less)
   local item_indent=""
   for ((i=0; i<depth; i++)); do
     item_indent="${item_indent}  "
   done
-  end_line=$(awk -v s="$start_line" -v indent="${item_indent}" 'NR >= s && /^[[:space:]]/ && $0 !~ "^"indent { print NR; exit } END { print NR+100 }' "$file")
+  local sep=$'\034' joined="" hdr
+  for hdr in "${headers[@]}"; do joined="${joined}${hdr}${sep}"; done
 
-  # Extract list items
-  awk -v s="$start_line" -v e="$end_line" -v prefix="${item_indent}" '
-    NR >= s && NR < e && $0 ~ "^"prefix"- " {
+  # One pass: match the headers in sequence, then take the "- " items of the last section
+  # until the first indented line that is not at the item indent.
+  awk -v hs="${joined%"$sep"}" -v sep="$sep" -v prefix="${item_indent}" '
+    BEGIN { n = split(hs, H, sep); i = 1 }
+    i <= n { if ($0 == H[i]) i++; next }
+    /^[[:space:]]/ && $0 !~ "^"prefix { exit }
+    $0 ~ "^"prefix"- " {
       val=$0
       sub("^"prefix"- ", "", val)
       if (val ~ /^name: /) sub(/^name: /, "", val)
       print val
     }
+    END { exit i > n ? 0 : 1 }
   ' "$file"
 }
 
