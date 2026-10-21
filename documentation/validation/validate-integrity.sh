@@ -153,49 +153,11 @@ while IFS= read -r det; do
 done < <(registry_list_detectors)
 ok
 
-# ─── 3. Role → Capability: every capabilities: entry exists in capabilities.md ─
+# ─── 3. Role → Capability and 4. Knowledge exists ────────────────────────────
+# Checked together with 7 and 8 by integrity-docs.mjs (see below).
 
 CAPABILITIES_FILE="$CONTROL_ROOT/knowledge/capabilities.md"
-if [ -f "$CAPABILITIES_FILE" ]; then
-  for platform in claude-code opencode; do
-    for agent_file in "$CONTROL_ROOT/agents/$platform/"*.md; do
-      [ -f "$agent_file" ] || continue
-      agent_name=$(basename "$agent_file" .md)
 
-      fm=$(awk 'NR==1 && $0=="---"{f=1; next} f && $0=="---"{exit} f{print}' "$agent_file")
-      caps=$(echo "$fm" | grep -E "^capabilities:" | sed -E 's/^capabilities:[[:space:]]*\[//' | sed -E 's/\].*//' | tr ',' '\n' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-
-      for cap in $caps; do
-        [ -z "$cap" ] && continue
-        if ! grep -qE "^## ${cap}[[:space:]]" "$CAPABILITIES_FILE" 2>/dev/null && \
-           ! grep -qE "^## ${cap}$" "$CAPABILITIES_FILE" 2>/dev/null; then
-          error "Agent '$agent_name' capability '$cap' not found in knowledge/capabilities.md"
-        fi
-      done
-    done
-  done
-fi
-ok
-
-# ─── 4. Knowledge exists: every knowledge: short-id resolves to file ─────────
-
-for platform in claude-code opencode; do
-  for agent_file in "$CONTROL_ROOT/agents/$platform/"*.md; do
-    [ -f "$agent_file" ] || continue
-    agent_name=$(basename "$agent_file" .md)
-
-    fm=$(awk 'NR==1 && $0=="---"{f=1; next} f && $0=="---"{exit} f{print}' "$agent_file")
-    knowledge=$(echo "$fm" | grep -E "^knowledge:" | sed -E 's/^knowledge:[[:space:]]*\[//' | sed -E 's/\].*//' | tr ',' '\n' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-
-    for k in $knowledge; do
-      [ -z "$k" ] && continue
-      if [ ! -f "$CONTROL_ROOT/knowledge/$k.md" ]; then
-        error "Agent '$agent_name' knowledge ref '$k' does not resolve to knowledge/$k.md"
-      fi
-    done
-  done
-done
-ok
 
 # ─── 5. Contract consistency: contracts referenced by registry exist ─────────
 
@@ -245,51 +207,13 @@ for sop_file in "$CONTROL_ROOT/sops/"*.yaml; do
 done
 ok
 
-# ─── 7. Template conformance: every template has valid Schema v1 FM ──────────
+# ─── 7. Template conformance and 8. Internal links ───────────────────────────
+# (together with 3 and 4 above: the document-reading checks run in one Node pass)
 
-for tmpl_file in "$CONTROL_ROOT/documentation/templates/"*.md; do
-  [ -f "$tmpl_file" ] || continue
-  tmpl_name=$(basename "$tmpl_file")
-
-  fm=$(awk 'NR==1 && $0=="---"{f=1; next} f && $0=="---"{exit} f{print}' "$tmpl_file")
-  if [ -z "$fm" ]; then
-    error "Template '$tmpl_name' has no frontmatter"
-    continue
-  fi
-
-  echo "$fm" | grep -qE "^schema:[[:space:]]*1[[:space:]]*$" || error "Template '$tmpl_name' schema != 1"
-  for field in id type status date owners; do
-    echo "$fm" | grep -qE "^${field}:" || error "Template '$tmpl_name' missing mandatory field '$field'"
-  done
-done
-ok
-
-# ─── 8. Internal links: entity_refs resolve to existing id: fields ───────────
-
-# Entity catalog: "- **<id>**: description" entries
-ENTITY_CATALOG="$CONTROL_ROOT/docs/architecture/entity-catalog.md"
-if [ ! -f "$ENTITY_CATALOG" ]; then
-  error "docs/architecture/entity-catalog.md not found"
-  all_ids=""
-else
-  all_ids=$(grep -oE '^- \*\*[a-z0-9][a-z0-9-]*\*\*' "$ENTITY_CATALOG" | sed -E 's/^- \*\*//; s/\*\*$//')
-fi
-
-all_ids="$all_ids
-$(find "$CONTROL_ROOT/docs" "$CONTROL_ROOT/knowledge" "$CONTROL_ROOT/documentation" -name "*.md" -type f 2>/dev/null | while read -r f; do
-  awk 'NR==1 && $0=="---"{f=1; next} f && $0=="---"{exit} f && /^id:/{gsub(/^id:[[:space:]]*/, ""); print}' "$f"
-done)"
-
-# Registry component names
-all_ids="$all_ids
-$(registry_list_agents 2>/dev/null)"
-all_ids="$all_ids
-$(registry_list_knowledge 2>/dev/null)"
-all_ids="$all_ids
-$(registry_list_sops 2>/dev/null)"
-all_ids="$all_ids
-$(registry_list_templates 2>/dev/null)"
-all_ids="$all_ids
+all_ids="$(registry_list_agents 2>/dev/null)
+$(registry_list_knowledge 2>/dev/null)
+$(registry_list_sops 2>/dev/null)
+$(registry_list_templates 2>/dev/null)
 $(registry_list_validators 2>/dev/null)"
 for level in product consumer; do
   all_ids="$all_ids
@@ -300,22 +224,16 @@ for component_type in collectors analyzers reporters; do
 $(registry_list_engine "$component_type" 2>/dev/null)"
 done
 
-all_ids=$(echo "$all_ids" | sort -u)
-
-while IFS= read -r f; do
-  [ -f "$f" ] || continue
-  fm=$(awk 'NR==1 && $0=="---"{f=1; next} f && $0=="---"{exit} f{print}' "$f")
-  refs=$(echo "$fm" | grep -E "^entity_refs:" | sed -E 's/^entity_refs:[[:space:]]*\[//' | sed -E 's/\].*//' | tr ',' '\n' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-
-  for ref in $refs; do
-    [ -z "$ref" ] && continue
-    if ! echo "$all_ids" | grep -qFx "$ref"; then
-      rel_path="${f#$CONTROL_ROOT/}"
-      error "$rel_path: entity_ref '$ref' does not resolve to any id: field or registry component"
-    fi
-  done
-done < <(find "$CONTROL_ROOT/docs" "$CONTROL_ROOT/knowledge" "$CONTROL_ROOT/documentation" -name "*.md" -type f 2>/dev/null)
+doc_findings=$(printf '%s\n' "$all_ids" | node "$(dirname "$0")/integrity-docs.mjs" "$CONTROL_ROOT")
+if [ -n "$doc_findings" ]; then
+  echo "$doc_findings"
+  fail=1
+fi
 ok
+ok
+ok
+ok
+
 
 # ─── 9. Engine components: collectors/analyzers/reporters referenced by SOP exist ─
 
