@@ -283,6 +283,7 @@ The longer the project lives, the more valuable Krok becomes.
 
 ## Changelog
 
+- **Unreleased** — **Consumer vocabulary allow-list**. `validate-vocabulary` reads literals under `allow:` in the consumer's `.context/vocabulary.yml` and masks them before the former-product-name word test — a consumer keeps its own terms that contain the name as a substring (permission slugs, routes, file names). Structural bans (former mount path, former variables, review lifecycle) are never whitelisted; the file itself is not scanned. Zero dependencies, no CLI change.
 - **2026-10-05** — **Krok rebrand**. The product is named Krok (CLI `krok`). Names only: architecture, contracts and CLI semantics are unchanged. Compatibility with earlier installations is removed: the v2 → v3 migration script and the old mount paths are gone, a project with an older layout installs again (INSTALL.md, flow A).
 - **2026-10-04** — **v3.0.0 — Control Plane**. Execution Units with state, immutable records and Escalations; the `underboss` CLI; one Spec lifecycle; `core/` and `docs/.control/`; one-time migration `core/migrate/v2-to-v3.mjs`.
 - **2026-07-10** — **v2.0.0 — Underboss rebrand + Registry SSOT**. Identity (name, version, codename) centralized in `core/registry.yaml`. All components read from registry API — zero hardcoded strings. Submodule path changed to `docs/.control`. Consumer upgrade prompt covers v1.0 → v2.0 migration.

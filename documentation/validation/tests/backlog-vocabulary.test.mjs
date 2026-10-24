@@ -102,3 +102,26 @@ test('vocabulary: lockfiles and the project log are not scanned; a consumer is s
   put(r, 'docs/a.md', doc({ id: 'a', type: 'guide', status: 'active', body: 'the runtime layer' }));
   assert.deepEqual(run(r).violations.map((x) => x.path), ['docs/a.md']);
 });
+
+test('vocabulary: consumer allow-list literals are masked before the word test', () => {
+  const hits = (t) => scan('f.md', t, 'docs', ['runtime.read', '*/runtime', '*/runtime/*']);
+  assert.equal(hits('gated by runtime.read only').length, 0);
+  assert.equal(hits('gated by runtime.read and runtime.update').length, 1); // .update is not in the list
+  assert.equal(hits("find . -not -path '*/runtime' -not -path '*/runtime/*'").length, 0);
+});
+
+test('vocabulary: consumer allow-list never whitelists the structural bans', () => {
+  const hits = (t) => scan('f.md', t, 'docs', ['runtime', 'review']).map((x) => x.what);
+  assert.ok(hits('mount at docs/.runtime/x').includes('former mount path'));
+  assert.ok(hits('status: review').includes('review lifecycle status'));
+});
+
+test('vocabulary: run() loads .context/vocabulary.yml and skips the file itself', () => {
+  const r = tmp();
+  put(r, '.context/vocabulary.yml', 'allow:\n  - "runtime.read"\n');
+  put(r, 'CLAUDE.md', 'gated by runtime.read\n');
+  const { violations } = run(r);
+  assert.equal(violations.length, 0);
+  put(r, 'AGENTS.md', 'gated by runtime.update\n');
+  assert.equal(run(r).violations.length, 1);
+});

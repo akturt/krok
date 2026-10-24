@@ -13,6 +13,14 @@
 // implements, entity_refs) are not vocabulary. Narrow exception: an ADR that explicitly defines the removal of a term
 // may use it (only adr-004-spec-lifecycle, for the Spec status `review`).
 //
+// Consumer domain terms: a consumer repo may keep its own vocabulary that
+// contains the former product name as a substring (entity names, permission
+// slugs, routes, file names). Literals listed under `allow:` in the consumer's
+// `.context/vocabulary.yml` are masked before the word test, exactly like
+// Krok's own DOMAIN_TERMS. They never whitelist the structural bans (former
+// mount path, former variables, review lifecycle). The file itself is not
+// scanned: it names the allowed terms, like a lockfile names packages.
+//
 // Usage: node validate-vocabulary.mjs [repo-root]
 // Exit: 0 OK, 1 at least one violation. Zero dependencies.
 
@@ -22,13 +30,26 @@ import { execFileSync } from 'node:child_process';
 
 const CODE_EXT = new Set(['.sh', '.ps1', '.mjs', '.json', '.yaml', '.yml']);
 const DOC_EXT = new Set(['.md']);
-// Not scanned: dependency lockfiles (third-party package names) and the consumer's append-only log.
+// Not scanned: dependency lockfiles (third-party package names), the consumer's append-only log,
+// and the consumer's own allow-list (it names the allowed terms, like a lockfile names packages).
 // In a consumer repository (docs/.control is mounted) only the operational files are scanned.
 const LOCKFILES = new Set(['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'composer.lock']);
 const OPERATIONAL = [/^docs\//, /^\.context\//, /^\.claude\//, /^\.github\//, /^(CLAUDE|AGENTS)\.md$/];
 export function skipped(path, consumer) {
-  if (LOCKFILES.has(basename(path)) || path === 'docs/LOG.md') return true;
+  if (LOCKFILES.has(basename(path)) || path === 'docs/LOG.md' || path === '.context/vocabulary.yml') return true;
   return consumer && !OPERATIONAL.some((re) => re.test(path));
+}
+
+// Literals the consumer allows under `allow:` in .context/vocabulary.yml (see header).
+export function consumerAllows(root) {
+  const allows = [];
+  let cfg;
+  try { cfg = readFileSync(join(root, '.context', 'vocabulary.yml'), 'utf8'); } catch { return allows; }
+  for (const m of cfg.matchAll(/^\s*-\s*"?([^"#\r\n]+?)"?\s*$/gm)) {
+    const lit = m[1].trim();
+    if (lit) allows.push(lit);
+  }
+  return allows;
 }
 
 // term -> regex. `runtime` is checked after consumer-domain terms are masked.
@@ -102,7 +123,7 @@ export function classify(path, text) {
   return null;
 }
 
-export function scan(path, text, cls) {
+export function scan(path, text, cls, allow = []) {
   const findings = [];
   const fm = path.endsWith('.md') ? frontmatter(text) : {};
   const allowed = EXCEPTIONS[fm.id] || new Set();
@@ -113,6 +134,7 @@ export function scan(path, text, cls) {
     if (!allowed.has('review')) for (const [what, re] of REVIEW_LIFECYCLE) if (re.test(line)) hit(what);
     let masked = line;
     for (const re of DOMAIN_TERMS) masked = masked.replace(re, ' ');
+    for (const lit of allow) masked = masked.split(lit).join(' ');
     if (!allowed.has('legacy') && /\bruntime\b/i.test(masked)) hit('former product term "runtime"');
   });
   void cls;
@@ -123,6 +145,7 @@ export function run(root) {
   const byClass = {};
   const violations = [];
   const consumer = existsSync(join(root, 'docs', '.control', 'core', 'registry.yaml'));
+  const allow = consumerAllows(root);
   for (const path of listFiles(root)) {
     if (skipped(path, consumer)) continue;
     const abs = join(root, path);
@@ -133,7 +156,7 @@ export function run(root) {
     const cls = classify(path, text);
     if (!cls) continue;
     byClass[cls] = (byClass[cls] || 0) + 1;
-    if (cls === 'code' || cls === 'docs') violations.push(...scan(path, text, cls).map((f) => ({ ...f, cls })));
+    if (cls === 'code' || cls === 'docs') violations.push(...scan(path, text, cls, allow).map((f) => ({ ...f, cls })));
   }
   return { byClass, violations };
 }
