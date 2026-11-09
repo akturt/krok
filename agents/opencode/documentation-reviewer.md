@@ -104,7 +104,7 @@ This agent runs on every PR that contains changes to `docs/**/*.md`. Invoked by 
    git diff origin/master...HEAD --name-status -- 'docs/specs/**/*.md' | grep "^R"
    ```
    - Verify `git mv` happened AND `status:` field was updated in the same PR.
-   - Direct content edit to `docs/specs/approved/*.md` without `git mv` from `drafts/` → flag.
+   - Direct content edit to `docs/specs/approved/*.md` without `git mv` from `drafts/` → flag. The correct path is to reopen the Spec as a draft (`git mv` to `drafts/`, `status: draft`), edit, then re-approve (ADR-008). The validator reports this as a warning, not an error.
 
 6. **For deletions** in `docs/specs/implemented/`, `docs/specs/superseded/`, `docs/adr/`:
    - These are NEVER to be deleted (history of decisions). Flag deletion of any file in these dirs as REJECT.

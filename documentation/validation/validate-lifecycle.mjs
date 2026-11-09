@@ -10,11 +10,13 @@
 //     no `code:`, and a docs|mixed Spec in implemented/ is propagated: every document in
 //     `docs:` exists and references the Spec id
 //   - with BASE_REF set: status transitions are legal, and the body of an
-//     approved/implemented/superseded Spec and of an accepted/superseded ADR
-//     is unchanged against BASE_REF (a `## Result` section of a Spec is excluded)
+//     implemented/superseded Spec and of an accepted/superseded ADR is unchanged against
+//     BASE_REF (a `## Result` section of a Spec is excluded). The body of an approved Spec
+//     may be edited (ADR-008): while it stays approved this is a WARNING that tells to
+//     reopen it as a draft; an approved -> draft move is silent.
 //
 // Usage: node validate-lifecycle.mjs [docs-root]      (BASE_REF=origin/master)
-// Exit: 0 OK, 1 at least one error. Zero dependencies.
+// Exit: 0 OK, 1 at least one error (warnings do not change the exit code). Zero dependencies.
 
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join, basename, dirname, resolve } from 'node:path';
@@ -24,7 +26,7 @@ import { acceptanceCriteria, parseDoc as parseDocYaml } from '../../core/control
 export const SPEC_DIRS = { drafts: 'draft', approved: 'approved', implemented: 'implemented', superseded: 'superseded' };
 export const SPEC_TRANSITIONS = {
   draft: ['draft', 'approved'],
-  approved: ['approved', 'implemented', 'superseded'],
+  approved: ['approved', 'draft', 'implemented', 'superseded'],
   implemented: ['implemented', 'superseded'],
   superseded: ['superseded'],
 };
@@ -37,6 +39,8 @@ export const ADR_TRANSITIONS = {
 };
 const IMMUTABLE_SPEC = new Set(['approved', 'implemented', 'superseded']);
 const IMMUTABLE_ADR = new Set(['accepted', 'superseded']);
+// ADR-008: the immutability of an approved Spec body is a prescription, not a gate.
+const SOFT_SPEC = new Set(['approved']);
 
 export function parseDoc(text) {
   const lines = text.replace(/\r\n/g, '\n').split('\n');
@@ -75,7 +79,8 @@ function git(args, cwd) {
   return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 }
 
-export function validate(docsRoot, baseRef) {
+// Returns the errors. Warnings are appended to `warnings` (an optional collector) and do not fail the check.
+export function validate(docsRoot, baseRef, warnings = []) {
   const errors = [];
   const err = (m) => errors.push(m);
   const specsRoot = join(docsRoot, 'specs');
@@ -102,7 +107,7 @@ export function validate(docsRoot, baseRef) {
     }
   }
 
-  if (baseRef) checkAgainstBase(docsRoot, baseRef, err);
+  if (baseRef) checkAgainstBase(docsRoot, baseRef, err, (m) => warnings.push(m));
   return errors;
 }
 
@@ -127,7 +132,7 @@ function checkTrack(f, dir, docsRoot, fm, err) {
   }
 }
 
-function checkAgainstBase(docsRoot, baseRef, err) {
+function checkAgainstBase(docsRoot, baseRef, err, warn) {
   let top, prefix;
   try {
     top = git(['rev-parse', '--show-toplevel'], docsRoot).trim();
@@ -152,7 +157,7 @@ function checkAgainstBase(docsRoot, baseRef, err) {
     }
     return map;
   };
-  const compare = (sub, type, transitions, immutable, cut) => {
+  const compare = (sub, type, transitions, immutable, cut, soft = new Set()) => {
     const base = loadBase(sub);
     for (const [id, now] of loadNow(sub)) {
       if (now.fm.type !== type) continue;
@@ -161,18 +166,23 @@ function checkAgainstBase(docsRoot, baseRef, err) {
       const from = was.fm.status, to = now.fm.status;
       if (transitions[from] && !transitions[from].includes(to)) err(`${now.f}: illegal ${type} transition ${from} -> ${to}`);
       if (immutable.has(from) && normalizeBody(was.body, cut) !== normalizeBody(now.body, cut)) {
-        err(`${now.f}: body of a ${from} ${type} changed against ${baseRef}`);
+        if (soft.has(from) && to === 'draft') continue; // reopened for editing: this is the prescribed path
+        if (soft.has(from) && to === from) warn(`${now.f}: body of an ${from} ${type} changed against ${baseRef}; set it to draft (git mv to drafts/) while it is being edited, then re-approve (ADR-008)`);
+        else err(`${now.f}: body of a ${from} ${type} changed against ${baseRef}`);
       }
     }
   };
-  compare('specs', 'spec', SPEC_TRANSITIONS, IMMUTABLE_SPEC, true);
+  compare('specs', 'spec', SPEC_TRANSITIONS, IMMUTABLE_SPEC, true, SOFT_SPEC);
   compare('adr', 'adr', ADR_TRANSITIONS, IMMUTABLE_ADR, false);
 }
 
 if (process.argv[1] && basename(process.argv[1]) === 'validate-lifecycle.mjs') {
   const docsRoot = process.argv[2] || process.env.ROOT || 'docs';
   if (!existsSync(docsRoot)) { console.log(`ERROR: docs root '${docsRoot}' not found`); process.exit(1); }
-  const errors = validate(docsRoot, process.env.BASE_REF || '');
+  const warnings = [];
+  const errors = validate(docsRoot, process.env.BASE_REF || '', warnings);
+  for (const w of warnings) console.log(`WARNING: ${w}`);
+  if (process.env.GITHUB_ACTIONS) for (const w of warnings) console.log(`::warning::${w}`);
   for (const e of errors) console.log(`ERROR: ${e}`);
   if (errors.length) { console.log('::error::validate-lifecycle failed (see errors above)'); process.exit(1); }
   console.log('validate-lifecycle: OK');

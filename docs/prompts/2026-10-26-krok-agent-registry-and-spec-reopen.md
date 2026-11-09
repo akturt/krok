@@ -1,3 +1,21 @@
+---
+schema: 1
+id: prompt-krok-agent-registry-and-spec-reopen
+type: prompt
+status: deprecated
+date: 2026-10-26
+owners: [krok-team]
+
+entity_refs: [agentic-layer, lifecycle-spec]
+touches: [agents, core, documentation]
+refs: [../adr/008-approved-spec-reopen.md]
+depends_on: []
+tags: [prompt, agents, registry, spec-lifecycle, consumer-request]
+priority: P2
+---
+
+> Historical request from a consumer project (U1 Hiring), carried out in the 2026-11-10 update package: ADR-008 and the agent registry. Kept as the source of the evidence.
+
 # Промпт разработчику Krok: реестр агентов + правка approved-спек как предписание
 
 Дата: 2026-10-26. Источник: работа над проектом U1 Hiring (`akturt/u1-hiring`, потребитель Krok как submodule `docs/.control`, закреплён на `9cf9987`; `master` Krok на момент написания — `84f13cd`). Задача для разработчика Krok: сделать PR в `akturt/krok`. Ниже всё, что нужно, без обращения к чату.

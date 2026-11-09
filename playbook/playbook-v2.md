@@ -556,7 +556,7 @@ cp docs/.control/documentation/templates/spec.md docs/specs/drafts/YYYY-MM-DD-<s
 
 ```
 docs/specs/drafts/     → draft, WIP, status: draft
-docs/specs/approved/   → approved by a human, ready for implementation, status: approved; Acceptance criteria (AC-NNN) required; semantic body immutable
+docs/specs/approved/   → approved by a human, ready for implementation, status: approved; Acceptance criteria (AC-NNN) required; editing the body means reopening it as a draft (ADR-008)
 docs/specs/implemented/ → archive (never delete), status: implemented
 docs/specs/superseded/ → replaced by new (never delete), status: superseded
 ```
@@ -567,6 +567,10 @@ Promotion via `git mv` + `status` update in the frontmatter:
 # draft → approved (a human act: review is what people do, approval is the transition)
 git mv docs/specs/drafts/2026-07-06-feature.md docs/specs/approved/
 # in file: status: draft -> status: approved
+
+# approved -> draft (the body has to change; the Spec is a draft until the edits are agreed, ADR-008)
+git mv docs/specs/approved/2026-07-06-feature.md docs/specs/drafts/
+# in file: status: approved -> status: draft; edit the body; then draft -> approved again (a human act)
 
 # approved -> implemented (after completion)
 git mv docs/specs/approved/2026-07-06-feature.md docs/specs/implemented/
@@ -1000,7 +1004,7 @@ done
 | Document type | type | Valid status | Where stored | Rules |
 |--------------|------|--------------|-------------|---------|
 | ADR | `adr` | `proposed → accepted → deprecated → superseded` | `docs/adr/` | Body immutable after acceptance; FM = metadata |
-| Spec | `spec` | `draft → approved → implemented`; `approved \| implemented → superseded` | `docs/specs/{drafts,approved,implemented,superseded}/` | Git mv + update `status`, never delete |
+| Spec | `spec` | `draft → approved → implemented`; `approved → draft` (edit); `approved \| implemented → superseded` | `docs/specs/{drafts,approved,implemented,superseded}/` | Git mv + update `status`, never delete; body of `implemented`/`superseded` immutable; an edit of an `approved` body is a warning, reopen it as a draft (ADR-008) |
 | Audit | `audit` | `draft → completed` | `docs/audits/` | Body never edit after completed; FM mutable |
 | Runbook | `runbook` | `active → deprecated` | `docs/*.md` | Updated on changes; kind distinguishes |
 | Architecture | `architecture` | `active → deprecated` | `docs/architecture/` | Updated on topology/schema changes |
