@@ -5,7 +5,7 @@ type: guide
 kind: index
 status: active
 date: 2026-07-08
-updated: 2026-07-09
+updated: 2026-11-10
 owners: [krok-team]
 
 entity_refs: [agentic-layer]
@@ -19,7 +19,7 @@ priority: P1
 
 # agents/ — Repository of AI agent roles
 
-Krok contains 6 roles, each a ready-to-use prompt configuration for a specific platform (Claude Code, opencode).
+Krok contains 8 roles (the opencode platform also has the Ontological Auditor), each a ready-to-use prompt configuration for a specific platform (Claude Code, opencode).
 
 ## Roles
 
@@ -30,6 +30,8 @@ Krok contains 6 roles, each a ready-to-use prompt configuration for a specific p
 | **Reality Auditor** | Reconstructs current project state from code, config, docs (read-only) | `state-reconstruction`, `drift-analysis`, `architecture-extraction`, `attribution-analysis` | claude-code, opencode |
 | **Adversary Checker** | Validates architectural claims against evidence, assigns verdicts + confidence | `claim-validation`, `assumption-analysis` | claude-code, opencode |
 | **Forensic Auditor** | End-to-end forensic audit of one layer/section — single self-contained executor (replaces the phantom-subagent forensic-orchestrator) | `forensic-layer-audit`, `state-reconstruction`, `drift-analysis`, `architecture-extraction`, `manifest-design`, `target-model-design`, `claim-validation` | claude-code, opencode |
+| **Frontend Contract Auditor** | Independent read-only check of UI changes against the contracts the project itself declares (components, string catalog, navigation, accessibility, naming). Born in a consumer project, generalized for Krok | `review-frontend-contracts` | claude-code, opencode |
+| **Ontological Auditor** | End-to-end ontological audit of a subject domain (concepts, Subject Test, DDD classification, Observation Contract, Freeze Gate) | `ontological-audit`, `subject-classification`, `ddd-classification`, `observation-contract`, `hypothesis-validation`, `freeze-gate` | opencode |
 | **Pipeline Archaeologist** | Reconstructs the runtime reality of a multi-hop data pipeline through 3 progressive layers (Execution/Structural/Content Topology) before any coverage matrix is built — single self-contained executor. Proposed from real-world use on Kordon's FSA ingestion pipeline (2026-08-03/04) | `pipeline-topology-audit`, `state-reconstruction`, `drift-analysis`, `architecture-extraction` | claude-code, opencode |
 
 ## Capabilities
@@ -54,6 +56,7 @@ Each role declares `capabilities:` in frontmatter (unidirectional Role→Capabil
 | `manifest-design` | drift-inventory, target-model | manifest-skeleton |
 | `target-model-design` | drift-inventory, reality-report | target-model, invariants |
 | `pipeline-topology-audit` | subject-pipeline (parameterized scope) | execution-topology-report, structural-topology-report, content-topology-report, coverage-matrix |
+| `review-frontend-contracts` | changed-files, project-contracts | frontend-findings |
 
 Full contracts: `knowledge/capabilities.md`
 
@@ -75,6 +78,7 @@ Krok resolves `knowledge/<short-id>.md`. Roles never hardcode knowledge paths �
 | adversary-checker | `audit-principles`, `report-formats` |
 | forensic-auditor | `evidence-model`, `audit-principles`, `report-formats` |
 | pipeline-archaeologist | `evidence-model`, `audit-principles`, `report-formats` |
+| frontend-contract-auditor | `report-formats` |
 
 ## Layout
 
@@ -87,6 +91,7 @@ agents/
 │   ├── reality-auditor.md
 │   ├── adversary-checker.md
 │   ├── forensic-auditor.md
+│   ├── frontend-contract-auditor.md
 │   └── pipeline-archaeologist.md
 └── opencode/          ← opencode configs
     ├── architecture-reviewer.md
@@ -94,17 +99,45 @@ agents/
     ├── reality-auditor.md
     ├── adversary-checker.md
     ├── forensic-auditor.md
+    ├── frontend-contract-auditor.md
+    ├── ontological-auditor.md
     └── pipeline-archaeologist.md
 ```
 
-## Integration
+## Registration
 
-Role files are ready-to-use agent descriptors. Copy them into your platform's configuration directory:
+Claude Code registers a sub-agent from a file in `.claude/agents/` by two frontmatter fields: **`name`** (equal to the file name without `.md`) and **`description`** (what the agent does and when to call it; this is the field the delegation decision reads). `tools:` is optional; without it the agent inherits every tool, including Edit and Write. Without `name` and `description` the file is a document, not an agent: `Agent(subagent_type: "<role>")` answers `Agent type '<role>' not found`.
 
-- **Claude Code**: `.claude/agents/<role>.md`
-- **opencode**: `.opencode/agents/<role>.md`
+- Claude Code reads the agent files when a **session starts**. After copying or changing a role, start a new session; a running session does not pick it up.
+- The file must start with `---` as its first bytes. A BOM before it hides the frontmatter.
+- `validate-integrity.sh` checks all of this for `agents/claude-code/*.md` (name equals the file name, non-empty description, no BOM) and checks that every agent file is listed in `core/registry.yaml` `components.agents` and the other way round.
+- opencode registers by the file name and reads `description`, `mode` and `permission` from the frontmatter.
+
+Tool restrictions of the roles: `reality-auditor`, `architecture-reviewer` and `frontend-contract-auditor` are read-only (`tools: Read, Grep, Glob, Bash`); `adversary-checker` validates claims without commands (`tools: Read, Grep, Glob, WebFetch`). `documentation-reviewer` (opt-in rewrite protocol), `forensic-auditor` and `pipeline-archaeologist` (write their audit reports) have no `tools:` and keep every tool.
+
+## Installing into a consumer
+
+Role files are ready-to-use agent descriptors. Copy them from the submodule into your platform's configuration directory:
+
+- **Claude Code**: `cp docs/.control/agents/claude-code/<role>.md .claude/agents/<role>.md`
+- **opencode**: `cp docs/.control/agents/opencode/<role>.md .opencode/agents/<role>.md`
+
+Copy the bytes unchanged: use `cp` or `Copy-Item`. Do **not** pipe a role through PowerShell `Out-File`, `Set-Content` or `>` in Windows PowerShell 5.1: they write a UTF-8 BOM and the agent stops registering. Then start a new session and check that `<role>` appears among the available agent types. After raising the submodule, copy the changed roles again; the copy in `.claude/agents/` does not update itself. Krok has no install command for agents; the copy is a manual step.
 
 Or use the Krok section that bootstrap puts into `CLAUDE.md` (see `INSTALL.md`).
+
+## Contributing a project-born agent
+
+An agent created in a project and useful beyond it is moved into Krok, so that every project and every AI agent can use it. Procedure, one PR in `krok`:
+
+1. **Generalize**: remove names of the project, its documents and invariants. Replace project rules with "apply the rules the project declares in its own documents".
+2. **Registration fields**: `name` (= file name), `description`, and `tools:` if the role must not write.
+3. **Krok fields**: `schema: 1`, `id: agent-claude-code-<role>`, `type: prompt`, `status: active`, `date`, `owners: [krok-team]`, `entity_refs: [agentic-layer]`, `capabilities`, `knowledge`, `tags`.
+4. **Capability**: add a section to `knowledge/capabilities.md` (Description, Consumes, Produces) unless it exists.
+5. **Registry**: add the role to `core/registry.yaml` `components.agents`.
+6. **Mirror**: the opencode file with the same content and the opencode descriptor (`description`, `mode: subagent`, `permission`).
+7. **Table and layout** in this file; run `validate-integrity.sh` and the tests.
+8. In the project, replace the local copy with the one from Krok after the submodule is raised.
 
 ## Usage via SOP
 

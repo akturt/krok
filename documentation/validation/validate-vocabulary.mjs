@@ -32,11 +32,13 @@ const CODE_EXT = new Set(['.sh', '.ps1', '.mjs', '.json', '.yaml', '.yml']);
 const DOC_EXT = new Set(['.md']);
 // Not scanned: dependency lockfiles (third-party package names), the consumer's append-only log,
 // and the consumer's own allow-list (it names the allowed terms, like a lockfile names packages).
+// Decision-records (docs/decisions/) hold the owner's exact words and are never edited, so they are not scanned.
 // In a consumer repository (docs/.control is mounted) only the operational files are scanned.
 const LOCKFILES = new Set(['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'composer.lock']);
 const OPERATIONAL = [/^docs\//, /^\.context\//, /^\.claude\//, /^\.github\//, /^(CLAUDE|AGENTS)\.md$/];
 export function skipped(path, consumer) {
   if (LOCKFILES.has(basename(path)) || path === 'docs/LOG.md' || path === '.context/vocabulary.yml') return true;
+  if (/^docs\/decisions\//.test(path.split('\\').join('/'))) return true;
   return consumer && !OPERATIONAL.some((re) => re.test(path));
 }
 

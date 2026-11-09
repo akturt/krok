@@ -590,3 +590,68 @@ test('rework: a failed verify or complete check is a failed verification', () =>
   assert.equal(r.ok, false);
   assert.equal(rework(ctx.root, ID, { ...A, now: ctx.now }).state, 'EXECUTING');
 });
+
+// ---------- ADR-008: a Spec reopened as a draft while a Unit exists ----------
+
+function reopenSpec(root) {
+  unlinkSync(join(root, 'docs/specs/approved/x.md'));
+  put(root, 'docs/specs/drafts/x.md', SPEC.replace('status: approved', 'status: draft'));
+}
+
+test('reopened Spec: ready and start refuse with the path-status reason; the Unit stays or returns to DESIGN', () => {
+  const design = unitInDesign();
+  reopenSpec(design.root);
+  const r = ready(design.root, ID, { ...A, now: design.now, reality: noDrift });
+  assert.equal(r.ok, false);
+  assert.equal(r.findings[0].check, 1);
+  assert.match(r.findings[0].message, /is not approved \(directory 'drafts', status 'draft'\)/);
+  assert.equal(readUnit(design.root, ID).state, 'DESIGN');
+
+  const rdy = toReady();
+  reopenSpec(rdy.root);
+  assert.equal(isStale(rdy.root, ID, { reality: noDrift }), true);
+  const s = start(rdy.root, ID, { ...A, now: rdy.now, reality: noDrift });
+  assert.equal(s.ok, false);
+  assert.equal(s.findings[0].check, 1);
+  assert.equal(readUnit(rdy.root, ID).state, 'DESIGN');
+});
+
+test('reopened Spec while a Unit is EXECUTING or VERIFYING: current behaviour, not a gate (ADR-008)', () => {
+  // verify and complete do not re-read the Spec path status; the Unit is not stopped by a reopened Spec.
+  // To stop work on a changed Spec the owner opens an Escalation (scope), as before.
+  const ctx = toExecuting();
+  reopenSpec(ctx.root);
+  verifyStart(ctx.root, ID, { ...A, now: ctx.now });
+  assert.equal(readUnit(ctx.root, ID).state, 'VERIFYING');
+  passAll(ctx);
+  assert.ok(complete(ctx.root, ID, { ...A, now: ctx.now, reality: noDrift }).ok);
+  assert.equal(readUnit(ctx.root, ID).state, 'DONE');
+});
+
+// ---------- ADR-009: decision-records in the READY fingerprint ----------
+
+const DECISION = (id, over = '') => `---\nschema: 1\nid: ${id}\ntype: decision\nstatus: recorded\ndate: 2026-11-10\nowners: [t]\nkind: instruction\ndepends_on: [t1]\nsupersedes: []\n${over}---\n\nwords\n`;
+const specDependingOnDecision = () => SPEC.replace('depends_on: []', 'depends_on: [dec-1]');
+
+test('fingerprint: a Spec without decisions keeps its earlier fingerprint (no new key)', () => {
+  const { root } = toReady();
+  const u = readUnit(root, ID);
+  assert.equal(computeFingerprint(root, u, { reality: noDrift }), u.fingerprint);
+});
+
+test('fingerprint: a decision-record the Spec depends on enters it; a superseding record makes READY stale', () => {
+  const ctx = unitInDesign();
+  put(ctx.root, 'docs/specs/approved/x.md', specDependingOnDecision());
+  put(ctx.root, 'docs/decisions/dec-1.md', DECISION('dec-1'));
+  assert.ok(ready(ctx.root, ID, { ...A, now: ctx.now, reality: noDrift }).ok);
+  assert.equal(isStale(ctx.root, ID, { reality: noDrift }), false);
+  // a new record supersedes dec-1; dec-1 itself is not edited
+  put(ctx.root, 'docs/decisions/dec-2.md', DECISION('dec-2', 'supersedes: [dec-1]\n').replace('supersedes: []\n', ''));
+  assert.equal(isStale(ctx.root, ID, { reality: noDrift }), true);
+});
+
+test('fingerprint: a decision the Spec does not name does not touch it', () => {
+  const ctx = toReady();
+  put(ctx.root, 'docs/decisions/dec-9.md', DECISION('dec-9'));
+  assert.equal(isStale(ctx.root, ID, { reality: noDrift }), false);
+});

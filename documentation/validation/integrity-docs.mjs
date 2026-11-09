@@ -4,6 +4,7 @@
 // The document-reading checks of validate-integrity.sh, in one pass over the files:
 //   3. every agent `capabilities:` entry exists in knowledge/capabilities.md
 //   4. every agent `knowledge:` entry resolves to knowledge/<id>.md
+//   5. every claude-code agent starts with `---` (no BOM), has `name` equal to its file name and a non-empty `description`
 //   7. every template has Schema v1 frontmatter with the mandatory fields
 //   8. every `entity_refs:` entry resolves to an id (entity catalog, `id:` fields, Registry names)
 // The Registry is parsed by the Core SDK (shell); its component names arrive on stdin, one per line.
@@ -35,6 +36,14 @@ function list(fm, key) {
   return line.slice(key.length + 1).replace(/^\s*\[/, '').replace(/\].*$/, '').split(',').map((s) => s.trim()).filter(Boolean);
 }
 
+// `key: value` -> value without surrounding quotes (the first matching line)
+function scalar(fm, key) {
+  const line = fm.find((l) => l.startsWith(`${key}:`));
+  if (line === undefined) return undefined;
+  const v = line.slice(key.length + 1).trim();
+  return /^(["']).*\1$/.test(v) ? v.slice(1, -1).trim() : v;
+}
+
 function walkMd(dir, out = []) {
   for (const e of ls(dir)) {
     const p = join(dir, e);
@@ -54,7 +63,17 @@ for (const platform of ['claude-code', 'opencode']) {
   const dir = join(root, 'agents', platform);
   for (const f of ls(dir).filter((x) => x.endsWith('.md'))) {
     const name = f.slice(0, -3);
-    const fm = frontmatter(read(join(dir, f)));
+    const text = read(join(dir, f));
+    const fm = frontmatter(text);
+    // 5: Claude Code registers a sub-agent from name + description; a BOM before the first --- hides the frontmatter
+    if (platform === 'claude-code') {
+      if (text.charCodeAt(0) === 0xfeff) err(`Agent '${name}' starts with a BOM, its frontmatter is not read (copy the file with cp or Copy-Item, not Out-File or Set-Content)`);
+      else if (fm.length === 0) err(`Agent '${name}' has no frontmatter`);
+      const nm = scalar(fm, 'name');
+      if (nm === undefined) err(`Agent '${name}' has no name: field, Claude Code will not register it`);
+      else if (nm !== name) err(`Agent '${name}' name: '${nm}' does not equal the file name`);
+      if (!scalar(fm, 'description')) err(`Agent '${name}' has no description: or it is empty, Claude Code cannot delegate to it`);
+    }
     if (capHeadings) {
       for (const cap of list(fm, 'capabilities')) {
         if (!capHeadings.has(cap)) err(`Agent '${name}' capability '${cap}' not found in knowledge/capabilities.md`);

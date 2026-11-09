@@ -19,6 +19,11 @@ import { execFileSync } from 'node:child_process';
 const FORBIDDEN = ['lifecycle', 'author', 'title', 'created', 'supersedes_adr', 'referenced_by', 'excludes-from-scope'];
 const MANDATORY = ['id', 'type', 'status', 'date', 'owners'];
 const TRACKS = ['code', 'docs', 'mixed'];
+const DECISION_KINDS = ['priority', 'note', 'instruction', 'initiative'];
+const DECISION_STATUSES = ['recorded', 'superseded'];
+const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
+// Fields of a decision-record that carry lists: written inline, `[a, b]`, so that line readers see them.
+const DECISION_LISTS = ['depends_on', 'supersedes', 'refs', 'tags'];
 
 // The YAML block between the first and second '---' line; null when the file has no frontmatter.
 function frontmatterLines(text) {
@@ -51,6 +56,15 @@ export function checkText(f, text) {
   if (type === 'spec' && has(/^track:/)) {
     const track = value('track');
     if (!TRACKS.includes(track)) err(`spec track '${track}' must be code, docs or mixed`);
+  }
+  if (type === 'decision') {
+    const kind = value('kind');
+    if (!DECISION_KINDS.includes(kind)) err(`decision kind '${kind}' must be ${DECISION_KINDS.join(', ')}`);
+    if (!DECISION_STATUSES.includes(status)) err(`decision status '${status}' must be recorded or superseded`);
+    if (!/^dec-[a-z0-9]+(-[a-z0-9]+)*$/.test(value('id'))) err(`decision id '${value('id')}' must be kebab-case and start with 'dec-'`);
+    if (kind === 'priority' && !PRIORITIES.includes(value('priority'))) err(`a priority decision requires 'priority:' P0, P1, P2 or P3 (got '${value('priority')}')`);
+    for (const key of DECISION_LISTS) if (has(new RegExp(`^${key}:\\s*$`))) err(`decision field '${key}' must be an inline list [a, b]`);
+    if (!/(^|[\\/])decisions[\\/][^\\/]+$/.test(f)) err('a decision lives in docs/decisions/');
   }
   if (type === 'api' && status !== 'active' && status !== 'deprecated') err(`api status '${status}' must be active or deprecated`);
   if ((type === 'spec' || type === 'audit') && !has(/^entity_refs:\s*\[[^\]]+\]/)) err(`${type} requires non-empty entity_refs`);

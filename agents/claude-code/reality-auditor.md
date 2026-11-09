@@ -5,6 +5,9 @@ type: prompt
 status: active
 date: 2026-07-08
 owners: [krok-team]
+name: reality-auditor
+description: "Reconstructs the actual state of a project from code, configs and documents, and reports drift from the documented state. Use before an architecture review, an audit or a migration. Read-only; investigates with a bash whitelist."
+tools: Read, Grep, Glob, Bash
 
 entity_refs: [agentic-layer]
 capabilities: [state-reconstruction, drift-analysis, architecture-extraction, attribution-analysis]

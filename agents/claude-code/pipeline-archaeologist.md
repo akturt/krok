@@ -6,6 +6,7 @@ status: active
 date: 2026-08-04
 owners: [krok-team]
 
+name: pipeline-archaeologist
 description: Pipeline forensic archaeologist (Claude Code variant) — reconstructs the runtime reality of a multi-hop data pipeline (ingestion/ETL/event pipeline/integration adapter) through 3 progressive layers (Execution Topology, Structural Topology, Content Topology) before any coverage matrix or replacement-layer design is allowed to proceed
 entity_refs: [agentic-layer]
 capabilities: [pipeline-topology-audit, state-reconstruction, drift-analysis, architecture-extraction]

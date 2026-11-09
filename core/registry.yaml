@@ -76,6 +76,9 @@ directories:
     - path: backlog/
       description: "backlog: active.md (open work) and archive.md (everything else)"
       required: false
+    - path: decisions/
+      description: "owner decisions: one decision-record per file (priority, note, instruction, initiative)"
+      required: false
     - path: api/
       description: "API documentation"
       required: false
@@ -107,6 +110,9 @@ templates:
   - name: runbook
     type: runbook
     path: documentation/templates/runbook.md
+  - name: decision
+    type: decision
+    path: documentation/templates/decision.md
   - name: backlog-active
     type: backlog
     path: documentation/templates/backlog-active.md
@@ -189,6 +195,10 @@ components:
     - name: documentation-reviewer
     - name: reality-auditor
     - name: adversary-checker
+    - name: forensic-auditor
+    - name: pipeline-archaeologist
+    - name: ontological-auditor
+    - name: frontend-contract-auditor
 
   knowledge:
     - architecture-principles

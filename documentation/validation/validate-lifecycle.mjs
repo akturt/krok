@@ -9,12 +9,17 @@
 //     Spec in approved/ or implemented/ names its documents in `docs:`, a docs Spec has
 //     no `code:`, and a docs|mixed Spec in implemented/ is propagated: every document in
 //     `docs:` exists and references the Spec id
+//   - docs/decisions/*.md (type decision, ADR-009): status recorded|superseded; every `supersedes`
+//     names an existing decision-record, not itself, without a cycle; a superseded record is named
+//     by another record's `supersedes`; a different `depends_on` target is a warning
 //   - with BASE_REF set: status transitions are legal, and the body of an
-//     approved/implemented/superseded Spec and of an accepted/superseded ADR
-//     is unchanged against BASE_REF (a `## Result` section of a Spec is excluded)
+//     implemented/superseded Spec and of an accepted/superseded ADR is unchanged against
+//     BASE_REF (a `## Result` section of a Spec is excluded). The body of an approved Spec
+//     may be edited (ADR-008): while it stays approved this is a WARNING that tells to
+//     reopen it as a draft; an approved -> draft move is silent.
 //
 // Usage: node validate-lifecycle.mjs [docs-root]      (BASE_REF=origin/master)
-// Exit: 0 OK, 1 at least one error. Zero dependencies.
+// Exit: 0 OK, 1 at least one error (warnings do not change the exit code). Zero dependencies.
 
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join, basename, dirname, resolve } from 'node:path';
@@ -24,8 +29,12 @@ import { acceptanceCriteria, parseDoc as parseDocYaml } from '../../core/control
 export const SPEC_DIRS = { drafts: 'draft', approved: 'approved', implemented: 'implemented', superseded: 'superseded' };
 export const SPEC_TRANSITIONS = {
   draft: ['draft', 'approved'],
-  approved: ['approved', 'implemented', 'superseded'],
+  approved: ['approved', 'draft', 'implemented', 'superseded'],
   implemented: ['implemented', 'superseded'],
+  superseded: ['superseded'],
+};
+export const DECISION_TRANSITIONS = {
+  recorded: ['recorded', 'superseded'],
   superseded: ['superseded'],
 };
 export const SPEC_TRACKS = ['code', 'docs', 'mixed'];
@@ -37,6 +46,9 @@ export const ADR_TRANSITIONS = {
 };
 const IMMUTABLE_SPEC = new Set(['approved', 'implemented', 'superseded']);
 const IMMUTABLE_ADR = new Set(['accepted', 'superseded']);
+const IMMUTABLE_DECISION = new Set(['recorded', 'superseded']);
+// ADR-008: the immutability of an approved Spec body is a prescription, not a gate.
+const SOFT_SPEC = new Set(['approved']);
 
 export function parseDoc(text) {
   const lines = text.replace(/\r\n/g, '\n').split('\n');
@@ -75,7 +87,8 @@ function git(args, cwd) {
   return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 }
 
-export function validate(docsRoot, baseRef) {
+// Returns the errors. Warnings are appended to `warnings` (an optional collector) and do not fail the check.
+export function validate(docsRoot, baseRef, warnings = []) {
   const errors = [];
   const err = (m) => errors.push(m);
   const specsRoot = join(docsRoot, 'specs');
@@ -102,8 +115,51 @@ export function validate(docsRoot, baseRef) {
     }
   }
 
-  if (baseRef) checkAgainstBase(docsRoot, baseRef, err);
+  checkDecisions(docsRoot, err, (m) => warnings.push(m));
+  if (baseRef) checkAgainstBase(docsRoot, baseRef, err, (m) => warnings.push(m));
   return errors;
+}
+
+// `[a, b]` -> ['a', 'b'] (an inline list; an absent field is empty)
+const inlineList = (v) => (v ? v.replace(/^\[/, '').replace(/\].*$/, '').split(',').map((s) => s.trim()).filter(Boolean) : []);
+
+// ADR-009: a decision-record is immutable and its history is the `supersedes` chain.
+// The chain has to be whole: a missing, self or circular reference is an error. Which record is
+// current is derived (nothing names it as superseded), so the status of an old record is optional
+// to update: the new record is a pure addition.
+function checkDecisions(docsRoot, err, warn) {
+  const records = new Map();
+  for (const f of walk(join(docsRoot, 'decisions'))) {
+    const { fm } = parseDoc(readFileSync(f, 'utf8'));
+    if (fm.type !== 'decision') continue;
+    if (records.has(fm.id)) err(`${f}: duplicate decision id '${fm.id}'`);
+    records.set(fm.id, { fm, f });
+  }
+  if (records.size === 0) return;
+  const named = new Set();
+  for (const [id, { fm, f }] of records) {
+    for (const target of inlineList(fm.supersedes)) {
+      named.add(target);
+      const old = records.get(target);
+      if (target === id) err(`${f}: decision '${id}' supersedes itself`);
+      else if (!old) err(`${f}: supersedes '${target}', which is not a decision-record in decisions/`);
+      else if (inlineList(old.fm.depends_on).join(',') !== inlineList(fm.depends_on).join(',')) {
+        warn(`${f}: supersedes '${target}', which concerns another target (depends_on differs)`);
+      }
+    }
+  }
+  for (const [id, { fm, f }] of records) {
+    if (fm.status === 'superseded' && !named.has(id)) err(`${f}: decision '${id}' is superseded but no decision-record lists it in 'supersedes'`);
+    const seen = new Set([id]);
+    let cur = id;
+    for (;;) {
+      const next = [...records.values()].find((r) => inlineList(r.fm.supersedes).includes(cur));
+      if (!next) break;
+      if (seen.has(next.fm.id)) { err(`${f}: the supersedes chain of '${id}' is circular`); break; }
+      seen.add(next.fm.id);
+      cur = next.fm.id;
+    }
+  }
 }
 
 // A Spec's deliverable is code, documents, or both. "implemented" for a docs|mixed Spec
@@ -127,7 +183,7 @@ function checkTrack(f, dir, docsRoot, fm, err) {
   }
 }
 
-function checkAgainstBase(docsRoot, baseRef, err) {
+function checkAgainstBase(docsRoot, baseRef, err, warn) {
   let top, prefix;
   try {
     top = git(['rev-parse', '--show-toplevel'], docsRoot).trim();
@@ -152,7 +208,7 @@ function checkAgainstBase(docsRoot, baseRef, err) {
     }
     return map;
   };
-  const compare = (sub, type, transitions, immutable, cut) => {
+  const compare = (sub, type, transitions, immutable, cut, soft = new Set()) => {
     const base = loadBase(sub);
     for (const [id, now] of loadNow(sub)) {
       if (now.fm.type !== type) continue;
@@ -161,18 +217,24 @@ function checkAgainstBase(docsRoot, baseRef, err) {
       const from = was.fm.status, to = now.fm.status;
       if (transitions[from] && !transitions[from].includes(to)) err(`${now.f}: illegal ${type} transition ${from} -> ${to}`);
       if (immutable.has(from) && normalizeBody(was.body, cut) !== normalizeBody(now.body, cut)) {
-        err(`${now.f}: body of a ${from} ${type} changed against ${baseRef}`);
+        if (soft.has(from) && to === 'draft') continue; // reopened for editing: this is the prescribed path
+        if (soft.has(from) && to === from) warn(`${now.f}: body of an ${from} ${type} changed against ${baseRef}; set it to draft (git mv to drafts/) while it is being edited, then re-approve (ADR-008)`);
+        else err(`${now.f}: body of a ${from} ${type} changed against ${baseRef}`);
       }
     }
   };
-  compare('specs', 'spec', SPEC_TRANSITIONS, IMMUTABLE_SPEC, true);
+  compare('specs', 'spec', SPEC_TRANSITIONS, IMMUTABLE_SPEC, true, SOFT_SPEC);
   compare('adr', 'adr', ADR_TRANSITIONS, IMMUTABLE_ADR, false);
+  compare('decisions', 'decision', DECISION_TRANSITIONS, IMMUTABLE_DECISION, false);
 }
 
 if (process.argv[1] && basename(process.argv[1]) === 'validate-lifecycle.mjs') {
   const docsRoot = process.argv[2] || process.env.ROOT || 'docs';
   if (!existsSync(docsRoot)) { console.log(`ERROR: docs root '${docsRoot}' not found`); process.exit(1); }
-  const errors = validate(docsRoot, process.env.BASE_REF || '');
+  const warnings = [];
+  const errors = validate(docsRoot, process.env.BASE_REF || '', warnings);
+  for (const w of warnings) console.log(`WARNING: ${w}`);
+  if (process.env.GITHUB_ACTIONS) for (const w of warnings) console.log(`::warning::${w}`);
   for (const e of errors) console.log(`ERROR: ${e}`);
   if (errors.length) { console.log('::error::validate-lifecycle failed (see errors above)'); process.exit(1); }
   console.log('validate-lifecycle: OK');
