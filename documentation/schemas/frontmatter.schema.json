@@ -20,7 +20,7 @@
     },
     "type": {
       "type": "string",
-      "enum": ["spec", "adr", "audit", "runbook", "guide", "api", "architecture", "backlog", "prompt"]
+      "enum": ["spec", "adr", "audit", "runbook", "guide", "api", "architecture", "backlog", "prompt", "decision"]
     },
     "status": {
       "type": "string",
@@ -85,7 +85,7 @@
     },
     "kind": {
       "type": "string",
-      "description": "Per-type discriminator. Required for runbook. Optional for guide. Allowed values: runbook (deploy|cicd|ops|troubleshoot|edge-hub|secrets|integration), guide (index|onboarding)."
+      "description": "Per-type discriminator. Required for runbook and decision. Optional for guide. Allowed values: runbook (deploy|cicd|ops|troubleshoot|edge-hub|secrets|integration), guide (index|onboarding), decision (priority|note|instruction|initiative)."
     },
     "track": {
       "type": "string",
@@ -149,6 +149,19 @@
           "status": {"enum": ["active", "deprecated"]},
           "kind": {"enum": ["index", "onboarding"]}
         }
+      }
+    },
+    {
+      "if": {"properties": {"type": {"const": "decision"}}},
+      "then": {
+        "properties": {
+          "status": {"enum": ["recorded", "superseded"]},
+          "kind": {"enum": ["priority", "note", "instruction", "initiative"]},
+          "id": {"pattern": "^dec-[a-z0-9]+(-[a-z0-9]+)*$"}
+        },
+        "required": ["kind"],
+        "if": {"properties": {"kind": {"const": "priority"}}},
+        "then": {"required": ["priority"]}
       }
     },
     {

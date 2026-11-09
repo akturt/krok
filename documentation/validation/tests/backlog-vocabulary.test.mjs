@@ -125,3 +125,11 @@ test('vocabulary: run() loads .context/vocabulary.yml and skips the file itself'
   put(r, 'AGENTS.md', 'gated by runtime.update\n');
   assert.equal(run(r).violations.length, 1);
 });
+
+test('vocabulary: decision-records hold the owner\'s exact words and are not scanned (ADR-009)', async () => {
+  const { skipped } = await import('../validate-vocabulary.mjs');
+  assert.equal(skipped('docs/decisions/dec-1.md', true), true);
+  assert.equal(skipped('docs/decisions\\dec-1.md', false), true);
+  assert.equal(skipped('docs/decisions-notes.md', true), false);
+  assert.equal(skipped('docs/adr/001.md', true), false);
+});

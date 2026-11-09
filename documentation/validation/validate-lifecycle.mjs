@@ -9,6 +9,9 @@
 //     Spec in approved/ or implemented/ names its documents in `docs:`, a docs Spec has
 //     no `code:`, and a docs|mixed Spec in implemented/ is propagated: every document in
 //     `docs:` exists and references the Spec id
+//   - docs/decisions/*.md (type decision, ADR-009): status recorded|superseded; every `supersedes`
+//     names an existing decision-record, not itself, without a cycle; a superseded record is named
+//     by another record's `supersedes`; a different `depends_on` target is a warning
 //   - with BASE_REF set: status transitions are legal, and the body of an
 //     implemented/superseded Spec and of an accepted/superseded ADR is unchanged against
 //     BASE_REF (a `## Result` section of a Spec is excluded). The body of an approved Spec
@@ -30,6 +33,10 @@ export const SPEC_TRANSITIONS = {
   implemented: ['implemented', 'superseded'],
   superseded: ['superseded'],
 };
+export const DECISION_TRANSITIONS = {
+  recorded: ['recorded', 'superseded'],
+  superseded: ['superseded'],
+};
 export const SPEC_TRACKS = ['code', 'docs', 'mixed'];
 export const ADR_TRANSITIONS = {
   proposed: ['proposed', 'accepted'],
@@ -39,6 +46,7 @@ export const ADR_TRANSITIONS = {
 };
 const IMMUTABLE_SPEC = new Set(['approved', 'implemented', 'superseded']);
 const IMMUTABLE_ADR = new Set(['accepted', 'superseded']);
+const IMMUTABLE_DECISION = new Set(['recorded', 'superseded']);
 // ADR-008: the immutability of an approved Spec body is a prescription, not a gate.
 const SOFT_SPEC = new Set(['approved']);
 
@@ -107,8 +115,51 @@ export function validate(docsRoot, baseRef, warnings = []) {
     }
   }
 
+  checkDecisions(docsRoot, err, (m) => warnings.push(m));
   if (baseRef) checkAgainstBase(docsRoot, baseRef, err, (m) => warnings.push(m));
   return errors;
+}
+
+// `[a, b]` -> ['a', 'b'] (an inline list; an absent field is empty)
+const inlineList = (v) => (v ? v.replace(/^\[/, '').replace(/\].*$/, '').split(',').map((s) => s.trim()).filter(Boolean) : []);
+
+// ADR-009: a decision-record is immutable and its history is the `supersedes` chain.
+// The chain has to be whole: a missing, self or circular reference is an error. Which record is
+// current is derived (nothing names it as superseded), so the status of an old record is optional
+// to update: the new record is a pure addition.
+function checkDecisions(docsRoot, err, warn) {
+  const records = new Map();
+  for (const f of walk(join(docsRoot, 'decisions'))) {
+    const { fm } = parseDoc(readFileSync(f, 'utf8'));
+    if (fm.type !== 'decision') continue;
+    if (records.has(fm.id)) err(`${f}: duplicate decision id '${fm.id}'`);
+    records.set(fm.id, { fm, f });
+  }
+  if (records.size === 0) return;
+  const named = new Set();
+  for (const [id, { fm, f }] of records) {
+    for (const target of inlineList(fm.supersedes)) {
+      named.add(target);
+      const old = records.get(target);
+      if (target === id) err(`${f}: decision '${id}' supersedes itself`);
+      else if (!old) err(`${f}: supersedes '${target}', which is not a decision-record in decisions/`);
+      else if (inlineList(old.fm.depends_on).join(',') !== inlineList(fm.depends_on).join(',')) {
+        warn(`${f}: supersedes '${target}', which concerns another target (depends_on differs)`);
+      }
+    }
+  }
+  for (const [id, { fm, f }] of records) {
+    if (fm.status === 'superseded' && !named.has(id)) err(`${f}: decision '${id}' is superseded but no decision-record lists it in 'supersedes'`);
+    const seen = new Set([id]);
+    let cur = id;
+    for (;;) {
+      const next = [...records.values()].find((r) => inlineList(r.fm.supersedes).includes(cur));
+      if (!next) break;
+      if (seen.has(next.fm.id)) { err(`${f}: the supersedes chain of '${id}' is circular`); break; }
+      seen.add(next.fm.id);
+      cur = next.fm.id;
+    }
+  }
 }
 
 // A Spec's deliverable is code, documents, or both. "implemented" for a docs|mixed Spec
@@ -174,6 +225,7 @@ function checkAgainstBase(docsRoot, baseRef, err, warn) {
   };
   compare('specs', 'spec', SPEC_TRANSITIONS, IMMUTABLE_SPEC, true, SOFT_SPEC);
   compare('adr', 'adr', ADR_TRANSITIONS, IMMUTABLE_ADR, false);
+  compare('decisions', 'decision', DECISION_TRANSITIONS, IMMUTABLE_DECISION, false);
 }
 
 if (process.argv[1] && basename(process.argv[1]) === 'validate-lifecycle.mjs') {

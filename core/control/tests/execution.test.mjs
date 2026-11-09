@@ -627,3 +627,31 @@ test('reopened Spec while a Unit is EXECUTING or VERIFYING: current behaviour, n
   assert.ok(complete(ctx.root, ID, { ...A, now: ctx.now, reality: noDrift }).ok);
   assert.equal(readUnit(ctx.root, ID).state, 'DONE');
 });
+
+// ---------- ADR-009: decision-records in the READY fingerprint ----------
+
+const DECISION = (id, over = '') => `---\nschema: 1\nid: ${id}\ntype: decision\nstatus: recorded\ndate: 2026-11-10\nowners: [t]\nkind: instruction\ndepends_on: [t1]\nsupersedes: []\n${over}---\n\nwords\n`;
+const specDependingOnDecision = () => SPEC.replace('depends_on: []', 'depends_on: [dec-1]');
+
+test('fingerprint: a Spec without decisions keeps its earlier fingerprint (no new key)', () => {
+  const { root } = toReady();
+  const u = readUnit(root, ID);
+  assert.equal(computeFingerprint(root, u, { reality: noDrift }), u.fingerprint);
+});
+
+test('fingerprint: a decision-record the Spec depends on enters it; a superseding record makes READY stale', () => {
+  const ctx = unitInDesign();
+  put(ctx.root, 'docs/specs/approved/x.md', specDependingOnDecision());
+  put(ctx.root, 'docs/decisions/dec-1.md', DECISION('dec-1'));
+  assert.ok(ready(ctx.root, ID, { ...A, now: ctx.now, reality: noDrift }).ok);
+  assert.equal(isStale(ctx.root, ID, { reality: noDrift }), false);
+  // a new record supersedes dec-1; dec-1 itself is not edited
+  put(ctx.root, 'docs/decisions/dec-2.md', DECISION('dec-2', 'supersedes: [dec-1]\n').replace('supersedes: []\n', ''));
+  assert.equal(isStale(ctx.root, ID, { reality: noDrift }), true);
+});
+
+test('fingerprint: a decision the Spec does not name does not touch it', () => {
+  const ctx = toReady();
+  put(ctx.root, 'docs/decisions/dec-9.md', DECISION('dec-9'));
+  assert.equal(isStale(ctx.root, ID, { reality: noDrift }), false);
+});

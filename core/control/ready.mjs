@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process';
 import { parse } from './yaml.mjs';
 import { escalationKinds, resolveSop, CONTROL_ROOT } from './registry.mjs';
 import { validateUnit } from './schema.mjs';
-import { findDocById, allDocIds, acceptanceCriteria, hasExcludedScope, invariantText } from './spec.mjs';
+import { findDocById, findDocBy, allDocIds, acceptanceCriteria, hasExcludedScope, invariantText } from './spec.mjs';
 import { readUnit, listRecords, appendRecord, transitionUnit, saveUnit, utc, DEFAULT_EVIDENCE } from './store.mjs';
 import { openEscalation, openEscalations } from './escalation.mjs';
 
@@ -68,6 +68,21 @@ function adrIds(specFm) {
   return [...new Set([...(specFm.implements || []), ...(specFm.depends_on || [])])].filter((x) => typeof x === 'string' && x.startsWith('adr-')).sort();
 }
 
+// Decision-records a Spec relies on (ids with the prefix dec-, ADR-009).
+function decisionIds(specFm) {
+  return [...new Set([...(specFm.implements || []), ...(specFm.depends_on || [])])].filter((x) => typeof x === 'string' && x.startsWith('dec-')).sort();
+}
+
+// The effective state of a decision-record: 'missing', 'recorded', or 'superseded-by:<id>' when another
+// record lists it in `supersedes` (a new decision does not have to edit the old file).
+function decisionState(root, id) {
+  const doc = findDocById(root, 'decisions', id);
+  if (!doc) return 'missing';
+  const by = findDocBy(root, 'decisions', (fm) => Array.isArray(fm.supersedes) && fm.supersedes.includes(id));
+  if (by) return `superseded-by:${by.fm.id}`;
+  return doc.fm.status === 'superseded' ? 'superseded' : 'recorded';
+}
+
 function fingerprintOf(inputs) {
   const stable = (v) => (Array.isArray(v) ? v.map(stable) : v && typeof v === 'object'
     ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, stable(v[k])])) : v);
@@ -83,6 +98,9 @@ export function computeFingerprint(root, unit, { reality = realityDrift } = {}) 
   const adrs = {};
   if (spec) for (const id of adrIds(spec.fm)) adrs[id] = findDocById(root, 'adr', id)?.fm.status ?? null;
   const invariants = {};
+  // Added only when the Spec names decision-records: a Spec without them keeps its earlier fingerprint.
+  const decisions = {};
+  if (spec) for (const id of decisionIds(spec.fm)) decisions[id] = decisionState(root, id);
   for (const id of unit.constraints) invariants[id] = invariantText(root, id);
   const boundariesFile = join(root, '.context', 'boundaries.yml');
   const { state, validated_at, fingerprint, ...definition } = unit;
@@ -90,6 +108,7 @@ export function computeFingerprint(root, unit, { reality = realityDrift } = {}) 
   return fingerprintOf({
     spec: spec ? { text: normalizeText(spec.text), path_status: spec.dir } : null,
     adrs,
+    ...(Object.keys(decisions).length ? { decisions } : {}),
     invariants,
     boundaries: existsSync(boundariesFile) ? normalizeText(readFileSync(boundariesFile, 'utf8')) : null,
     unit: definition,

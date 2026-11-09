@@ -122,7 +122,7 @@ updated: 2026-07-07    # when last changed
 ### Type enum
 
 ```
-spec | adr | audit | runbook | guide | api | architecture | backlog | prompt
+spec | adr | audit | runbook | guide | api | architecture | backlog | prompt | decision
 ```
 
 ### Status enum (per-type)
@@ -133,6 +133,7 @@ spec | adr | audit | runbook | guide | api | architecture | backlog | prompt
 | api | active, deprecated |
 | adr | proposed, accepted, deprecated, superseded |
 | audit | draft, completed |
+| decision | recorded, superseded |
 | architecture, runbook, guide, backlog, prompt | active, deprecated |
 
 ### Per-type Extensions
@@ -152,6 +153,11 @@ api:
 
 guide:
   kind: index | onboarding             # optional
+
+decision:
+  kind: priority | note | instruction | initiative   # required
+  priority: P0 | P1 | P2 | P3                        # required when kind is priority
+  # id starts with dec-; depends_on names the target; supersedes names the records it replaces
 
 architecture: {}                                 # no extensions
 adr: {}                                          # no extensions
@@ -299,6 +305,7 @@ Client received 500 instead of 400 on invalid JSON.
 | `docs/adr/` | Architecture Decision Records | Body immutable after `accepted`. Frontmatter = metadata, may be updated |
 | `docs/specs/` | Specification lifecycle | `drafts/ → approved/ → implemented/` (and `superseded/`) |
 | `docs/audits/` | Audits and forensic reports | Body append-only, FM = metadata (mutable) |
+| `docs/decisions/` | Owner decisions: one decision-record per file | Body is the owner's exact text and never changes; history is kept through `supersedes` (ADR-009) |
 | `docs/backlog/` | Backlog | `active.md`: open work; `archive.md`: everything else |
 | `docs/prompts/` | AI context prompts | type: prompt — answered by the LLM, not a human |
 | `docs/api/` | API specifications | type: api, versioned |
@@ -1006,6 +1013,7 @@ done
 | ADR | `adr` | `proposed → accepted → deprecated → superseded` | `docs/adr/` | Body immutable after acceptance; FM = metadata |
 | Spec | `spec` | `draft → approved → implemented`; `approved → draft` (edit); `approved \| implemented → superseded` | `docs/specs/{drafts,approved,implemented,superseded}/` | Git mv + update `status`, never delete; body of `implemented`/`superseded` immutable; an edit of an `approved` body is a warning, reopen it as a draft (ADR-008) |
 | Audit | `audit` | `draft → completed` | `docs/audits/` | Body never edit after completed; FM mutable |
+| Decision | `decision` | `recorded → superseded` | `docs/decisions/` | Body immutable from creation; `supersedes` keeps the history; ADR stays the form for architectural decisions (ADR-009) |
 | Runbook | `runbook` | `active → deprecated` | `docs/*.md` | Updated on changes; kind distinguishes |
 | Architecture | `architecture` | `active → deprecated` | `docs/architecture/` | Updated on topology/schema changes |
 | Guide | `guide` | `active → deprecated` | `docs/*.md` (index, README) | Navigation entrance |

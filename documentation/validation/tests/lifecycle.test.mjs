@@ -230,3 +230,79 @@ test('the CLI prints WARNING (and ::warning:: in GitHub Actions) and still exits
   assert.equal(ci.status, 0);
   assert.match(ci.stdout, /^::warning::.*body of an approved spec changed/m);
 });
+
+// ---------- ADR-009: decision-records ----------
+
+const DREC = (id, over = {}) => {
+  const f = { status: 'recorded', kind: 'note', depends_on: '[t1]', supersedes: '[]', ...over };
+  return `---\nschema: 1\nid: ${id}\ntype: decision\nstatus: ${f.status}\ndate: 2026-11-10\nowners: [t]\nkind: ${f.kind}\ndepends_on: ${f.depends_on}\nsupersedes: ${f.supersedes}\n---\n\n${f.body ?? 'owner words'}\n`;
+};
+
+test('decision: a supersedes chain passes; the old record may stay recorded or be marked superseded', () => {
+  const r = tmp();
+  put(r, 'decisions/dec-1.md', DREC('dec-1'));
+  put(r, 'decisions/dec-2.md', DREC('dec-2', { supersedes: '[dec-1]' }));
+  assert.deepEqual(validate(r, ''), []);
+  put(r, 'decisions/dec-1.md', DREC('dec-1', { status: 'superseded' }));
+  assert.deepEqual(validate(r, ''), []);
+});
+
+test('decision: missing, self and circular supersedes are errors', () => {
+  const r = tmp();
+  put(r, 'decisions/dec-1.md', DREC('dec-1', { supersedes: '[dec-ghost]' }));
+  assert.match(validate(r, '').join('\n'), /supersedes 'dec-ghost', which is not a decision-record/);
+  const r2 = tmp();
+  put(r2, 'decisions/dec-1.md', DREC('dec-1', { supersedes: '[dec-1]' }));
+  assert.match(validate(r2, '').join('\n'), /supersedes itself/);
+  const r3 = tmp();
+  put(r3, 'decisions/dec-1.md', DREC('dec-1', { supersedes: '[dec-2]' }));
+  put(r3, 'decisions/dec-2.md', DREC('dec-2', { supersedes: '[dec-1]' }));
+  assert.match(validate(r3, '').join('\n'), /circular/);
+});
+
+test('decision: superseded without a successor is an error; another target is a warning', () => {
+  const r = tmp();
+  put(r, 'decisions/dec-1.md', DREC('dec-1', { status: 'superseded' }));
+  assert.match(validate(r, '').join('\n'), /is superseded but no decision-record lists it/);
+  const r2 = tmp();
+  put(r2, 'decisions/dec-1.md', DREC('dec-1'));
+  put(r2, 'decisions/dec-2.md', DREC('dec-2', { supersedes: '[dec-1]', depends_on: '[other]' }));
+  const warnings = [];
+  assert.deepEqual(validate(r2, '', warnings), []);
+  assert.match(warnings.join('\n'), /concerns another target/);
+});
+
+test('decision: a project without decisions/ and a decisions/ of other types are untouched', () => {
+  const r = tmp();
+  assert.deepEqual(validate(r, ''), []);
+  put(r, 'decisions/log.md', doc({ id: 'log', type: 'guide', status: 'active', body: 'free text' }));
+  assert.deepEqual(validate(r, ''), []);
+});
+
+test('decision: against a base ref the body is immutable, the status may move recorded -> superseded', () => {
+  const { r, docs } = repoWith({
+    'docs/decisions/dec-1.md': DREC('dec-1'),
+    'docs/decisions/dec-2.md': DREC('dec-2', { supersedes: '[dec-1]' }),
+  });
+  put(r, 'docs/decisions/dec-1.md', DREC('dec-1', { status: 'superseded' }));
+  assert.deepEqual(validate(docs, 'HEAD'), []);
+  put(r, 'docs/decisions/dec-2.md', DREC('dec-2', { supersedes: '[dec-1]', body: 'rewritten' }));
+  const warnings = [];
+  assert.match(validate(docs, 'HEAD', warnings).join('\n'), /body of a recorded decision changed/);
+  assert.deepEqual(warnings, []);
+});
+
+test('decision: superseded -> recorded is an illegal transition', () => {
+  const { r, docs } = repoWith({
+    'docs/decisions/dec-1.md': DREC('dec-1', { status: 'superseded' }),
+    'docs/decisions/dec-2.md': DREC('dec-2', { supersedes: '[dec-1]' }),
+  });
+  put(r, 'docs/decisions/dec-1.md', DREC('dec-1', { status: 'recorded' }));
+  assert.match(validate(docs, 'HEAD').join('\n'), /illegal decision transition superseded -> recorded/);
+});
+
+test('decision: adding a new record against the base is a pure addition', () => {
+  const { r, docs } = repoWith({ 'docs/decisions/dec-1.md': DREC('dec-1') });
+  put(r, 'docs/decisions/dec-2.md', DREC('dec-2', { supersedes: '[dec-1]' }));
+  assert.deepEqual(validate(docs, 'HEAD'), []);
+});

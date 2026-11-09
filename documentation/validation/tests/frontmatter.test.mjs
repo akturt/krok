@@ -77,3 +77,38 @@ test('--changed without a repository checks everything instead of reporting a fa
     assert.match(res.errors.join('\n'), /bad\.md: no frontmatter/);
   } finally { process.chdir(cwd); }
 });
+
+// ---------- ADR-009: type decision ----------
+
+const DEC = (over = {}) => {
+  const f = { id: 'dec-20261110-ab12cd', status: 'recorded', kind: 'priority', priority: 'P0', depends_on: '[u1:TEST-ENV]', supersedes: '[]', refs: '[op:x, sha:y]', tags: '[owner-decision]', ...over };
+  return `---\nschema: 1\n${Object.entries(f).filter(([, v]) => v !== null).map(([k, v]) => (k === 'id' ? `id: ${v}\ntype: decision` : `${k}: ${v}`)).join('\n')}\ndate: 2026-11-10\nowners: [akturt]\n---\n\nSet this to P0 and do it first.\n`;
+};
+const DEC_PATH = 'docs/decisions/dec-20261110-ab12cd.md';
+
+test('decision: a valid record of each kind passes', () => {
+  assert.deepEqual(checkText(DEC_PATH, DEC()), []);
+  for (const kind of ['note', 'instruction', 'initiative']) assert.deepEqual(checkText(DEC_PATH, DEC({ kind, priority: null })), [], kind);
+  assert.deepEqual(checkText(DEC_PATH, DEC({ status: 'superseded' })), []);
+});
+
+test('decision: kind, status, id prefix and priority are checked', () => {
+  assert.match(checkText(DEC_PATH, DEC({ kind: null })).join('\n'), /decision kind '' must be/);
+  assert.match(checkText(DEC_PATH, DEC({ kind: 'wish' })).join('\n'), /decision kind 'wish'/);
+  assert.match(checkText(DEC_PATH, DEC({ status: 'active' })).join('\n'), /decision status 'active'/);
+  assert.match(checkText('docs/decisions/x.md', DEC({ id: 'x-1' })).join('\n'), /must be kebab-case and start with 'dec-'/);
+  assert.match(checkText(DEC_PATH, DEC({ priority: null })).join('\n'), /priority decision requires 'priority:'/);
+  assert.match(checkText(DEC_PATH, DEC({ priority: 'P9' })).join('\n'), /priority decision requires 'priority:'/);
+  assert.deepEqual(checkText(DEC_PATH, DEC({ kind: 'note', priority: null })), []);
+});
+
+test('decision: lists are inline, the file lives in decisions/', () => {
+  assert.match(checkText(DEC_PATH, DEC({ depends_on: '' })).join('\n'), /'depends_on' must be an inline list/);
+  assert.match(checkText('docs/elsewhere/dec-20261110-ab12cd.md', DEC()).join('\n'), /a decision lives in docs\/decisions\//);
+  assert.deepEqual(checkText('C:\\p\\docs\\decisions\\dec-20261110-ab12cd.md', DEC()), []);
+});
+
+test('decision: existing document types are unaffected', () => {
+  assert.deepEqual(checkText('docs/decisions/log.md', FM('', 'guide').replace('active', 'active')), []);
+  assert.deepEqual(checkText('docs/adr/001.md', FM('', 'adr').replace('active', 'accepted')), []);
+});

@@ -50,6 +50,16 @@ export function findDocById(root, subdir, id) {
   return null;
 }
 
+// The first document under docs/<subdir> whose frontmatter satisfies `match`.
+export function findDocBy(root, subdir, match) {
+  for (const file of walk(join(root, 'docs', subdir))) {
+    const text = readFileSync(file, 'utf8');
+    const doc = parseDoc(text);
+    if (match(doc.fm)) return { file, text, ...doc };
+  }
+  return null;
+}
+
 export function allDocIds(root) {
   const ids = new Set();
   for (const file of walk(join(root, 'docs'))) {
