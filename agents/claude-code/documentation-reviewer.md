@@ -5,6 +5,8 @@ type: prompt
 status: active
 date: 2026-07-08
 owners: [krok-team]
+name: documentation-reviewer
+description: "Checks a change to docs/**/*.md for Canonical Schema v1 compliance: frontmatter, entity_refs, the path-status contract and spec lifecycle. Use on every PR that touches docs. Reviews first; rewrites body text only when the author asks."
 
 entity_refs: [schema-v1, canonical-frontmatter, lifecycle-spec]
 touches: [docs]

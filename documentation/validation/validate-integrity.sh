@@ -64,6 +64,20 @@ while IFS= read -r agent; do
 done < <(registry_list_agents)
 ok
 
+# Reverse direction: every agent file is in the Registry, otherwise the Registry drifts
+registered_agents=" $(registry_list_agents | tr '\n' ' ') "
+for platform in claude-code opencode; do
+  for f in "$CONTROL_ROOT/agents/$platform"/*.md; do
+    [ -f "$f" ] || continue
+    name="$(basename "$f" .md)"
+    case "$registered_agents" in
+      *" $name "*) ;;
+      *) error "Agent file 'agents/$platform/$name.md' is not in the Registry (components.agents)" ;;
+    esac
+  done
+done
+ok
+
 # Check knowledge
 while IFS= read -r k; do
   [ -z "$k" ] && continue

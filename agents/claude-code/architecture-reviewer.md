@@ -5,6 +5,9 @@ type: prompt
 status: active
 date: 2026-07-08
 owners: [krok-team]
+name: architecture-reviewer
+description: "Architecture review of changes against the real project state: specs, ADRs, domain and security models, lifecycle and layering. Use on a change that touches docs/architecture, docs/adr or docs/specs, or on request. Read-only; reports findings, does not edit."
+tools: Read, Grep, Glob, Bash
 
 entity_refs: [schema-v1, canonical-frontmatter, lifecycle-adr, lifecycle-spec]
 touches: [docs/architecture, docs/adr]

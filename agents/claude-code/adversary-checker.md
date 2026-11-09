@@ -5,6 +5,9 @@ type: prompt
 status: active
 date: 2026-07-08
 owners: [krok-team]
+name: adversary-checker
+description: "Claim validation agent: checks architectural findings from other reviewers against the actual data and assigns a verdict with confidence. Use after architecture-reviewer, or to challenge existing findings. Read-only; makes no recommendations."
+tools: Read, Grep, Glob, WebFetch
 
 entity_refs: [agentic-layer]
 capabilities: [claim-validation, assumption-analysis]

@@ -6,6 +6,7 @@ status: active
 date: 2026-07-30
 owners: [krok-team]
 
+name: forensic-auditor
 description: Layer forensic auditor (Claude Code variant) — single-agent, layer-agnostic, end-to-end forensic audit from As-Is through drift/God-Object detection to To-Be target model with manifest SSOT, migration, and invariant tests
 entity_refs: [agentic-layer]
 capabilities: [forensic-layer-audit, state-reconstruction, drift-analysis, architecture-extraction, manifest-design, target-model-design, claim-validation]

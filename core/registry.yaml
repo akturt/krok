@@ -189,6 +189,10 @@ components:
     - name: documentation-reviewer
     - name: reality-auditor
     - name: adversary-checker
+    - name: forensic-auditor
+    - name: pipeline-archaeologist
+    - name: ontological-auditor
+    - name: frontend-contract-auditor
 
   knowledge:
     - architecture-principles
