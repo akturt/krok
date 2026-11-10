@@ -27,4 +27,5 @@ Source of the first package below: the U1 Hiring project (2026-10-26), [prompt](
 - [x] Spec reopen → ADR-008 (proposed): `approved → draft`; a body change of an approved Spec is a WARNING; `implemented` and `superseded` stay immutable
 - [x] `validate-lifecycle`: transitions, warnings collector, tests; Execution Units behaviour with a reopened Spec fixed by tests
 - [x] Open questions of the prompt: `tools:` only for roles whose text forbids writing; no `krok agents install` (copy with `cp`); no agent template (the README procedure); no `strict` option for the approved-spec warning
+- [x] Test fixture reads the Registry with CRLF line endings (`core/control/tests/fixture.mjs`)
 - [x] Decision-record (request of the TPO session) → ADR-009 (proposed): type `decision`, template, Registry, lifecycle and frontmatter checks, vocabulary exemption, READY fingerprint
