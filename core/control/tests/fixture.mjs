@@ -106,7 +106,7 @@ export function definition(root, over = {}) {
 
 export function nineKinds() {
   const reg = readFileSync(join(REPO, 'core', 'registry.yaml'), 'utf8');
-  const block = reg.split('escalation_kinds:')[1].split('\n\n')[0];
+  const block = reg.split('escalation_kinds:')[1].split(/\r?\n\r?\n/)[0];
   return [...block.matchAll(/^\s+- ([a-z-]+)$/gm)].map((m) => m[1]);
 }
 
