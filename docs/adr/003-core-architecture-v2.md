@@ -1,18 +1,18 @@
 ---
 schema: 1
-id: adr-003-runtime-architecture-v2
+id: adr-003-core-architecture-v2
 type: adr
 status: superseded
 date: 2026-07-09
 owners: [underboss-team]
 
-entity_refs: [agentic-layer, adr-002-runtime-v1.2-operating-platform]
-tags: [adr, runtime, v1.6, runtime-api, registry, bootstrap-engine, architecture]
-depends_on: [adr-002-runtime-v1.2-operating-platform]
+entity_refs: [agentic-layer, adr-002-core-v1.2-operating-platform]
+tags: [adr, core, v1.6, core-api, registry, bootstrap-engine, architecture]
+depends_on: [adr-002-core-v1.2-operating-platform]
 priority: P0
 ---
 
-# ADR-003: Runtime Architecture v2 — Core, Module, API, Registry SSOT, Bootstrap Engine
+# ADR-003: Core Architecture v2 — Core, Module, API, Registry SSOT, Bootstrap Engine
 
 ## Status
 
@@ -23,34 +23,34 @@ Accepted (2026-07-09)
 ADR-002 ("From Templates to Operating Platform") introduced the Registry as SSOT, the
 state machine, the contract split, and the Reality Engine as a standalone module. v1.5 then
 decomposed the monolith `bootstrap.sh` (637 lines) into `bootstrap/lib/` and
-`bootstrap/generators/`, and split Runtime into **Runtime Core** and **Documentation Module**.
-The decomposition worked, but three structural gaps remained that made the Runtime hard to
+`bootstrap/generators/`, and split the product into **Core** and **Documentation Module**.
+The decomposition worked, but three structural gaps remained that made the Core hard to
 extend and reason about:
 
 1. **Bootstrap was still the smartest thing in the repo.** `bootstrap.sh`, `install.sh`, and
-   `validate-runtime.sh` each independently re-sourced `bootstrap/lib/*` and re-implemented the
+   `validate-integrity.sh` each independently re-sourced `bootstrap/lib/*` and re-implemented the
    same detection/parsing. There was no stable surface for other tools to build on.
-2. **Runtime was a loose bag of scripts, not a system.** Logic lived under
+2. **Core was a loose bag of scripts, not a system.** Logic lived under
    `bootstrap/lib/` (`registry.sh`, `detect-state.sh`, `detect-stack.sh`, `verify.sh`). Nothing
    stopped tools from grepping the registry with `sed`/`head`, and there was no SDK contract for
    a Portal / CLI / TUI / test harness / plugin to depend on.
 3. **Versions and paths were still coupled.** `bootstrap.ps1` re-implemented stub-writing
    business logic; `install.sh` parsed the registry with text tools; a single version number was
-   expected to describe Runtime, Bootstrap, and the schema at once.
+   expected to describe Core, Bootstrap, and the schema at once.
 
-The question this ADR answers: *why do `runtime/lib/`, `documentation/`, and
+The question this ADR answers: *why do `core/lib/`, `documentation/`, and
 `engine/reality-engine/` exist, and what is the contract between them?* Six months from now the
 layout must be explicable without archaeology.
 
 ## Decision
 
-Adopt five architectural rules that finalize the Runtime v2 topology.
+Adopt five architectural rules that finalize the Core v2 topology.
 
-### 1. Two-layer topology: Runtime Core + Documentation Module
+### 1. Two-layer topology: Core + Documentation Module
 
-Runtime ships as a Git Submodule mounted at `docs/.runtime/underboss`. It has two layers:
+Core ships as a Git Submodule mounted at `docs/.control`. It has two layers:
 
-- **Runtime Core** (infrastructure): `runtime/`, `bootstrap/`, `engine/`
+- **Core** (infrastructure): `core/`, `bootstrap/`, `engine/`
   — registry, state machine, contracts, reality engine, bootstrap.
 - **Documentation Module** (authored content): `documentation/`, `knowledge/`, `agents/`,
   `sops/`, `playbook/`.
@@ -58,9 +58,9 @@ Runtime ships as a Git Submodule mounted at `docs/.runtime/underboss`. It has tw
 The consumer repository root stays clean: only `docs/` is added. This is the D-BR decision from
 v1.1, now finalized as the only supported layout.
 
-### 2. Runtime API as an internal SDK (`runtime/lib/`)
+### 2. Core SDK as an internal SDK (`core/lib/`)
 
-All Runtime logic moves into `runtime/lib/` as a cohesive internal SDK, one concern per module:
+All Core logic moves into `core/lib/` as a cohesive internal SDK, one concern per module:
 
 - `yaml.sh` — minimal YAML reader (no external deps).
 - `registry.sh` — SSOT reader; the only way to read structure and versions.
@@ -68,21 +68,21 @@ All Runtime logic moves into `runtime/lib/` as a cohesive internal SDK, one conc
 - `detectors.sh` — detector plugin runner (iterates `bootstrap/detectors/`).
 - `generators.sh` — generator plugin runner (iterates `bootstrap/generators/`).
 - `components.sh` — component verification.
-- `api.sh` — **unified entrypoint** that sources all modules and derives `RUNTIME_ROOT`.
+- `api.sh` — **unified entrypoint** that sources all modules and derives `CONTROL_ROOT`.
 
-Every tool (`bootstrap`, `install`, `validate-runtime`) does exactly one thing:
-`source "${RUNTIME_ROOT}/runtime/lib/api.sh"`. This turns Runtime from "a set of shell scripts"
+Every tool (`bootstrap`, `install`, `validate-integrity`) does exactly one thing:
+`source "${CONTROL_ROOT}/core/lib/api.sh"`. This turns Core from "a set of shell scripts"
 into "a system" with a stable surface, which is the prerequisite for Portal, CLI, TUI, tests,
 and plugins.
 
 ### 3. Registry as SSOT — an API, not just data
 
-`runtime/registry.yaml` is both the data source and the contract. It declares:
+`core/registry.yaml` is both the data source and the contract. It declares:
 
 - `directories:` — every docs/ and .context/ path bootstrap creates.
 - `generators:` / `detectors:` — plugin manifests consumed by `generators.sh` / `detectors.sh`.
 - `entrypoints:` — `bootstrap`, `install` command locations.
-- `runtime:` / `bootstrap:` / `schema:` / `contracts:` — independent version fields.
+- `control:` / `bootstrap:` / `schema:` / `contracts:` — independent version fields.
 
 No tool hardcodes a path or greps the registry. The public functions
 (`yaml_get`, `registry_version`, `registry_list_directories`, `registry_entrypoint`,
@@ -107,16 +107,16 @@ silently produces a wrong tree.
 
 `bootstrap.ps1` is intentionally kept a **dumb adapter**: it reads the registry and mirrors the
 structure, but it is NOT rewritten to call the generators. PowerShell is an adapter, not the
-Runtime; keeping it simple is preferred over premature abstraction.
+Core; keeping it simple is preferred over premature abstraction.
 
-`install.sh` is rewritten to use the Runtime API (`registry_version`, `registry_entrypoint`)
+`install.sh` is rewritten to use the Core SDK (`registry_version`, `registry_entrypoint`)
 instead of `grep`/`sed`/`head`.
 
 ### 5. Decoupled versioning
 
-Runtime, Bootstrap Engine, Registry Schema, and Contract Schema version independently:
+Core, Bootstrap Engine, Registry Schema, and Contract Schema version independently:
 
-- `runtime.version` = `1.6`
+- `control.version` = `1.6`
 - `bootstrap.engine_version` = `2.0`
 - `schema.version` = `1`
 - `contracts.version` = `1`
@@ -130,7 +130,7 @@ Each can evolve without forcing the others, which makes migrations explicit and 
 - All tools share one API surface — no drift between `bootstrap`, `install`, and `validate`.
 - Adding a generator or detector is one file + one registry entry; the orchestrator is never
   edited.
-- Runtime is now extensible: Portal / CLI / TUI / tests / plugins become feasible because there
+- Core is now extensible: Portal / CLI / TUI / tests / plugins become feasible because there
   is a stable `api.sh` to depend on.
 - `DEGRADED` mode makes bootstrap robust when the registry is missing.
 - Versioning is decoupled; migrations are explicit and local.
@@ -138,8 +138,8 @@ Each can evolve without forcing the others, which makes migrations explicit and 
 ### Negative
 
 - More files; `api.sh` is a new indirection layer every tool must source.
-- Runtime Core and Documentation Module are separate, so cross-references must use relative
-  paths (e.g. `../../runtime/registry.yaml`).
+- Core and Documentation Module are separate, so cross-references must use relative
+  paths (e.g. `../../core/registry.yaml`).
 
 ### Neutral
 
@@ -152,8 +152,8 @@ Each can evolve without forcing the others, which makes migrations explicit and 
 
 ## References
 
-- ADR-002: Runtime v1.2 — From Templates to Operating Platform (Registry SSOT, state machine,
+- ADR-002: Core v1.2 — From Templates to Operating Platform (Registry SSOT, state machine,
   contract split, Reality Engine standalone).
-- `runtime/registry.yaml` — the SSOT this ADR formalizes.
-- `runtime/lib/api.sh` — the unified Runtime API entrypoint.
+- `core/registry.yaml` — the SSOT this ADR formalizes.
+- `core/lib/api.sh` — the unified Core SDK entrypoint.
 - `bootstrap/bootstrap.sh` — the thin orchestrator this ADR describes.

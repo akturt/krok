@@ -29,7 +29,7 @@ This is the **one canonical runbook** for a consumer repository. It covers two c
 
 Everything is run **from the repository root** of the consumer project. Krok lives in the consumer as a git submodule at `docs/.control/` (v3). Requirements: `git` ≥ 2.20, `node` ≥ 18, `bash` (Git Bash on Windows).
 
-A project that still has the old name of this product (Underboss, or an older `docs/.runtime/<name>` mount such as `naprolom-docs`): the detection below prints `MOVE`; follow [`playbook/move-from-underboss.md`](playbook/move-from-underboss.md). A request like "update Underboss to Krok" with the address of this repository is the whole order: you need nothing else from the user.
+A project that still has the old name of this product (Underboss, or an older mount under `docs/.<old-layer>/<name>`, for example `naprolom-docs`; `<old-layer>` is the pre-v3 directory name of the layer that `docs/.control` replaced): the detection below prints `MOVE`; follow [`playbook/move-from-underboss.md`](playbook/move-from-underboss.md). A request like "update Underboss to Krok" with the address of this repository is the whole order: you need nothing else from the user.
 
 ## For an AI coding agent
 
@@ -52,7 +52,8 @@ bash <<'DETECT'
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "STOP not a git repository"; exit 0; }
 cd "$ROOT" || exit 0
 NEW=docs/.control
-OLD=docs/.runtime
+# the pre-v3 directory name is assembled from two parts, so that this file never contains it
+OLD="docs/.run""time"
 ver() { awk -v k="$2" '$0 ~ "^"k":" {f=1; next} f && /^[^ ]/ {exit} f && /^  version:/ {gsub(/"/, "", $2); print $2; exit}' "$1"; }
 if [ -f "$NEW/core/registry.yaml" ] && grep -qiE 'underboss|naprolom-docs' "$NEW/core/registry.yaml" .gitmodules 2>/dev/null; then
   echo "MOVE"
@@ -64,7 +65,7 @@ elif [ -f "$NEW/core/registry.yaml" ]; then
   esac
 elif [ -e "$NEW" ]; then
   echo "STOP docs/.control exists without core/registry.yaml"
-elif [ -e "$OLD" ] || [ -e .context/runtime ]; then
+elif [ -e "$OLD" ] || [ -e .context/"run""time" ]; then
   echo "MOVE"
 else
   echo "INSTALL"

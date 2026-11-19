@@ -21,7 +21,7 @@ priority: P0
 
 ## Goal
 
-Make Underboss semantically simpler while adding the one concept it lacks: **an Execution Unit with operational state**. Everything else in v3 is the removal of ambiguity: one vocabulary, one spec lifecycle, one escalation vocabulary, no compatibility layers, no word "runtime" in the Operational Model.
+Make Underboss semantically simpler while adding the one concept it lacks: **an Execution Unit with operational state**. Everything else in v3 is the removal of ambiguity: one vocabulary, one spec lifecycle, one escalation vocabulary, no compatibility layers, no word "<retired-term>" in the Operational Model.
 
 Success criterion: after v3 the model has fewer terms, fewer states and fewer mechanisms than v2 plus exactly two new stored kinds (Execution Unit, Execution Record).
 
@@ -31,7 +31,7 @@ Facts established by repository archaeology (see `docs/audits/2026-10-04-semanti
 
 - Knowledge is already modeled: ADR (why), Spec (what/how), Architecture and invariants, Reality Engine (what exists), SOP (how a class of work is done).
 - **No instance-level state exists.** A SOP describes work and "is not execution"; the planner prints a DAG; the reality report is a project-level snapshot. Nothing records that a particular piece of approved work is being carried out, by whom, in which state, or why it stopped.
-- The word "runtime" names a dozen unrelated things (product, layer, directory, SDK, registry, installation states, ownership, environment variable, entity id).
+- The word "<retired-term>" names a dozen unrelated things (product, layer, directory, SDK, registry, installation states, ownership, environment variable, entity id).
 - The spec lifecycle contains a stage (`review`) that no code requires and no consumer uses; the `api` lifecycle is documented but not implemented.
 - Several mechanisms exist only as compatibility or fallback (degraded bootstrap mode, legacy-layout detection, version matrix, SOP role alias, warn-only validation).
 
@@ -47,7 +47,7 @@ Owner policy: **minimal closed model; no backward compatibility, no fallback, no
 4. Execution Record (§5) and Escalation with one closed vocabulary (§6).
 5. Storage under `.context/execution/` (§7) and the Control Plane projections and CLI (§8).
 6. Agent contract (§9), backlog lifecycle (§10), SOP and Reality integration (§11), Project/Repository identity (§12).
-7. Removal of the former "runtime" vocabulary and of every compatibility/fallback mechanism (§13, §14).
+7. Removal of the former "<retired-term>" vocabulary and of every compatibility/fallback mechanism (§13, §14).
 8. One-time migration of existing consumers (§14).
 
 ### Excluded
@@ -397,23 +397,23 @@ SOPs stay descriptive YAML and never hold progress. An Execution Unit references
 
 | Former | Target |
 |---|---|
-| directory `runtime/` | `core/` |
-| `runtime/state-machine.yaml` | `core/installation-state-machine.yaml` |
-| `runtime/contracts/runtime/` | `core/contracts/product/` |
-| `docs/.runtime/underboss/` (consumer mount) | `docs/.control/` |
-| `RUNTIME_ROOT`, `RUNTIME_REGISTRY` and local variables of the same family | `CONTROL_ROOT`, `CONTROL_REGISTRY`, … |
-| registry key `runtime:` | `control:` |
-| `validate-runtime.sh` (and its Registry entry) | `validate-integrity.sh` |
-| "Runtime API" | Core SDK |
-| "Runtime Registry" | Registry |
-| "Runtime state machine" | Installation State Machine |
-| "Runtime Core" | Core |
-| "runtime role" in SOP text | orchestrator |
-| `.context/` described as "runtime context" | Agent Entry Metadata |
-| entity ref `runtime-agentic-layer` | `agentic-layer` |
-| entity refs `runtime`, `registry`, `state-machine` | `core`, `registry`, `installation-state-machine` |
-| README tagline "Documentation Runtime" | "Engineering control plane for projects built with AI coding agents" |
-| this spec's former title and id "control-runtime" | `control-plane` (done) |
+| directory `<retired-term>/` | `core/` |
+| `<retired-term>/state-machine.yaml` | `core/installation-state-machine.yaml` |
+| `<retired-term>/contracts/<retired-term>/` | `core/contracts/product/` |
+| `docs/.<retired-term>/underboss/` (consumer mount) | `docs/.control/` |
+| `<RETIRED-TERM>_ROOT`, `<RETIRED-TERM>_REGISTRY` and local variables of the same family | `CONTROL_ROOT`, `CONTROL_REGISTRY`, … |
+| registry key `<retired-term>:` | `control:` |
+| `validate-<retired-term>.sh` (and its Registry entry) | `validate-integrity.sh` |
+| "<retired-term> API" | Core SDK |
+| "<retired-term> Registry" | Registry |
+| "<retired-term> state machine" | Installation State Machine |
+| "<retired-term> Core" | Core |
+| "<retired-term> role" in SOP text | orchestrator |
+| `.context/` described as "<retired-term> context" | Agent Entry Metadata |
+| entity ref `<retired-term>-agentic-layer` | `agentic-layer` |
+| entity refs `<retired-term>`, `registry`, `state-machine` | `core`, `registry`, `installation-state-machine` |
+| README tagline "Documentation <retired-term>" | "Engineering control plane for projects built with AI coding agents" |
+| this spec's former title and id "control-<retired-term>" | `control-plane` (done) |
 
 Physical names are functional, not product-bearing: the integration namespace (`docs/.control/`, `CONTROL_*`, the registry key) does not repeat the product name, so a later product rename does not touch it. The `underboss` CLI keeps its name; renaming the product is a separate, later change and out of scope.
 
@@ -431,7 +431,7 @@ A Migration Contract may know the old system; the Operational Model may not.
 
 Lexical policy, checked **per class, not as one global search**:
 
-| Class | Former vocabulary (`runtime`, old paths, variables, statuses, entity refs) |
+| Class | Former vocabulary (`<retired-term>`, old paths, variables, statuses, entity refs) |
 |---|---|
 | code, Registry, contracts, validators, generators, CLI/API | forbidden |
 | active operational documentation (README, INSTALL, playbook, knowledge, SOPs, agents, templates, active ADRs, architecture) | forbidden |
@@ -440,7 +440,7 @@ Lexical policy, checked **per class, not as one global search**:
 | audits, `implemented` and `superseded` artifacts, `deprecated` and `superseded` ADRs | allowed (historical) |
 | git history | allowed |
 
-Never a violation: ordinary English "at run time" and consumer-domain terms (`runtime-ownership-report`, the pipeline-archaeologist's "runtime reality of a pipeline"). Forbidden identifiers in operational classes: `docs/.runtime`, `RUNTIME_ROOT`, `RUNTIME_REGISTRY`, `runtime-agentic-layer`, `specs/review`, `status: review`. The final inventory is run for each class separately and reports each class's result; an operational-class survivor that is not a listed exception is a defect.
+Never a violation: ordinary English "at run time" and consumer-domain terms (`<retired-term>-ownership-report`, the pipeline-archaeologist's "<retired-term> reality of a pipeline"). Forbidden identifiers in operational classes: `docs/.<retired-term>`, `<RETIRED-TERM>_ROOT`, `<RETIRED-TERM>_REGISTRY`, `<retired-term>-agentic-layer`, `specs/review`, `status: review`. The final inventory is run for each class separately and reports each class's result; an operational-class survivor that is not a listed exception is a defect.
 
 #### 13.4 Other deletions in the same change set
 
@@ -459,7 +459,7 @@ Policy: **no backward compatibility, no fallback, no alias, no legacy mode.** Pr
 Mechanisms deleted:
 
 1. degraded bootstrap mode and its built-in fallback layout (`bootstrap.sh`; hardcoded directory list in `bootstrap.ps1`): a missing Registry is an error;
-2. legacy-layout detection and migration (`.context/runtime/`, state `legacy`, the legacy-layout contract, install handling): the Installation State Machine is `fresh`, `installed`, `partial`, `broken`;
+2. legacy-layout detection and migration (`.context/<retired-term>/`, state `legacy`, the legacy-layout contract, install handling): the Installation State Machine is `fresh`, `installed`, `partial`, `broken`;
 3. the version compatibility matrix and its reader;
 4. the `role: human` alias in the planner: SOPs use `gate: manual`;
 5. `WARN_ONLY` mode, and every check that only warns (path-status, empty `entity_refs`, legacy fields): all are errors;
@@ -472,17 +472,17 @@ Mechanisms deleted:
 
 | Input | One-time result |
 |---|---|
-| submodule at `docs/.runtime/underboss` | moved to `docs/.control`; generated files regenerated by bootstrap |
+| submodule at `docs/.<retired-term>/underboss` | moved to `docs/.control`; generated files regenerated by bootstrap |
 | `docs/specs/review/*` | moved to `drafts/` with `status: draft` (approval is a human act, never automatic) |
 | `type: api` with an old lifecycle status | `draft`, `review`, `approved`, `implemented` → `active`; `superseded` → `deprecated`; old `docs/api/` subdirectories removed |
-| `entity_refs` / `implements` / `depends_on` naming `runtime-agentic-layer` and the other renamed ids | rewritten to the new ids, repository-wide, atomically |
+| `entity_refs` / `implements` / `depends_on` naming `<retired-term>-agentic-layer` and the other renamed ids | rewritten to the new ids, repository-wide, atomically |
 | existing backlog | open items → `active.md`; `Done` and non-actionable items → `archive.md` |
 | `.context/boundaries.yml` | regenerated from the corrected generator |
 | specs in `approved/` whose scope is already realized | moved to `implemented/` by the owner's explicit list |
 
 The script is idempotent, writes nothing outside the listed transformations, and is removed from the product once the owner's consumers are migrated.
 
-For this repository: the two delivered approved specs (`2026-07-08-agentic-layer`, `2026-07-08-runtime-v1.2`) move to `implemented/`; `2026-07-09-architecture-study-layered-decomposition`, whose body states `REJECTED` and which is a study rather than a change contract, becomes `type: audit` in `docs/audits/`. ADR-001, ADR-002 and ADR-003 become `superseded` by ADR-005.
+For this repository: the two delivered approved specs (`2026-07-08-agentic-layer`, `2026-07-08-core-v1.2`) move to `implemented/`; `2026-07-09-architecture-study-layered-decomposition`, whose body states `REJECTED` and which is a study rather than a change contract, becomes `type: audit` in `docs/audits/`. ADR-001, ADR-002 and ADR-003 become `superseded` by ADR-005.
 
 ### 15. Required ADRs
 
@@ -518,22 +518,22 @@ Implementation rule for every phase: extend an existing mechanism before creatin
 
 ## Affected files (predicted)
 
-**Moved or renamed.** `runtime/**` → `core/**` (14 files: `registry.yaml`, `state-machine.yaml` → `installation-state-machine.yaml`, `lib/{api,components,detectors,generators,registry,state,yaml}.sh`, `contracts/consumer/{boundaries,project-layout}.yaml`, `contracts/runtime/{installation,migration,validation}.yaml` → `contracts/product/`); `documentation/validation/validate-runtime.sh` → `validate-integrity.sh`.
+**Moved or renamed.** `<retired-term>/**` → `core/**` (14 files: `registry.yaml`, `state-machine.yaml` → `installation-state-machine.yaml`, `lib/{api,components,detectors,generators,registry,state,yaml}.sh`, `contracts/consumer/{boundaries,project-layout}.yaml`, `contracts/<retired-term>/{installation,migration,validation}.yaml` → `contracts/product/`); `documentation/validation/validate-<retired-term>.sh` → `validate-integrity.sh`.
 
-**Edited for vocabulary** (the former "runtime" words, paths, variables, entity refs):
+**Edited for vocabulary** (the former "<retired-term>" words, paths, variables, entity refs):
 - Agent entry and generated: `.context/{agent-entry.md,boundaries.yml,project.yml}`, `.github/workflows/docs-validate.yml`, `docs/architecture/README.md`.
 - Top level: `README.md`, `README_RU.md`, `INSTALL.md`.
 - `bootstrap/`: `bootstrap.sh`, `bootstrap.ps1`, `install.sh`, `DEPLOY-PROMPT.md`, `README.md`, `generators/{architecture-readme,boundaries,ci-workflow,claude-md,invariants,project-yml}.sh`, `templates/entity-catalog.md`.
 - `documentation/`: `validation/validate-frontmatter.sh`, `schemas/frontmatter.schema.json`.
 - `engine/`: `reality-engine/README.md`, `analyzers/{adr-drift,documentation-drift,spec-drift}.sh`, `collectors/{architecture-inventory,dependency-graph,entity-inventory,module-inventory}.sh`, `reporters/reality-report.sh`, `scripts/migrate-legacy.mjs`.
-- `agents/`: `README.md` and all 13 role files in `claude-code/` (6) and `opencode/` (7); every role carries `entity_refs: [runtime-agentic-layer]`.
+- `agents/`: `README.md` and all 13 role files in `claude-code/` (6) and `opencode/` (7); every role carries `entity_refs: [<retired-term>-agentic-layer]`.
 - `knowledge/`: `README.md`, `architecture-principles.md`, `audit-principles.md`, `capabilities.md`, `evidence-model.md`, `report-formats.md`.
 - `sops/`: `README.md`, `audit.yaml`, `forensic-audit.yaml`, `forensic-layer-audit.yaml`, `incident.yaml`, `pipeline-topology-audit.yaml`, `planner.mjs`.
 - `playbook/`: `playbook-v2.md`, `install-remote-prompt.md`, `migrate-legacy.md`.
 
 **Edited for the spec lifecycle** (beyond the above): `documentation/validation/validate-frontmatter.sh`, `documentation/schemas/frontmatter.schema.json`, `engine/reality-engine/analyzers/{documentation-drift,spec-drift}.sh` (also fixes `draft` vs `drafts`), `engine/scripts/migrate-legacy.mjs`, `bootstrap/bootstrap.{sh,ps1}`, `bootstrap/generators/{architecture-readme,claude-md}.sh`, `core/registry.yaml`, `core/contracts/consumer/boundaries.yaml`, `sops/{architecture-review,new-feature,new-service}.yaml`, `agents/{claude-code,opencode}/documentation-reviewer.md`, `knowledge/architecture-principles.md`, `playbook/playbook-v2.md`, `playbook/install-remote-prompt.md`, `INSTALL.md`, `documentation/templates/spec.md` (Acceptance criteria), `documentation/templates/adr.md` (no `Status` section).
 
-**Historical, status changed, body untouched.** `docs/adr/001-…`, `002-…`, `003-…` → `superseded`; `docs/specs/approved/2026-07-08-agentic-layer.md` and `2026-07-08-runtime-v1.2.md` → `docs/specs/implemented/`; `2026-07-09-architecture-study-layered-decomposition.md` → `docs/audits/` as `type: audit`.
+**Historical, status changed, body untouched.** `docs/adr/001-…`, `002-…`, `003-…` → `superseded`; `docs/specs/approved/2026-07-08-agentic-layer.md` and `2026-07-08-core-v1.2.md` → `docs/specs/implemented/`; `2026-07-09-architecture-study-layered-decomposition.md` → `docs/audits/` as `type: audit`.
 
 **New.** `docs/adr/004-…`, `005-…`, `006-…`; `core/control/` (YAML subset module, state machine, validation, fingerprint, context resolution, records, CLI, tests); `core/bin/underboss`; `core/migrate/v2-to-v3.mjs`; `documentation/templates/backlog-{active,archive}.md` (replacing `backlog.md`); `documentation/validation/{validate-lifecycle,validate-backlog,validate-execution}` ; fixtures for tests.
 
@@ -547,7 +547,7 @@ Technical details only; none blocks approval.
 
 ## Acceptance criteria
 
-- **AC-001** The final inventory (§13.3) finds no former "runtime" vocabulary in the operational classes (§13.3), and no forbidden identifier there.
+- **AC-001** The final inventory (§13.3) finds no former "<retired-term>" vocabulary in the operational classes (§13.3), and no forbidden identifier there.
 - **AC-002** `review` does not exist as a status, directory, enum value, validator branch, SOP step or documentation term in the Operational Model; `docs/specs/review/` is not created by bootstrap.
 - **AC-003** The spec validator enforces path = status as an error and rejects transitions outside §3.3; approved, implemented and superseded Spec bodies and accepted ADR bodies are verified unchanged against the base ref.
 - **AC-004** A Spec cannot enter `approved/` without Acceptance criteria that have `AC-NNN` ids; an Execution Unit never contains criteria text.

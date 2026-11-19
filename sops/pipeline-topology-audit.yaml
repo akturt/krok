@@ -1,9 +1,9 @@
 name: pipeline-topology-audit
 version: 1
-description: 3-layer progressive forensic reconstruction of a multi-hop data pipeline's runtime reality (Execution Topology -> Structural Topology -> Content Topology) before any coverage matrix or replacement-layer design is allowed to proceed
+description: 3-layer progressive forensic reconstruction of a multi-hop data pipeline's operating reality (Execution Topology -> Structural Topology -> Content Topology) before any coverage matrix or replacement-layer design is allowed to proceed
 triggers:
   - manual invocation before designing a coverage matrix or migration plan for an existing multi-hop pipeline
-  - suspicion that an existing coverage audit was built from code presence rather than runtime reality
+  - suspicion that an existing coverage audit was built from code presence rather than operating reality
   - periodic re-drift check for long-lived pipelines with many silent config-driven routing changes
   - after a router/dispatcher config change, to check for silently orphaned handlers
 input:
@@ -92,7 +92,7 @@ steps:
     platform: any
     consumes: [layer1-execution-topology, layer2-structural-topology, layer3-content-topology]
     produces: coverage-matrix
-    note: "built per node (Layer 2's unit), never per family/subsystem; columns: handler exists / wired to runtime / payload composition known / real sample available / parity proven — exists and wired are always separate columns — skipped at depth=shallow"
+    note: "built per node (Layer 2's unit), never per family/subsystem; columns: handler exists / wired into the live system / payload composition known / real sample available / parity proven — exists and wired are always separate columns — skipped at depth=shallow"
     depends_on: [1, 2, 3]
     condition: "depth != shallow"
   - id: 5

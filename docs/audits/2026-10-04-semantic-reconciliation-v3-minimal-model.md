@@ -7,14 +7,14 @@ date: 2026-10-04
 owners: [underboss-team]
 
 scope: "Canonical semantic model of Underboss: existing model reconstructed from the repository, minimal conceptual model derived from it, v3 reconciled against it, owner decisions applied"
-trigger: "Owner accepted the second reconciliation pass and fixed the open decisions (Decision as a human act, spec lifecycle without review, approved-spec immutability, escalation vocabulary, storage, complete removal of 'runtime', no backward compatibility)"
+trigger: "Owner accepted the second reconciliation pass and fixed the open decisions (Decision as a human act, spec lifecycle without review, approved-spec immutability, escalation vocabulary, storage, complete removal of '<retired-term>', no backward compatibility)"
 
 entity_refs: [schema-v1, agentic-layer]
 touches: [docs]
 docs: [docs/specs/drafts/2026-10-04-underboss-v3-control-plane.md, docs/audits/2026-10-04-semantic-reconciliation-v3.md, playbook/playbook-v2.md]
 refs: []
-depends_on: [audit-semantic-reconciliation-v3, adr-003-runtime-architecture-v2]
-tags: [audit, terminology, semantics, v3, runtime, decision, adr, spec-lifecycle, review-removal, backlog, storage, no-compat]
+depends_on: [audit-semantic-reconciliation-v3, adr-003-core-architecture-v2]
+tags: [audit, terminology, semantics, v3, <retired-term>, decision, adr, spec-lifecycle, review-removal, backlog, storage, no-compat]
 priority: P0
 ---
 
@@ -38,7 +38,7 @@ Rules applied: existing Underboss semantics first, v3 second; every concept must
 | Decision | no stored entity; three informal uses (ADR, `.context/decisions.yml` in the playbook only, inline `D-xx` tables) | **a human act, never a stored artifact** | §2 | removed as entity, kind, status, source, READY check, file |
 | Architecture, Invariant | topology / domain / `INV-NNN` | unchanged | `docs/architecture/`, invariants template | constraints reference `INV-NNN` |
 | Entity | (a) `entity_ref`: stable id of a named concept; (b) DDD Entity/Subject in the ontological audit | **(a)**; (b) stays inside the ontological-audit vocabulary | Entity Refs Workflow; `entity-inventory.sh` | used only as `entity_refs` |
-| Capability | skill contract of an agent role | unchanged | `knowledge/capabilities.md`; `validate-runtime.sh:161-250` | **never** a generic word |
+| Capability | skill contract of an agent role | unchanged | `knowledge/capabilities.md`; `validate-<retired-term>.sh:161-250` | **never** a generic word |
 | Boundary | path ownership class (`pristine / editable / generated / secret`); also "responsibility boundary" (review criterion) | path ownership class; the other use is always qualified | `.context/boundaries.yml`; consumer contract | "boundary crossing" → **escalation trigger** |
 | BC | not an Underboss concept (one phrase in the ontological-auditor source table) | **not an Underboss concept** | repository search | not introduced |
 | SOP | declarative workflow; "not execution"; `gate: manual` | unchanged; `role: human` alias removed | `sops/README.md`; `planner.mjs` | bound to an Execution Unit by name + version |
@@ -196,25 +196,25 @@ Files that carry `review` as lifecycle (19): `INSTALL.md`, both `documentation-r
 
 ---
 
-## 6. Removal of `runtime`
+## 6. Removal of `<retired-term>`
 
 82 files and 1055 mentions in the repository before this audit (counts below are heuristic). Meanings found: product name, shipped product, infrastructure layer, directory, internal SDK, structure registry, installation state machine, product contracts, vendored mount path, integrity validator, SOP executor, `.context` caption, environment variable, entity id, consumer-domain term, historical text.
 
 | Category | ≈ tokens |
 |---|---|
 | historical records (ADR-001/002/003, approved specs) | 249 |
-| path `docs/.runtime/underboss` | 225 |
+| path `docs/.<retired-term>/underboss` | 225 |
 | documentation terminology | 221 |
 | environment and shell variables | 124 |
-| path `runtime/`, `contracts/runtime/` | 86 |
+| path `<retired-term>/`, `contracts/<retired-term>/` | 86 |
 | script, file and id names | 35 |
-| legacy-layout path `.context/runtime` | 33 |
-| entity ref `runtime-agentic-layer` | 21 (26 files) |
+| legacy-layout path `.context/<retired-term>` | 33 |
+| entity ref `<retired-term>-agentic-layer` | 21 (26 files) |
 | consumer-domain terms (untouched) | 7 |
 
 Target vocabulary: `Underboss, Core, Core SDK, Registry, Installation State Machine, Control Plane, Orchestrator, Agent Entry Metadata`. Renames are in the spec §13.2; they are one atomic change set with no alias and no dual-read.
 
-**Scopes (spec §13.3).** Three independent scopes, defined by what a file is and not by its directory: the **Operational Model** (the system in force after migration, including this model's Spec while draft or approved), the **Historical / Reconciliation Record** (audits, `implemented` and `superseded` Specs, `deprecated` and `superseded` ADRs, git history) and the **Migration Contract** (the one-time v2 → v3 transition, which may name the old system as the source state). The Operational Model knows nothing of the old system. The lexical policy is checked per class: the former vocabulary is forbidden in code, Registry, contracts, validators, generators, CLI/API and active operational documentation; allowed only as migration or historical vocabulary elsewhere. Accepted ADR bodies are immutable and ADR-001/002/003 contain the old words, so ADR-005 supersedes them and they become historical records. Never a violation: ordinary English "run time" and consumer-domain terms (`runtime-ownership-report`, the pipeline-archaeologist's runtime reality of a pipeline).
+**Scopes (spec §13.3).** Three independent scopes, defined by what a file is and not by its directory: the **Operational Model** (the system in force after migration, including this model's Spec while draft or approved), the **Historical / Reconciliation Record** (audits, `implemented` and `superseded` Specs, `deprecated` and `superseded` ADRs, git history) and the **Migration Contract** (the one-time v2 → v3 transition, which may name the old system as the source state). The Operational Model knows nothing of the old system. The lexical policy is checked per class: the former vocabulary is forbidden in code, Registry, contracts, validators, generators, CLI/API and active operational documentation; allowed only as migration or historical vocabulary elsewhere. Accepted ADR bodies are immutable and ADR-001/002/003 contain the old words, so ADR-005 supersedes them and they become historical records. Never a violation: ordinary English "run time" and consumer-domain terms (`<retired-term>-ownership-report`, the pipeline-archaeologist's <retired-term> reality of a pipeline).
 
 Compatibility and fallback mechanisms found and deleted (spec §14): degraded bootstrap mode; legacy-layout detection and migration; version compatibility matrix; `role: human` alias; `WARN_ONLY` and warn-only checks; tolerant status whitelist; `legacy` `kind` values (nothing produces them). `migrate-legacy.mjs` stays: it onboards foreign documentation.
 
@@ -270,8 +270,8 @@ Compatibility and fallback mechanisms found and deleted (spec §14): degraded bo
 | Operational storage | none (only `project.yml` carrying a `reality:` block) | `.context/execution/` |
 | Backlog | one freeform file | `active.md` and `archive.md` with a validator |
 | Boundary | three meanings | path ownership only; "escalation trigger" for the rest |
-| Vocabulary | "runtime" with sixteen meanings | Core, Core SDK, Registry, Installation State Machine, Control Plane, Orchestrator, Agent Entry Metadata |
-| Layout | `runtime/`, `docs/.runtime/underboss/` | `core/`, `docs/.control/` |
+| Vocabulary | "<retired-term>" with sixteen meanings | Core, Core SDK, Registry, Installation State Machine, Control Plane, Orchestrator, Agent Entry Metadata |
+| Layout | `<retired-term>/`, `docs/.<retired-term>/underboss/` | `core/`, `docs/.control/` |
 | Installation states | `fresh, installed, partial, legacy, broken` | `fresh, installed, partial, broken` |
 | Compatibility | matrix, degraded mode, alias, warn-only | none; one-time migration only |
 | ADR set | ADR-001, ADR-002, ADR-003 | ADR-004 (lifecycle), ADR-005 (baseline, supersedes 001–003), ADR-006 (execution state) |

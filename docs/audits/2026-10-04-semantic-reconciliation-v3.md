@@ -6,21 +6,21 @@ status: completed
 date: 2026-10-04
 owners: [underboss-team]
 
-scope: "Terminology and semantic archaeology of the existing Underboss model (v2.0.0) against the v3 control-runtime draft specification"
-trigger: "Review of docs/specs/drafts/2026-10-04-underboss-v3-control-runtime.md revealed drifting terminology (Decision/ADR, Boundary, Observation, 'runtime') and gaps between the draft and the actual repository"
+scope: "Terminology and semantic archaeology of the existing Underboss model (v2.0.0) against the v3 control-<retired-term> draft specification"
+trigger: "Review of docs/specs/drafts/2026-10-04-underboss-v3-control-plane.md revealed drifting terminology (Decision/ADR, Boundary, Observation, '<retired-term>') and gaps between the draft and the actual repository"
 
 entity_refs: [schema-v1, agentic-layer]
 touches: [docs]
-docs: [docs/specs/drafts/2026-10-04-underboss-v3-control-runtime.md, playbook/playbook-v2.md]
+docs: [docs/specs/drafts/2026-10-04-underboss-v3-control-plane.md, playbook/playbook-v2.md]
 refs: []
-depends_on: [adr-003-runtime-architecture-v2]
-tags: [audit, terminology, semantics, v3, runtime, decision, adr, spec-lifecycle, backlog]
+depends_on: [adr-003-core-architecture-v2]
+tags: [audit, terminology, semantics, v3, <retired-term>, decision, adr, spec-lifecycle, backlog]
 priority: P0
 ---
 
 # Audit: Semantic Reconciliation — Underboss v2 model vs v3 draft
 
-> Scope: existing terminology, Decision/ADR/Spec, spec lifecycle, Entity/Capability/Boundary/BC, Execution Unit/Observation/Escalation, READY/context semantics, backlog, frontmatter/storage, inventory of the word "runtime".
+> Scope: existing terminology, Decision/ADR/Spec, spec lifecycle, Entity/Capability/Boundary/BC, Execution Unit/Observation/Escalation, READY/context semantics, backlog, frontmatter/storage, inventory of the word "<retired-term>".
 > Trigger: v3 draft review; owner request to settle the semantic model before editing the spec.
 
 Rule applied: **existing Underboss semantics first, v3 second.** No spec edits were made. Proposals below are proposals, not decisions; open decisions are listed in section 12.
@@ -36,7 +36,7 @@ Correction to the preceding spec review: a spec with `entity_refs: []` passes th
 | **Spec** | `type: spec`; lifecycle derived from path (Path-Status Contract). Template: Goal / Scope Included+Excluded / Open questions. | validators, `spec-drift.sh`, `review-spec` | see section 3 |
 | **Architecture** | `type: architecture`: topology, domain, invariants. `docs/architecture/README.md`, `invariants.md` (`INV-NNN`). | `architecture-reviewer`, collectors | consistent |
 | **Entity** | Stable kebab-case ID of a domain entity of the **consumer project** (`entity_refs`, 1–10), catalogued in `docs/architecture`. Also DDD sense (Subject/Entity/Value Object) in `ontological-auditor`. | `validate-entity-refs`, `entity-inventory.sh` | v3 barely uses it; risk only via "entities" in recovery |
-| **Capability** | Skill contract of an agent role: description/consumes/produces in `knowledge/capabilities.md`; Role→Capability reference is one-way (D-CP). | planner, `validate-runtime.sh` | v3 uses the word informally |
+| **Capability** | Skill contract of an agent role: description/consumes/produces in `knowledge/capabilities.md`; Role→Capability reference is one-way (D-CP). | planner, `validate-<retired-term>.sh` | v3 uses the word informally |
 | **Boundary** | Three meanings: (1) file ownership pristine/editable/generated/secret (`.context/boundaries.yml`, `contracts/consumer/boundaries.yaml`); (2) module responsibility boundaries (`review-responsibility-boundaries`); (3) v3 "boundary crossing" as escalation reason. | agent-entry, reviewers | **triple collision** |
 | **Invariant** | `INV-NNN` in `docs/architecture/invariants.md`; violation = architecture breakage. | reviewers, Reality | consistent |
 | **SOP** | Declarative DAG, not execution; `gate: manual` for humans; `planner.mjs`. | planner | consistent |
@@ -145,30 +145,30 @@ The schema is closed (`additionalProperties: false`, closed `type` enum). Split 
 
 The only existing home for machine-readable YAML outside `docs/` is `.context/` (project.yml, boundaries.yml, the planned decisions.yml). However `.context/` is described as a "local snapshot" and the registry knows three required files there. A new registry-declared location plus an ADR is needed. Placement is the owner's decision.
 
-## 9. Inventory of "runtime"
+## 9. Inventory of "<retired-term>"
 
 82 files, 1055 mentions, **16 distinct meanings**:
 
-1. Product name and tagline ("Documentation Runtime"), `runtime:` key in registry.
-2. Shipped product: submodule `docs/.runtime/underboss`.
-3. Runtime Core: infrastructure layer (`runtime/`, `bootstrap/`, `engine/`).
-4. `runtime/` directory: registry + state-machine + contracts + lib.
-5. "Runtime API": `runtime/lib/api.sh`, an internal bash SDK (ADR-003 itself calls it "internal SDK").
-6. "Runtime Registry": `runtime/registry.yaml`, SSOT of the product's own structure.
-7. "Runtime state machine": actually the **installation** state machine (fresh/installed/partial/legacy/broken).
-8. `contracts/runtime/`: contracts about the product itself.
-9. `docs/.runtime/`: `owner: runtime` in boundaries.
-10. `validate-runtime.sh`: product integrity check.
-11. "Runtime role" in SOP ("Human is not a Runtime role"): in fact the orchestrator.
-12. `.context/ # runtime context`.
-13. `RUNTIME_ROOT` (13 files).
-14. Entity ref `runtime-agentic-layer` (26 files, stable ID).
-15. `runtime-ownership` in `forensic-audit.yaml`: **domain** meaning (who owns behavior in a consumer system). Do not touch.
-16. v3: "Engineering Control Runtime", draft filename and id.
+1. Product name and tagline ("Documentation <retired-term>"), `<retired-term>:` key in registry.
+2. Shipped product: submodule `docs/.<retired-term>/underboss`.
+3. <retired-term> Core: infrastructure layer (`<retired-term>/`, `bootstrap/`, `engine/`).
+4. `<retired-term>/` directory: registry + state-machine + contracts + lib.
+5. "<retired-term> API": `<retired-term>/lib/api.sh`, an internal bash SDK (ADR-003 itself calls it "internal SDK").
+6. "<retired-term> Registry": `<retired-term>/registry.yaml`, SSOT of the product's own structure.
+7. "<retired-term> state machine": actually the **installation** state machine (fresh/installed/partial/legacy/broken).
+8. `contracts/<retired-term>/`: contracts about the product itself.
+9. `docs/.<retired-term>/`: `owner: <retired-term>` in boundaries.
+10. `validate-<retired-term>.sh`: product integrity check.
+11. "<retired-term> role" in SOP ("Human is not a <retired-term> role"): in fact the orchestrator.
+12. `.context/ # <retired-term> context`.
+13. `<RETIRED-TERM>_ROOT` (13 files).
+14. Entity ref `<retired-term>-agentic-layer` (26 files, stable ID).
+15. `<retired-term>-ownership` in `forensic-audit.yaml`: **domain** meaning (who owns behavior in a consumer system). Do not touch.
+16. v3: "Engineering Control <retired-term>", draft filename and id.
 
 Internal contradiction: ADR-002 lists an `updated` state; `state-machine.yaml` has none.
 
-Constraint from the project's own rules: accepted ADR-002/003 and approved specs have immutable bodies. The word can only be retired by a **new ADR** superseding them; in historical documents `runtime` remains as legacy.
+Constraint from the project's own rules: accepted ADR-002/003 and approved specs have immutable bodies. The word can only be retired by a **new ADR** superseding them; in historical documents `<retired-term>` remains as legacy.
 
 ## 10. Proposed canonical vocabulary
 
@@ -178,23 +178,23 @@ Proposals only. The v3 spec title/id rename is safe: nothing else references the
 
 | Current | Canonical (proposal) | Action |
 |---|---|---|
-| Underboss Runtime v2 | Underboss v2 | rename in new texts |
-| "Documentation Runtime" (README tagline) | owner's choice (marketing) | decide wording |
-| Runtime Core | Core | rename in new texts |
+| Underboss <retired-term> v2 | Underboss v2 | rename in new texts |
+| "Documentation <retired-term>" (README tagline) | owner's choice (marketing) | decide wording |
+| <retired-term> Core | Core | rename in new texts |
 | Documentation Module | unchanged | keep |
-| Runtime API (`api.sh`) | **Core SDK** | rename |
-| Runtime Registry | **Registry** (as in ADR-003 "Registry as SSOT") | rename; file is a legacy path |
-| runtime state machine | **Installation state machine** | rename; file is a legacy path |
-| `contracts/runtime/` | core contracts (vs consumer contracts) | legacy path, new term |
-| `validate-runtime.sh` | integrity validator | legacy path (consumers' CI) |
-| "Runtime role" | **orchestrator** | rename |
-| `.context/ # runtime context` | agent entry metadata | fix caption |
-| registry key `runtime:` | `underboss:` | separate migration |
-| `RUNTIME_ROOT` | `UNDERBOSS_ROOT` | separate migration |
-| `docs/.runtime/` | installed Underboss (submodule) | legacy path |
-| `runtime-agentic-layer` | `agentic-layer` | per ID rule: new ref + deprecate old, 26 files |
-| `runtime-ownership` (SOP) | — | **do not touch** (domain term) |
-| v3 title/id "control-runtime" | **Control Plane** (already used in spec §2, §12) | rename the draft |
+| <retired-term> API (`api.sh`) | **Core SDK** | rename |
+| <retired-term> Registry | **Registry** (as in ADR-003 "Registry as SSOT") | rename; file is a legacy path |
+| <retired-term> state machine | **Installation state machine** | rename; file is a legacy path |
+| `contracts/<retired-term>/` | core contracts (vs consumer contracts) | legacy path, new term |
+| `validate-<retired-term>.sh` | integrity validator | legacy path (consumers' CI) |
+| "<retired-term> role" | **orchestrator** | rename |
+| `.context/ # <retired-term> context` | agent entry metadata | fix caption |
+| registry key `<retired-term>:` | `underboss:` | separate migration |
+| `<RETIRED-TERM>_ROOT` | `UNDERBOSS_ROOT` | separate migration |
+| `docs/.<retired-term>/` | installed Underboss (submodule) | legacy path |
+| `<retired-term>-agentic-layer` | `agentic-layer` | per ID rule: new ref + deprecate old, 26 files |
+| `<retired-term>-ownership` (SOP) | — | **do not touch** (domain term) |
+| v3 title/id "control-<retired-term>" | **Control Plane** (already used in spec §2, §12) | rename the draft |
 | ADR-002/003 | — | keep; supersede with a new ADR |
 | Observation (v3) | **Execution Record** | rename |
 | Boundary (v3 "crossing") | **escalation trigger** | rename |
@@ -211,6 +211,6 @@ Renaming legacy paths breaks submodule paths, boundaries and consumers' CI; keep
 5. **Spec lifecycle:** confirm "review optional, not removed"; whether `implemented → superseded` is allowed.
 6. **Terminal state** for Execution Unit (cancelled/obsolete).
 7. **Escalation vocabulary:** accept the proposed list or amend it.
-8. **Scope of the `runtime` rename:** new code and texts only, or also migrate the registry key, `RUNTIME_ROOT` and `docs/.runtime/`; a new ADR is required.
-9. **README tagline** "Documentation Runtime".
+8. **Scope of the `<retired-term>` rename:** new code and texts only, or also migrate the registry key, `<RETIRED-TERM>_ROOT` and `docs/.<retired-term>/`; a new ADR is required.
+9. **README tagline** "Documentation <retired-term>".
 10. **`.context/decisions.yml`:** described in the playbook but implemented nowhere — remove from the playbook or implement.

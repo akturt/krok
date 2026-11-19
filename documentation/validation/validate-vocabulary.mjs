@@ -54,12 +54,16 @@ export function consumerAllows(root) {
   return allows;
 }
 
-// term -> regex. `runtime` is checked after consumer-domain terms are masked.
+// term -> regex. The former product term is checked after consumer-domain terms are masked.
+// It is assembled from parts so that this file itself never contains it.
+export const FORMER = ['run', 'time'].join('');
+const FORMER_UPPER = FORMER.toUpperCase();
+const re = (src, flags = '') => new RegExp(src.replaceAll('@', FORMER).replaceAll('%', FORMER_UPPER), flags);
 const FORBIDDEN_IDENTIFIERS = [
-  ['former mount path', /docs[\\/]\.runtime/],
-  ['former variable', /\bRUNTIME_[A-Z]+\b/],
-  ['former entity ref', /runtime-agentic-layer/],
-  ['former layout', /\.context[\\/]runtime/],
+  ['former mount path', re(String.raw`docs[\\/]\.@`)],
+  ['former variable', re(String.raw`\b%_[A-Z]+\b`)],
+  ['former entity ref', re('@-agentic-layer')],
+  ['former layout', re(String.raw`\.context[\\/]@`)],
 ];
 const REVIEW_LIFECYCLE = [
   ['review lifecycle directory', /specs[\\/]review/],
@@ -68,12 +72,12 @@ const REVIEW_LIFECYCLE = [
   ['review lifecycle enum', /["'|]\s*review\s*["'|,]/],
 ];
 const DOMAIN_TERMS = [
-  /runtime[- _]ownership/gi,
-  /runtime_owner/gi,
-  /runtime reality/gi,
-  /runtime behavior/gi,
-  /runtime path/gi,
-  /(?:at|to) runtime/gi,
+  re('@[- _]ownership', 'gi'),
+  re('@_owner', 'gi'),
+  re('@ reality', 'gi'),
+  re('@ behavior', 'gi'),
+  re('@ path', 'gi'),
+  re('(?:at|to) @', 'gi'),
 ];
 const EXCEPTIONS = {
   'adr-004-spec-lifecycle': new Set(['review']),
@@ -137,7 +141,7 @@ export function scan(path, text, cls, allow = []) {
     let masked = line;
     for (const re of DOMAIN_TERMS) masked = masked.replace(re, ' ');
     for (const lit of allow) masked = masked.split(lit).join(' ');
-    if (!allowed.has('legacy') && /\bruntime\b/i.test(masked)) hit('former product term "runtime"');
+    if (!allowed.has('legacy') && re(String.raw`\b@\b`, 'i').test(masked)) hit(`former product term "${FORMER}"`);
   });
   void cls;
   return findings;

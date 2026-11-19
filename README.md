@@ -283,6 +283,7 @@ The longer the project lives, the more valuable Krok becomes.
 
 ## Changelog
 
+- **2026-11-20** — **v3.0.1 — vocabulary clean-up**. The retired product term is removed from every tracked file and every tracked path: three documents are renamed (`docs/adr/002-core-v1.2-operating-platform.md`, `docs/adr/003-core-architecture-v2.md`, `docs/specs/implemented/2026-07-08-core-v1.2.md`; ADR numbers unchanged, ids and references updated), the SOP artifact and capability named after the retired term are now `actual-ownership-report` and `actual_owner`, and the detection snippet of `INSTALL.md` and the guide `playbook/move-from-underboss.md` build the old directory name from two parts. `validate-vocabulary` and its tests assemble the term from parts, so no file contains it; a new test checks that no tracked content or path does. No change to the CLI, the Registry layout, the contracts or the ADR status grammar. Includes the changes listed as Unreleased below.
 - **Unreleased** — **Update package: agent registry, spec reopen, decision-record**. (1) Claude Code roles carry `name` and `description` (and `tools` for read-only roles), so they register as sub-agents; `validate-integrity` checks name, description and BOM and checks the Registry in both directions; new role `frontend-contract-auditor` and capability `review-frontend-contracts`; `agents/README.md` describes registration, copying without a BOM and how a project-born agent enters Krok. (2) ADR-008 (proposed): an `approved` Spec can be edited; it is reopened as a draft; `approved → draft` is legal; a body change of a Spec that stays `approved` is a WARNING, `implemented`/`superseded` stay immutable; `validate-lifecycle(root, ref, warnings)`. (3) ADR-009 (proposed): document type `decision` (`docs/decisions/`, one record per file, immutable body, `supersedes` chain), template, Registry entries, lifecycle and frontmatter checks, vocabulary check skips the directory, decision-records enter the READY fingerprint only when a Spec names them. Backward compatible for consumers. Released as master `f0dc0d0`; independently verified on a clean clone (183/183, twice); version not bumped.
 - **Unreleased** — **Consumer vocabulary allow-list**. `validate-vocabulary` reads literals under `allow:` in the consumer's `.context/vocabulary.yml` and masks them before the former-product-name word test — a consumer keeps its own terms that contain the name as a substring (permission slugs, routes, file names). Structural bans (former mount path, former variables, review lifecycle) are never whitelisted; the file itself is not scanned. Zero dependencies, no CLI change.
 - **2026-10-05** — **Krok rebrand**. The product is named Krok (CLI `krok`). Names only: architecture, contracts and CLI semantics are unchanged. Compatibility with earlier installations is removed: the v2 → v3 migration script and the old mount paths are gone, a project with an older layout installs again (INSTALL.md, flow A).
@@ -302,7 +303,7 @@ The longer the project lives, the more valuable Krok becomes.
 
 | Stage | State |
 |------|-------|
-| Krok v3.0.0 | ✅ implemented |
+| Krok v3.0.1 | ✅ implemented |
 | Playbook v2 (greenfield model) | ✅ implemented |
 | Migration Prompt (brownfield) | ✅ implemented |
 | Bootstrap (idempotent, POSIX + Windows) | ✅ implemented |

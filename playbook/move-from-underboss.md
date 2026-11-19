@@ -22,13 +22,19 @@ Krok is the new name of Underboss. There is **no migration and no compatibility 
 
 Everything is run from the repository root. Unrelated uncommitted changes in the tree do not stop this guide: see rule 3 of the agent section.
 
-The old installation may carry another name than Underboss: any submodule mounted under `docs/.runtime/<name>` (for example `docs/.runtime/naprolom-docs`) is the same case as `docs/.runtime/underboss`. Krok is always mounted at `docs/.control`, never under `docs/.runtime`.
+The old installation may carry another name than Underboss: any submodule mounted under `docs/.<old-layer>/<name>` (for example `docs/.<old-layer>/naprolom-docs`) is the same case as `docs/.<old-layer>/underboss`. Krok is always mounted at `docs/.control`, never under `docs/.<old-layer>`.
+
+`<old-layer>` in this guide is the pre-v3 directory name of the layer that `docs/.control` replaced (the former product term that `validate-vocabulary` reports). It is written in two parts here so that this guide never contains the word; the shell snippets below expect:
+
+```bash
+OLD_LAYER="run""time"
+```
 
 ## For an AI coding agent
 
 The user's request is one line ("update Underboss to Krok" and the address of this repository); it is the whole order. The decisions below are made. Do not ask the user about any of them, do not offer alternatives, and do not wait for approval of a plan: if you work in plan mode, the approval of the plan is the order to execute it. Stop only on a failed check you cannot fix at its root.
 
-0. **Remove the word "runtime" and the removed Spec status "review"** from operational files as `validate-vocabulary` reports (rule 4). Spec fixes that the validators demand are allowed: status `ready` → `draft`, a missing `## Acceptance criteria` in an approved Spec restated from the Spec itself, an empty `docs/specs/review/` removed. Report each.
+0. **Remove the retired word that `validate-vocabulary` prints as the former product term (the value of `OLD_LAYER` below), and the removed Spec status "review"** from operational files as `validate-vocabulary` reports (rule 4). Spec fixes that the validators demand are allowed: status `ready` → `draft`, a missing `## Acceptance criteria` in an approved Spec restated from the Spec itself, an empty `docs/specs/review/` removed. Report each.
 1. **Choose the case yourself** with section 0. Case 1 → section 1, case 2 or v1 → section 2. Nothing found → this guide does not apply; use `INSTALL.md` flow A.
 2. **No compatibility.** Delete the old installation outright. Keep no alias, shim, copy or fallback of the old name or the old paths.
 3. **Unrelated work in the tree.** Leave it alone. Do not stash, revert or commit it. Stage the migration by explicit path (`git add <paths>`), never `git add -A` or `git commit -a`. If the user asked you to commit it first, do that as a separate commit before the migration.
@@ -36,15 +42,15 @@ The user's request is one line ("update Underboss to Krok" and the address of th
 
    | Old | New |
    |---|---|
-   | `docs/.runtime/underboss`, `docs/.runtime/naprolom-docs` | `docs/.control` |
+   | `docs/.<old-layer>/underboss`, `docs/.<old-layer>/naprolom-docs` | `docs/.control` |
    | `naprolom-docs` as the name of the product | `Krok` |
    | `core/bin/underboss` | `core/bin/krok` |
-   | `validate-runtime.sh` | `validate-integrity.sh` |
+   | `validate-<old-layer>.sh` | `validate-integrity.sh` |
    | `Underboss` / `underboss` | `Krok` / `krok` |
    | `owners: [underboss-team]` | `owners: [krok-team]` |
-   | any other `docs/.runtime` (for example the `boundaries:` block of `.context/project.yml`) | `docs/.control` |
+   | any other `docs/.<old-layer>` (for example the `boundaries:` block of `.context/project.yml`) | `docs/.control` |
 
-   Find them with `git grep -il underboss` and `git grep -l 'docs/\.runtime'`.
+   Find them with `git grep -il underboss` and `git grep -l "docs/\.$OLD_LAYER"`.
 5. **Files the old bootstrap created outside the three generated ones** (`.claude/agents/`, `.claude/rules/`, hand-filled `.context/project.yml`) belong to the consumer now. Keep them and update the references in them; do not delete them. Find them with the greps of rule 4, not from a fixed list. Bootstrap generates only the Krok section of `CLAUDE.md`. `AGENTS.md`, if the project has one, is the consumer's: update the names in it by rule 4; if there is none, do not create one. `.context/agent-entry.md` is recreated by bootstrap with the Krok entry protocol; if it exists empty from an older install, delete it and run bootstrap again.
 6. **History is not rewritten.** Leave as they are: the project log (`docs/LOG.md` or similar append-only logs), everything under `docs/audits/` and `docs/adr/`, and every document whose frontmatter `status` is `implemented` or `superseded`. The old name in them is a historical fact. Check each excluded file for a live reference (a path or command someone would run) before leaving it; fix only a live one.
 7. **Document model (section 2, step 4).** Check each item and fix what is there. Never change the lifecycle status of a Spec: approval is a human act.
@@ -55,15 +61,15 @@ The user's request is one line ("update Underboss to Krok" and the address of th
 ## 0. Which case are you in?
 
 ```bash
-ls -d docs/.control docs/.runtime/* .context/runtime 2>/dev/null
+ls -d docs/.control docs/."$OLD_LAYER"/* .context/"$OLD_LAYER" 2>/dev/null
 git config -f .gitmodules --get-regexp 'path|url' 2>/dev/null
 ```
 
 | You have | Case |
 |---|---|
 | `docs/.control` | [1. v3 (control layer at `docs/.control`)](#1-v3-control-layer-at-docscontrol) |
-| `docs/.runtime/<name>` (`underboss`, `naprolom-docs`, any other) | [2. v2](#2-v2-docsruntimeunderboss) |
-| `.context/runtime` | v1: treat it as case 2 |
+| `docs/.<old-layer>/<name>` (`underboss`, `naprolom-docs`, any other) | [2. v2](#2-v2-docsold-layerunderboss) |
+| `.context/<old-layer>` | v1: treat it as case 2 |
 
 If you do not want to move now, do nothing: the submodule is pinned to a commit, and the old repository address redirects to the new one. You get no updates and no support from Krok.
 
@@ -92,14 +98,14 @@ Follow flow B of `INSTALL.md`, plus the following.
 5. **CLI.** Replace `docs/.control/core/bin/underboss` with `docs/.control/core/bin/krok` in your scripts, CI and agent instructions. Commands and flags are unchanged.
 6. **Names in your own files.** Replace the old name by the table of the agent section above. The validators do not require it, but nothing of the old name stays in live files.
 
-## 2. v2, `docs/.runtime/underboss`
+## 2. v2, `docs/.<old-layer>/underboss`
 
 Install Krok again and bring the documents to the v3 model by hand. The content of `docs/` stays.
 
-1. **Remove the old installation.** `OLD` is the path of the old submodule from `.gitmodules` (`docs/.runtime/underboss`, `docs/.runtime/naprolom-docs`, …):
+1. **Remove the old installation.** `OLD` is the path of the old submodule from `.gitmodules` (`docs/.<old-layer>/underboss`, `docs/.<old-layer>/naprolom-docs`, …):
 
    ```bash
-   OLD=docs/.runtime/underboss   # set the real path
+   OLD="docs/.$OLD_LAYER/underboss"   # set the real path
    git submodule deinit -f "$OLD"
    git rm -f "$OLD"
    rm -rf ".git/modules/$OLD"
@@ -112,10 +118,10 @@ Install Krok again and bring the documents to the v3 model by hand. The content 
    - The Spec lifecycle is `draft`, `approved`, `implemented`, `superseded` only. A Spec with another status (for example `ready`) fails `validate-lifecycle` even if `validate-frontmatter` accepts it: set `draft` when it lives in `drafts/`.
    - An approved Spec needs a `## Acceptance criteria` section with `AC-001`, `AC-002`, … ids. If it is missing, add it by restating what the Spec already says in Scope and Technical approach; add no new scope and do not change the status. Tell the owner to check the wording against the code.
    - The frontmatter field `excludes-from-scope` is rejected by the validators: remove it from templates and documents.
-   - An accepted ADR is scanned like any operational document. If `validate-vocabulary` reports the word "runtime" in its body, replace the word with the exact term of the project (browser, server, host, Engine) and report the edit; changing only the spelling ("run-time") is not a fix. Never touch the decision itself.
-   - The words "runtime" and "review" (as a Spec status or stage) are removed from operational files; `validate-vocabulary` lists them. The human act of reviewing a document is not the removed stage and may stay.
+   - An accepted ADR is scanned like any operational document. If `validate-vocabulary` reports the former product term in its body, replace the word with the exact term of the project (browser, server, host, Engine) and report the edit; changing only the spelling ("run-time") is not a fix. Never touch the decision itself.
+   - The former product term and the word "review" (as a Spec status or stage) are removed from operational files; `validate-vocabulary` lists them. The human act of reviewing a document is not the removed stage and may stay.
    - `api` documents take the statuses `active` or `deprecated`; the old lifecycle subdirectories of `docs/api/` are removed.
-   - Renamed ids in `entity_refs`, `implements`, `depends_on`: `runtime-agentic-layer` → `agentic-layer`, `runtime` → `core`, `state-machine` → `installation-state-machine`.
+   - Renamed ids in `entity_refs`, `implements`, `depends_on`: `<old-layer>-agentic-layer` → `agentic-layer`, `<old-layer>` → `core`, `state-machine` → `installation-state-machine`.
    - The backlog is split into `docs/backlog/active.md` (open items) and `docs/backlog/archive.md` (everything else).
 5. **Verify** with the commands of the Verification section of `INSTALL.md`, review `git diff`, commit.
 

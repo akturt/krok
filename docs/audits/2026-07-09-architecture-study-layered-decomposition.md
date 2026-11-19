@@ -12,7 +12,7 @@ entity_refs: [core, registry, installation-state-machine, capabilities]
 
 ## Status: REJECTED
 
-This study evaluates whether Runtime v1.3 should be decomposed into a layered architecture (Runtime Core → Profile Loader → Knowledge Profile → Documentation Profile).
+This study evaluates whether Core v1.3 should be decomposed into a layered architecture (Core → Profile Loader → Knowledge Profile → Documentation Profile).
 
 **Verdict: The decomposition is NOT justified.**
 
@@ -26,7 +26,7 @@ The proposed layers create abstraction that does not reduce complexity, introduc
 
 ```
 underboss/
-├── runtime/              # Infrastructure: registry, state machine, contracts (5 files)
+├── core/              # Infrastructure: registry, state machine, contracts (5 files)
 ├── bootstrap/            # Infrastructure: installer, loader, templates (5 files)
 ├── engine/               # Domain: validators, schemas, templates, reality-engine (13 files)
 ├── knowledge/            # Domain: agent prompt materials (6 files)
@@ -42,7 +42,7 @@ underboss/
 
 ```
                     ┌─────────────┐
-                    │   runtime/  │ (registry, state-machine, contracts)
+                    │   core/  │ (registry, state-machine, contracts)
                     └──────┬──────┘
                            │ read by
               ┌────────────┼────────────┐
@@ -72,10 +72,10 @@ underboss/
 
 | Boundary | What It Separates | Enforced By |
 |----------|-------------------|-------------|
-| Submodule isolation | Consumer repo ≠ Runtime repo | git submodule, boundaries.yaml |
+| Submodule isolation | Consumer repo ≠ Core repo | git submodule, boundaries.yaml |
 | Consumer exposure | Only `docs/` is editable by consumer | project-layout.yaml, CI |
 | Agent↔Knowledge | Knowledge consumed only via short-id refs | FM `knowledge:` field |
-| Validator↔Domain | Validators read contracts, not prose | validate-runtime.sh |
+| Validator↔Domain | Validators read contracts, not prose | validate-integrity.sh |
 | Bootstrap↔Domain | Bootstrap creates structure, not content | bootstrap.sh scope |
 
 ---
@@ -85,7 +85,7 @@ underboss/
 ### 2.1 The Proposal
 
 ```
-Runtime Core
+Core
         │
         ▼
 Profile Loader
@@ -95,7 +95,7 @@ Profile Loader
         └── Future Profiles
 ```
 
-Runtime Core: bootstrap, registry, state machine, contracts, validation, project detection, stack detection, lifecycle.
+Core: bootstrap, registry, state machine, contracts, validation, project detection, stack detection, lifecycle.
 
 Knowledge Profile: entities, notes, research, findings, references, decisions.
 
@@ -125,12 +125,12 @@ These are **not** generic knowledge. They are **documentation-about-documentatio
 
 **The proposed "Knowledge Profile" contents (entities, notes, research, findings, references, decisions) do not exist anywhere in the codebase.** There is no `knowledge/entities.md`, no `knowledge/research/`, no `knowledge/findings/`. The proposal describes a system that does not exist.
 
-### 2.3 What Actually Happens at Runtime
+### 2.3 What Actually Happens at Core
 
 1. **Agent roles** (in `agents/`) reference `knowledge/` by short-id in their frontmatter
 2. **SOPs** (in `sops/`) orchestrate agents in sequence
 3. **Bootstrap** (in `bootstrap/`) creates the consumer's `docs/` directory structure
-4. **Validators** (in `engine/`) check frontmatter and runtime consistency
+4. **Validators** (in `engine/`) check frontmatter and Core consistency
 5. **Templates** (in `engine/`) are copied by bootstrap to seed `docs/`
 
 The flow is: bootstrap creates → agents produce → SOPs orchestrate → validators check.
@@ -141,8 +141,8 @@ There is no intermediate "Knowledge Profile" that sits between infrastructure an
 
 If we forced the decomposition:
 
-**Runtime Core** (would keep):
-- `runtime/` — registry, state machine, contracts ✓
+**Core** (would keep):
+- `core/` — registry, state machine, contracts ✓
 - `bootstrap/` — bootstrap.sh, install.sh ✓ (but bootstrap.sh already references engine/templates/)
 - `engine/validators/` — but these validate documentation-specific frontmatter, not generic core
 - `engine/schemas/` — but this is canonical frontmatter schema, documentation-specific
@@ -166,7 +166,7 @@ The decomposition requires moving files into artificial groupings that do not re
 ### 3.1 Indirection Without Simplification
 
 Currently, bootstrap.sh knows about:
-- `runtime/registry.yaml` (reads it)
+- `core/registry.yaml` (reads it)
 - `engine/templates/*.md` (copies them)
 - `engine/validators/validate-*.sh` (references in CI)
 - `bootstrap/templates/entity-catalog.md` (copies it)
@@ -181,7 +181,7 @@ With a Profile Loader, bootstrap.sh would need to:
 
 ### 3.2 Validator Changes
 
-Currently, `validate-runtime.sh` checks the entire dependency graph in one pass: registry, agents, knowledge, capabilities, contracts, SOPs, templates, engine components.
+Currently, `validate-integrity.sh` checks the entire dependency graph in one pass: registry, agents, knowledge, capabilities, contracts, SOPs, templates, engine components.
 
 With profiles, validators would need to:
 - Know which profile owns which component
@@ -198,7 +198,7 @@ Currently, agents reference knowledge by short-id:
 knowledge: [architecture-principles, report-formats]
 ```
 
-The runtime resolves `knowledge: architecture-principles` → `knowledge/architecture-principles.md`.
+The Core resolves `knowledge: architecture-principles` → `knowledge/architecture-principles.md`.
 
 With profiles, agents would need to:
 - Know which profile owns each knowledge file
@@ -229,7 +229,7 @@ The actual clean separation in the codebase is:
 ```
 Infrastructure                    Domain
 ─────────────────                 ──────────────
-runtime/                          engine/
+core/                          engine/
 bootstrap/                        knowledge/
 CI workflow                       agents/
                                   sops/
@@ -327,7 +327,7 @@ engine/
 ├── validation/
 │   ├── validators/
 │   ├── schemas/
-│   └── contracts/       # move runtime/contracts/ here? No — contracts are infrastructure
+│   └── contracts/       # move core/contracts/ here? No — contracts are infrastructure
 ├── templates/
 └── reality-engine/
 ```
@@ -357,7 +357,7 @@ bootstrap/
 If a genuine second profile appears (e.g., "API Documentation Profile" with OpenAPI specs, Swagger, gRPC definitions), THEN consider decomposition. But the decomposition should be:
 
 ```
-runtime/
+core/
 ├── core/              # registry, state-machine, contracts
 ├── profiles/
 │   └── documentation/
@@ -392,14 +392,14 @@ Rationale:
 
 ## 8. Appendix: Full File Inventory
 
-### Runtime Infrastructure (11 files)
-- `runtime/registry.yaml` — SSOT, 80 lines
-- `runtime/state-machine.yaml` — 6 states, 38 lines
-- `runtime/contracts/runtime/installation.yaml` — bootstrap contract
-- `runtime/contracts/runtime/migration.yaml` — version transitions
-- `runtime/contracts/runtime/validation.yaml` — validator contracts
-- `runtime/contracts/consumer/boundaries.yaml` — editable boundaries
-- `runtime/contracts/consumer/project-layout.yaml` — expected layout
+### Core Infrastructure (11 files)
+- `core/registry.yaml` — SSOT, 80 lines
+- `core/installation-state-machine.yaml` — 6 states, 38 lines
+- `core/contracts/product/installation.yaml` — bootstrap contract
+- `core/contracts/product/migration.yaml` — version transitions
+- `core/contracts/product/validation.yaml` — validator contracts
+- `core/contracts/consumer/boundaries.yaml` — editable boundaries
+- `core/contracts/consumer/project-layout.yaml` — expected layout
 - `.github/workflows/docs-validate.yml` — CI guard
 - `bootstrap/bootstrap.sh` — universal loader, 638 lines
 - `bootstrap/bootstrap.ps1` — Windows mirror, 212 lines
@@ -407,7 +407,7 @@ Rationale:
 
 ### Domain: Engine (13 files)
 - `engine/validators/validate-frontmatter.sh` — 128 lines
-- `engine/validators/validate-runtime.sh` — 334 lines
+- `engine/validators/validate-integrity.sh` — 334 lines
 - `engine/schemas/frontmatter.schema.json` — 181 lines
 - `engine/scripts/migrate-legacy.mjs` — 358 lines
 - `engine/templates/{adr,spec,audit,architecture,runbook,backlog}.md` — 6 templates
@@ -442,5 +442,5 @@ Rationale:
 - `README.md`, `INSTALL.md`
 - `docs/adr/001-*.md`, `docs/adr/002-*.md`
 - `docs/specs/approved/2026-07-08-agentic-layer.md`
-- `docs/specs/approved/2026-07-08-runtime-v1.2.md`
+- `docs/specs/approved/2026-07-08-core-v1.2.md`
 - `docs/audits/2026-07-07-documentation-transformation-kordon.md`

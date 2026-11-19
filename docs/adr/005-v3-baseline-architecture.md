@@ -8,7 +8,7 @@ owners: [underboss-team]
 
 entity_refs: [agentic-layer]
 tags: [adr, architecture, terminology, core, registry, no-compatibility]
-supersedes: [adr-001-agentic-layer-separation, adr-002-runtime-v1.2-operating-platform, adr-003-runtime-architecture-v2]
+supersedes: [adr-001-agentic-layer-separation, adr-002-core-v1.2-operating-platform, adr-003-core-architecture-v2]
 depends_on: []
 priority: P0
 ---

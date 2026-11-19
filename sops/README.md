@@ -44,7 +44,7 @@ sops/
 | **`architecture-review`** | Sequential review: Reality → Arch → Doc → Adversary → Human | 5 | multi-role |
 | **`forensic-audit`** | 8-step forensic audit pipeline (domain-specific) | 8 | multi-role |
 | **`forensic-layer-audit`** | 11-phase single-agent forensic audit of any layer/section/subsystem | 11 | `forensic-auditor` only |
-| **`pipeline-topology-audit`** | 3-layer progressive reconstruction of a multi-hop data pipeline's runtime reality (Execution → Structural → Content Topology) before any coverage matrix is built | 6 | `pipeline-archaeologist` only |
+| **`pipeline-topology-audit`** | 3-layer progressive reconstruction of a multi-hop data pipeline's operating reality (Execution → Structural → Content Topology) before any coverage matrix is built | 6 | `pipeline-archaeologist` only |
 
 ## Artifact Contracts (v1.1)
 

@@ -5,6 +5,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, readFileSync, existsSync, readdirSync, statSync, mkdirSync, copyFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { REPO, tmp, put } from './helpers.mjs';
+import { FORMER as W } from '../validate-vocabulary.mjs';
 
 const P = (p) => p.split('\\').join('/');
 const bash = (script, cwd, env = {}) =>
@@ -20,19 +21,19 @@ function walk(dir, out = []) {
 }
 
 test('the old directory and file names no longer exist', () => {
-  assert.ok(!existsSync(join(REPO, 'runtime')));
+  assert.ok(!existsSync(join(REPO, W)));
   assert.ok(existsSync(join(REPO, 'core', 'registry.yaml')));
   assert.ok(existsSync(join(REPO, 'core', 'installation-state-machine.yaml')));
   assert.ok(existsSync(join(REPO, 'core', 'contracts', 'product')));
   assert.ok(existsSync(join(REPO, 'documentation', 'validation', 'validate-integrity.sh')));
-  assert.ok(!existsSync(join(REPO, 'documentation', 'validation', 'validate-runtime.sh')));
+  assert.ok(!existsSync(join(REPO, 'documentation', 'validation', 'validate-' + W + '.sh')));
   assert.ok(!existsSync(join(REPO, 'documentation', 'templates', 'backlog.md')));
 });
 
 test('the Registry has the control key, no compatibility block, no review directory', () => {
   const reg = readFileSync(join(REPO, 'core', 'registry.yaml'), 'utf8');
   assert.match(reg, /^control:/m);
-  assert.doesNotMatch(reg, /^runtime:/m);
+  assert.doesNotMatch(reg, new RegExp('^' + W + ':', 'm'));
   assert.doesNotMatch(reg, /^compatibility:/m);
   assert.doesNotMatch(reg, /specs\/review/);
 });
@@ -52,7 +53,7 @@ test('no product code names the old layout or a fallback', () => {
   const files = [...walk(join(REPO, 'core')), ...walk(join(REPO, 'bootstrap'))].filter((f) => /\.(sh|ps1|yaml)$/.test(f));
   for (const f of files) {
     const t = readFileSync(f, 'utf8');
-    assert.doesNotMatch(t, /\.context[\\/]runtime/, f);
+    assert.doesNotMatch(t, new RegExp(String.raw`\.context[\\/]` + W), f);
     assert.doesNotMatch(t, /DEGRADED|built-in fallback|WARN_ONLY/, f);
     assert.doesNotMatch(t, /\blegacy (layout|mode|state|path|v1)/i, f);
   }
@@ -82,7 +83,7 @@ test('detect_state knows exactly fresh, installed, partial', () => {
   assert.equal(states((root) => { copyReg(root); }), 'partial');
   assert.equal(states((root) => { copyReg(root); for (const d of ['bootstrap', 'documentation', 'agents', 'knowledge', 'sops']) mkdirSync(join(root, d)); }), 'installed');
   // an old layout is simply not special
-  assert.equal(states((root, t) => { mkdirSync(join(t, '.context', 'runtime'), { recursive: true }); }), 'fresh');
+  assert.equal(states((root, t) => { mkdirSync(join(t, '.context', W), { recursive: true }); }), 'fresh');
 });
 
 function copyReg(root) {
@@ -115,7 +116,7 @@ test('bootstrap against a fresh project creates the registry layout without revi
   assert.match(readFileSync(join(proj, 'CLAUDE.md'), 'utf8'), /docs\/\.control\/core\/registry\.yaml/);
   const ci = readFileSync(join(proj, '.github', 'workflows', 'docs-validate.yml'), 'utf8');
   assert.match(ci, /validate-lifecycle\.mjs/);
-  assert.doesNotMatch(ci, /runtime|WARN_ONLY|if \[ -f/);
+  assert.doesNotMatch(ci, new RegExp(W + String.raw`|WARN_ONLY|if \[ -f`));
 });
 
 test('planner: gate: manual is a human step and role: human is not an alias', () => {
@@ -208,4 +209,15 @@ test('claude-md generator: an existing CLAUDE.md without Krok rules gets the sni
   const fresh = run(null);
   assert.match(fresh, /^# CLAUDE\.md — AI Agent Quickstart/);
   assert.match(fresh, /core\/bin\/krok/);
+});
+
+test('the former product term is absent from the content and the paths of every tracked file', () => {
+  // The word is assembled from parts: this file must not contain it either.
+  const word = new RegExp(W, 'i');
+  const files = execFileSync('git', ['ls-files', '-z'], { cwd: REPO, encoding: 'utf8' }).split('\0').filter(Boolean);
+  assert.ok(files.length > 100, 'git ls-files returned too few files');
+  const inPath = files.filter((f) => word.test(f));
+  assert.deepEqual(inPath, [], 'tracked paths contain the former product term');
+  const inContent = files.filter((f) => existsSync(join(REPO, f)) && statSync(join(REPO, f)).isFile() && word.test(readFileSync(join(REPO, f)).toString('latin1')));
+  assert.deepEqual(inContent, [], 'tracked file contents contain the former product term');
 });

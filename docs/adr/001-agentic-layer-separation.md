@@ -23,7 +23,7 @@ priority: P0
 
 ## Context
 
-Runtime v1.0 stored everything in monolithic agent prompts: role identity, knowledge, protocol, and output format in single 300-600 line files. This caused:
+Core v1.0 stored everything in monolithic agent prompts: role identity, knowledge, protocol, and output format in single 300-600 line files. This caused:
 - 14 architectural principles, 5-stage validation, 7-stage forensic protocol baked into specific prompts — unreusable
 - `forensic-orchestrator.md` was a workflow engine (DAG, retries, validators), not an agent
 - Duplication across roles (same principles copied into each prompt)
@@ -45,7 +45,7 @@ Key decisions:
 - **No output templates** — merged into `knowledge/report-formats.md`
 - **Capability Catalog** in `knowledge/capabilities.md` (not `agents/README.md`) — single source of truth
 - **No `provided by:`** in catalog — unidirectional Role→Capability, declared in Role FM
-- **`gate: manual`** instead of `role: human` — human is not a Runtime role
+- **`gate: manual`** instead of `role: human` — human is not a Core role
 - **planner stays DAG-printer** — no executor (avoids small-Airflow syndrome)
 - **`agents/` not renamed to `roles/`** — avoids breaking v1.0 contracts
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validate as validateBacklog } from '../validate-backlog.mjs';
-import { classify, scan, run } from '../validate-vocabulary.mjs';
+import { classify, scan, run, FORMER as W } from '../validate-vocabulary.mjs';
 import { tmp, put, doc } from './helpers.mjs';
 
 test('backlog: active.md only [ ], archive.md only [x] and [-]', () => {
@@ -45,10 +45,10 @@ test('vocabulary: classes follow what a file is', () => {
 
 test('vocabulary: forbidden identifiers and the former product term are found', () => {
   const hits = (t) => scan('f.md', t, 'docs').map((x) => x.what);
-  assert.ok(hits('mount at docs/.runtime/x').includes('former mount path'));
-  assert.ok(hits('export RUNTIME_ROOT=1').includes('former variable'));
-  assert.ok(hits('entity_ref runtime-agentic-layer').includes('former entity ref'));
-  assert.ok(hits('the Runtime API').includes('former product term "runtime"'));
+  assert.ok(hits('mount at docs/.' + W + '/x').includes('former mount path'));
+  assert.ok(hits('export ' + W.toUpperCase() + '_ROOT=1').includes('former variable'));
+  assert.ok(hits('entity_ref ' + W + '-agentic-layer').includes('former entity ref'));
+  assert.ok(hits('the ' + W[0].toUpperCase() + W.slice(1) + ' API').includes('former product term "' + W + '"'));
   assert.ok(hits('status: review').includes('review lifecycle status'));
   assert.ok(hits('draft → review → approved').includes('review lifecycle transition'));
   assert.ok(hits('docs/specs/review/a.md').includes('review lifecycle directory'));
@@ -56,14 +56,14 @@ test('vocabulary: forbidden identifiers and the former product term are found', 
 
 test('vocabulary: consumer-domain terms and ordinary review are allowed', () => {
   const hits = (t) => scan('f.md', t, 'docs');
-  assert.equal(hits('produces: runtime-ownership-report').length, 0);
-  assert.equal(hits('reconstructs the runtime reality of a pipeline').length, 0);
+  assert.equal(hits('produces: ' + W + '-ownership-report').length, 0);
+  assert.equal(hits('reconstructs the ' + W + ' reality of a pipeline').length, 0);
   assert.equal(hits('architecture review → doc review → human').length, 0);
   assert.equal(hits('the code review of a PR').length, 0);
 });
 
 test('vocabulary: structural id references in frontmatter are not vocabulary', () => {
-  assert.equal(scan('a.md', '---\nsupersedes: [adr-002-runtime-v1.2]\n---\n', 'docs').length, 0);
+  assert.equal(scan('a.md', '---\nsupersedes: [adr-002-' + W + '-v1.2]\n---\n', 'docs').length, 0);
 });
 
 test('vocabulary: only adr-004-spec-lifecycle may use the removed review status', () => {
@@ -74,9 +74,9 @@ test('vocabulary: only adr-004-spec-lifecycle may use the removed review status'
 
 test('vocabulary: run reports violations per class', () => {
   const r = tmp();
-  put(r, 'core/a.sh', 'RUNTIME_ROOT=1\n');
+  put(r, 'core/a.sh', W.toUpperCase() + '_ROOT=1\n');
   put(r, 'README.md', doc({ id: 'readme', type: 'guide', status: 'active', body: 'fine' }));
-  put(r, 'docs/audits/a.md', doc({ id: 'a', type: 'audit', status: 'completed', body: 'Runtime was the old word' }));
+  put(r, 'docs/audits/a.md', doc({ id: 'a', type: 'audit', status: 'completed', body: '' + W[0].toUpperCase() + W.slice(1) + ' was the old word' }));
   const { byClass, violations } = run(r);
   assert.equal(byClass.code, 1);
   assert.equal(byClass.historical, 1);
@@ -85,7 +85,7 @@ test('vocabulary: run reports violations per class', () => {
 });
 
 test('vocabulary: only the move-from-the-old-name guide may name the old layout', () => {
-  const body = 'mount at docs/.runtime/x and .context/runtime, the Runtime API';
+  const body = 'mount at docs/.' + W + '/x and .context/' + W + ', the ' + W[0].toUpperCase() + W.slice(1) + ' API';
   const guide = scan('g.md', doc({ id: 'guide-move-from-underboss', type: 'guide', status: 'active' }) + body, 'docs');
   assert.deepEqual(guide, []);
   const other = scan('g.md', doc({ id: 'guide-other', type: 'guide', status: 'active' }) + body, 'docs');
@@ -94,35 +94,35 @@ test('vocabulary: only the move-from-the-old-name guide may name the old layout'
 
 test('vocabulary: lockfiles and the project log are not scanned; a consumer is scanned only in its operational files', () => {
   const r = tmp();
-  put(r, 'package-lock.json', '{"@edge-runtime/vm": "1"}\n');
-  put(r, 'docs/LOG.md', doc({ id: 'log', type: 'guide', status: 'active', body: 'docs/.runtime/underboss' }));
+  put(r, 'package-lock.json', '{"@edge-' + W + '/vm": "1"}\n');
+  put(r, 'docs/LOG.md', doc({ id: 'log', type: 'guide', status: 'active', body: 'docs/.' + W + '/underboss' }));
   assert.equal(run(r).violations.length, 0);
   put(r, 'docs/.control/core/registry.yaml', 'control:\n  version: "3.0.0"\n');
-  put(r, 'vercel.json', '{"runtime": "nodejs"}\n');
-  put(r, 'docs/a.md', doc({ id: 'a', type: 'guide', status: 'active', body: 'the runtime layer' }));
+  put(r, 'vercel.json', '{"' + W + '": "nodejs"}\n');
+  put(r, 'docs/a.md', doc({ id: 'a', type: 'guide', status: 'active', body: 'the ' + W + ' layer' }));
   assert.deepEqual(run(r).violations.map((x) => x.path), ['docs/a.md']);
 });
 
 test('vocabulary: consumer allow-list literals are masked before the word test', () => {
-  const hits = (t) => scan('f.md', t, 'docs', ['runtime.read', '*/runtime', '*/runtime/*']);
-  assert.equal(hits('gated by runtime.read only').length, 0);
-  assert.equal(hits('gated by runtime.read and runtime.update').length, 1); // .update is not in the list
-  assert.equal(hits("find . -not -path '*/runtime' -not -path '*/runtime/*'").length, 0);
+  const hits = (t) => scan('f.md', t, 'docs', [W + '.read', '*/' + W + '', '*/' + W + '/*']);
+  assert.equal(hits('gated by ' + W + '.read only').length, 0);
+  assert.equal(hits('gated by ' + W + '.read and ' + W + '.update').length, 1); // .update is not in the list
+  assert.equal(hits(`find . -not -path '*/${W}' -not -path '*/${W}/*'`).length, 0);
 });
 
 test('vocabulary: consumer allow-list never whitelists the structural bans', () => {
-  const hits = (t) => scan('f.md', t, 'docs', ['runtime', 'review']).map((x) => x.what);
-  assert.ok(hits('mount at docs/.runtime/x').includes('former mount path'));
+  const hits = (t) => scan('f.md', t, 'docs', [W, 'review']).map((x) => x.what);
+  assert.ok(hits('mount at docs/.' + W + '/x').includes('former mount path'));
   assert.ok(hits('status: review').includes('review lifecycle status'));
 });
 
 test('vocabulary: run() loads .context/vocabulary.yml and skips the file itself', () => {
   const r = tmp();
-  put(r, '.context/vocabulary.yml', 'allow:\n  - "runtime.read"\n');
-  put(r, 'CLAUDE.md', 'gated by runtime.read\n');
+  put(r, '.context/vocabulary.yml', 'allow:\n  - "' + W + '.read"\n');
+  put(r, 'CLAUDE.md', 'gated by ' + W + '.read\n');
   const { violations } = run(r);
   assert.equal(violations.length, 0);
-  put(r, 'AGENTS.md', 'gated by runtime.update\n');
+  put(r, 'AGENTS.md', 'gated by ' + W + '.update\n');
   assert.equal(run(r).violations.length, 1);
 });
 

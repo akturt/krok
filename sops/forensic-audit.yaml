@@ -67,27 +67,27 @@ steps:
     note: "verdict + evidence + contradictions"
     depends_on: [2]
   - id: 6
-    name: Runtime Ownership Analysis
+    name: Actual Ownership Analysis
     capability: architecture-extraction
     role: reality-auditor
     platform: any
     consumes: [control-objects-matrix, multi-binding-verdict]
-    produces: runtime-ownership-report
-    note: "runtime_owner + per-attribute owner + conflict_behavior"
+    produces: actual-ownership-report
+    note: "actual_owner + per-attribute owner + conflict_behavior"
     depends_on: [5]
   - id: 7
     name: Reputation Layer Design (architecture recommendation)
     capability: review-domain-model
     role: architecture-reviewer
     platform: any
-    consumes: [attribution-analysis, runtime-ownership-report]
+    consumes: [attribution-analysis, actual-ownership-report]
     produces: reputation-layer-design
     note: "layer_responsibilities + unified_reputation_identity_exists?"
     depends_on: [4, 6]
   - id: 8
     name: Final Recommendation (ADR-precursor, human merge)
     gate: manual
-    consumes: [reputation-layer-design, runtime-ownership-report, attribution-analysis]
+    consumes: [reputation-layer-design, actual-ownership-report, attribution-analysis]
     produces: forensic-report
     note: "adr_recommendation + risk_register + open_questions → docs/audits/YYYY-MM-DD-forensic-<topic>.md (terminal artifact)"
     depends_on: [7]

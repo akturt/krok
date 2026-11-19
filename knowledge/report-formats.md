@@ -121,8 +121,8 @@ Evidence: <file path / line / diff snippet>
 ### 5. Multi-Binding Reality Check
 <verdict + evidence + contradictions>
 
-### 6. Runtime Ownership Analysis
-<runtime_owner + per-attribute owner + conflict_behavior>
+### 6. Actual Ownership Analysis
+<actual_owner + per-attribute owner + conflict_behavior>
 
 ### 7. Reputation Layer Design
 <layer_responsibilities + unified_identity_exists?>
@@ -260,7 +260,7 @@ archaeology, <layer>]`.
  code; cross-cutting hidden dependencies>
 <Coverage Matrix (only after Layers 1-3, own step but usually embedded in
  the Layer 3 or a final synthesis report):
- | node | handler exists | wired to runtime | payload composition known | real sample available | parity proven | ready for downstream work |>
+ | node | handler exists | wired into the live system | payload composition known | real sample available | parity proven | ready for downstream work |>
 
 ## Findings
 | # | Severity | Finding | Evidence | Recommendation |
