@@ -1,6 +1,6 @@
 control:
   name: Krok
-  version: "3.0.1"
+  version: "3.0.2"
   codename: Consigliere
 
 bootstrap:

@@ -84,12 +84,15 @@ test('vocabulary: run reports violations per class', () => {
   assert.ok(violations.length >= 1);
 });
 
-test('vocabulary: only the move-from-the-old-name guide may name the old layout', () => {
+test('vocabulary: no file may name the old layout; only the move guide may name the removed review status', () => {
   const body = 'mount at docs/.' + W + '/x and .context/' + W + ', the ' + W[0].toUpperCase() + W.slice(1) + ' API';
   const guide = scan('g.md', doc({ id: 'guide-move-from-underboss', type: 'guide', status: 'active' }) + body, 'docs');
-  assert.deepEqual(guide, []);
+  assert.ok(guide.length >= 3);
   const other = scan('g.md', doc({ id: 'guide-other', type: 'guide', status: 'active' }) + body, 'docs');
   assert.ok(other.length >= 3);
+  const review = 'the status: review of a Spec';
+  assert.deepEqual(scan('g.md', doc({ id: 'guide-move-from-underboss', type: 'guide', status: 'active' }) + review, 'docs'), []);
+  assert.ok(scan('g.md', doc({ id: 'guide-other', type: 'guide', status: 'active' }) + review, 'docs').length >= 1);
 });
 
 test('vocabulary: lockfiles and the project log are not scanned; a consumer is scanned only in its operational files', () => {

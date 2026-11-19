@@ -81,8 +81,7 @@ const DOMAIN_TERMS = [
 ];
 const EXCEPTIONS = {
   'adr-004-spec-lifecycle': new Set(['review']),
-  'install-krok': new Set(['legacy']), // the detection snippet names the old layout to route it to the guide
-  'guide-move-from-underboss': new Set(['legacy', 'review']), // the guide for consumers of the old name must name the old layout
+  'guide-move-from-underboss': new Set(['review']), // the guide for consumers of the old name must name the removed Spec status
 };
 
 function listFiles(root) {

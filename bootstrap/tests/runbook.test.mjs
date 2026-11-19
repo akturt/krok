@@ -10,7 +10,6 @@ import { fileURLToPath } from 'node:url';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const P = (p) => p.split('\\').join('/');
-const W = ['run', 'time'].join(''); // assembled from parts so this file never contains the word
 const RUNBOOK = readFileSync(join(REPO, 'INSTALL.md'), 'utf8').split('\r\n').join('\n');
 const URL = 'https://github.com/akturt/krok.git';
 
@@ -97,9 +96,6 @@ test('detection: every repository state maps to exactly one verdict', () => {
   assert.match(detect(v3('2.0.0')), /^STOP docs\/\.control has an unexpected version/);
 
   // the old name routes to the guide, it is never converted
-  assert.equal(detect(repo({ ['docs/.' + W + '/underboss/x']: 'x' })), 'MOVE');
-  assert.equal(detect(repo({ ['.context/' + W + '/x']: 'x' })), 'MOVE');
-  assert.equal(detect(repo({ ['docs/.' + W + '/naprolom-docs/x']: 'x' })), 'MOVE');
   assert.equal(detect(repo({ '.gitmodules': '[submodule "docs/.control"]\n\tpath = docs/.control\n\turl = https://github.com/akturt/naprolom-docs.git\n', 'docs/.control/core/registry.yaml': 'control:\n  name: Krok\n  version: "3.0.0"\n' })), 'MOVE');
   assert.equal(detect(repo({ 'docs/.control/core/registry.yaml': 'control:\n  name: Underboss\n  version: "3.0.0"\n' })), 'MOVE');
   assert.match(detect(repo({ 'docs/.control/x': 'x' })), /^STOP docs\/\.control exists without core\/registry\.yaml/);
@@ -158,7 +154,7 @@ test('flow A then B: install from scratch, then update, exactly as the runbook s
   ok(proj, bootstrap);
   assert.match(readFileSync(join(proj, '.context', 'agent-entry.md'), 'utf8'), /Agent Entry Point/);
   writeFileSync(join(proj, '.context', 'project.yml'), 'name: shop\nrepository:\n  name: shop\n');
-  assert.equal(detect(proj), 'UPDATE 3.0.1');
+  assert.equal(detect(proj), 'UPDATE 3.0.2');
   verify(proj);
   ok(proj, 'git add -A docs .context .github CLAUDE.md && git commit -q -m "chore: install Krok"');
   assert.match(readFileSync(join(proj, 'CLAUDE.md'), 'utf8'), /INSTALL\.md/);
@@ -178,6 +174,6 @@ test('flow A then B: install from scratch, then update, exactly as the runbook s
   assert.equal(readFileSync(join(proj, 'CLAUDE.md'), 'utf8'), owned.claude);
   assert.equal(readFileSync(join(proj, '.context', 'boundaries.yml'), 'utf8'), owned.boundaries);
   ok(proj, 'git add docs/.control && git commit -q -m "chore: update Krok"');
-  assert.equal(detect(proj), 'UPDATE 3.0.1');
+  assert.equal(detect(proj), 'UPDATE 3.0.2');
 });
 
