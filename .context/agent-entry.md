@@ -1,6 +1,6 @@
 # Agent Entry Point
 
-This project uses **Krok v3.0.2**.
+This project uses **Krok v3.0.3**.
 
 ## Your first action
 

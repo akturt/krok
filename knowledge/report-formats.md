@@ -77,28 +77,57 @@ Evidence: <file path / line / diff snippet>
 ```
 ## Adversary Validation Report
 
+Input mode: full | single-artifact (explicit flag only)
+
 ### Verdict Summary
+Compact row per finding — all findings, including those with no triggered passes:
 | Finding | Verdict | Confidence | Evidence Chain |
 |---------|---------|------------|----------------|
 | F-01    | SUSTAINED/WEAKENED/REFUTED/INSUFFICIENT | HIGH/MEDIUM/LOW | <sources> |
 
+Aggregate: MIXED (N WEAKENED, M INSUFFICIENT) — evidence maturity and defect status are separate axes; INSUFFICIENT does not cancel a WEAKENED/REFUTED downgrade.
+
+### Artifact Scope
+One block per artifact:
+- checked: <files/symbols/commits read>
+- not checked: <not run, not initialized, out of access>
+
+### Triggered Passes
+| Pass | Claim classes | Findings |
+|------|---------------|----------|
+| 1 Evidence (critical) | evidence | F-01, F-03 |
+| 2 Coverage (critical) | coverage | F-02 |
+| 3 Consistency/Measurements/Mechanism (high) | consistency / measurement / mechanism | F-03 |
+| 4 Contract/Failure/Normative (medium) | contract / normative | — |
+| Misc (low) | — | — |
+
+Pass 3 starts with the in-artifact round-trip (defect ↔ RESOLVED: direction, ID, status, counters); it is the first step of Pass 3, not a separate pass.
+
 ### Per-Finding Detail
+Compact by default; full claim type/class table only for high-impact classes. Only findings with at least one triggered pass:
 #### F-01: <finding title>
-- **Claim**: <decomposed claim>
-- **Evidence found**: <level + source>
+- **Claim**: <decomposed claim — type + class>
+- **Evidence found**: <level 1-7 + source; "artifact asserts P" vs "P true externally" kept separate; WEAK_EVIDENCE markers where applicable>
 - **Verdict**: <verdict>
 - **Confidence**: <level>
-- **Reasoning**: <how evidence leads to verdict>
+- **Reasoning**: one line
+- **residual_gap**: one line, only for a triggered group with a defect
+
+### Negative Check
+Cross-artifact / cross-generation discrepancies; every item names both locations:
+- <value> in <artifact A:location> vs <artifact B:location> → affected findings
 
 ### Contradictions
 - <any conflicting evidence between findings>
 
 ### Open Questions
-- <INSUFFICIENT_EVIDENCE items requiring human review>
+- <INSUFFICIENT_EVIDENCE items requiring human review, each with what data would resolve it>
 
 ### Aggregate
 - Total findings: N
-- SUSTAINED: N | WEAKENED: N | REFUTED: N | INSUFFICIENT: N
+- Defect status: SUSTAINED: N | WEAKENED: N | REFUTED: N | INSUFFICIENT: N
+- Evidence maturity: external snapshot available / absent; INSUFFICIENT caused only by a missing external snapshot: N
+- Triggered passes: <list> | findings without triggered passes: N
 ```
 
 ## Forensic Report

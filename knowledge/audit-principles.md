@@ -27,7 +27,7 @@ Break each finding into separate, verifiable claims:
 - **Normative claim** — "X should be done" (only the factual part is verified)
 
 ### Stage 2: Evidence Hunt
-For each claim, find corroborating or refuting data:
+For each claim, find corroborating or refuting data (canonical scale — see Evidence Level Ladder below):
 - Level 1-2 evidence (verified/direct) — strongest
 - Level 3-5 evidence (derived/inferred) — contextual
 - Absence of evidence — is not evidence of absence
@@ -58,6 +58,22 @@ Combine individual verdicts into an overall report:
 - Open questions (INSUFFICIENT_EVIDENCE items)
 - Contradictions between findings
 
+## Evidence Level Ladder
+
+Canonical scale of evidence quality (Levels 1-7), referenced by the Verdict System and Confidence Matrix:
+
+| Level | Name | Meaning | Report class |
+|-------|------|---------|--------------|
+| 1 | Direct observation | `file:line` read by the checker itself during this validation | OBSERVED |
+| 2 | Mechanical verification | Machine check performed now: Grep hit on a concrete literal, validator/test output, recount over primary records | EVIDENCED |
+| 3 | Derived from primary data | Aggregation/interpretation of Level 1-2 data (distributions, deltas) not independently recounted | INFERRED |
+| 4 | Documentation | Statement in docs/specs/ADRs — describes intent, not state | INFERRED |
+| 5 | Unverified claim | Author's assertion inside the source material; single uncorroborated mention | CLAIMED |
+| 6 | Retelling | Secondhand — retelling of a retelling, summary without a primary source | CLAIMED |
+| 7 | Unavailable | Outside the access of available tooling (not run, not initialized, no access) | INSUFFICIENT |
+
+Boundaries used by the Verdict System: SUSTAINED requires Level 1-2; WEAKENED admits Level 3-4 contradictions; REFUTED requires Level 1-3 disproof; INSUFFICIENT_EVIDENCE = the claim rests on Level 5-7.
+
 ## Verdict System
 
 ### Per-Finding Verdict
@@ -65,14 +81,15 @@ Each finding from the architecture-review receives:
 - **Verdict**: SUSTAINED / WEAKENED / REFUTED / INSUFFICIENT_EVIDENCE
 - **Confidence**: HIGH / MEDIUM / LOW
 - **Evidence chain**: sources used for this verdict
+- **Evidence target**: "the artifact asserts P" (Level 1-2 from the artifact itself) is kept separate from "P is true in the external world" (requires an external snapshot); failure of the second does not cancel the first
 - **Reasoning**: how the evidence leads to the verdict
 
 ### Aggregate Verdict
-Overall result of the adversary-check:
+Evidence maturity and defect status are two independent axes; INSUFFICIENT never cancels a WEAKENED or REFUTED downgrade. Overall result of the adversary-check:
 - **All SUSTAINED** → findings validated, proceed
-- **Mixed** → report the specific situation, human decides
+- **Mixed** → `MIXED (N WEAKENED, M INSUFFICIENT)`, both axes visible; human decides
 - **Any REFUTED** → findings need revision
-- **Any INSUFFICIENT** → more data needed
+- **Any INSUFFICIENT** → more data needed, listed separately from defect status
 
 ## Confidence Model
 

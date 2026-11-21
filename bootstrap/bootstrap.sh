@@ -4,7 +4,7 @@ trap 'echo "Error on line $LINENO" >&2' ERR
 
 # bootstrap.sh — Krok bootstrap orchestrator
 # Uses Core SDK (core/lib/) for all identity fields — no hardcoded names.
-# v3.0.2
+# v3.0.3
 
 CONTROL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET=""
