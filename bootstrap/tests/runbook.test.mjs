@@ -154,7 +154,7 @@ test('flow A then B: install from scratch, then update, exactly as the runbook s
   ok(proj, bootstrap);
   assert.match(readFileSync(join(proj, '.context', 'agent-entry.md'), 'utf8'), /Agent Entry Point/);
   writeFileSync(join(proj, '.context', 'project.yml'), 'name: shop\nrepository:\n  name: shop\n');
-  assert.equal(detect(proj), 'UPDATE 3.0.2');
+  assert.equal(detect(proj), 'UPDATE 3.0.3');
   verify(proj);
   ok(proj, 'git add -A docs .context .github CLAUDE.md && git commit -q -m "chore: install Krok"');
   assert.match(readFileSync(join(proj, 'CLAUDE.md'), 'utf8'), /INSTALL\.md/);
@@ -174,6 +174,6 @@ test('flow A then B: install from scratch, then update, exactly as the runbook s
   assert.equal(readFileSync(join(proj, 'CLAUDE.md'), 'utf8'), owned.claude);
   assert.equal(readFileSync(join(proj, '.context', 'boundaries.yml'), 'utf8'), owned.boundaries);
   ok(proj, 'git add docs/.control && git commit -q -m "chore: update Krok"');
-  assert.equal(detect(proj), 'UPDATE 3.0.2');
+  assert.equal(detect(proj), 'UPDATE 3.0.3');
 });
 
